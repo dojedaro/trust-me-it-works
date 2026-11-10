@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trustme"
+version = "0.1.0"
+description = "Can an AI tell when its own code is wrong? Measuring LLM self-checking loops against hidden tests."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = []  # runtime is standard library only
+
+[project.optional-dependencies]
+dev = ["pytest==9.2.0", "ruff==0.17.4"]
+
+[project.scripts]
+trustme = "trustme.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["tasks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "BLE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

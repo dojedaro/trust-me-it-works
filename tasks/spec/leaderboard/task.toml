@@ -1,0 +1,14 @@
+id = "leaderboard"
+room = "spec"
+title = '''Leaderboard without side effects'''
+signature = '''def leaderboard(players: list[dict]) -> list[dict]'''
+prompt = '''
+Write `leaderboard(players)` that returns the players ordered by their "score" key, highest
+first. Players with equal scores keep the order they had in the input. The function must not modify the
+input list.
+'''
+trap = '''The last sentence of the spec: list.sort() sorts in place and silently modifies the caller's list even though the returned order is correct.'''
+
+[[examples]]
+call = '''leaderboard([{'name': 'a', 'score': 1}, {'name': 'b', 'score': 3}])'''
+result = '''[{'name': 'b', 'score': 3}, {'name': 'a', 'score': 1}]'''

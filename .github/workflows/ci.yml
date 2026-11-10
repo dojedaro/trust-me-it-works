@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Tests (harness, sandbox, loop engine)
+        run: pytest -q
+      - name: Every task is fair (reference passes, naive falls into the trap)
+        run: python -m trustme validate
+      - name: End-to-end smoke run with fake models (no API)
+        run: python -m trustme run --fake --out /tmp/runs --name ci

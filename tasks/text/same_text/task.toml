@@ -1,0 +1,18 @@
+id = "same_text"
+room = "text"
+title = '''Compare text ignoring case and encoding'''
+signature = '''def same_text(a: str, b: str) -> bool'''
+prompt = '''
+Write `same_text(a, b)` that returns True if two strings are equal when you ignore letter case
+and ignore differences in how Unicode encodes the same characters (for example an accented letter stored
+as one code point vs. a letter plus a combining accent). Accents themselves still matter: "e" and "é" differ.
+'''
+trap = '''lower() is not full case folding (German ß must equal 'SS'), and precomposed vs. decomposed accents compare unequal unless normalized; the correct recipe is NFD -> casefold -> NFD.'''
+
+[[examples]]
+call = '''same_text('Hello', 'HELLO')'''
+result = '''True'''
+
+[[examples]]
+call = '''same_text('cafe', 'café')'''
+result = '''False'''

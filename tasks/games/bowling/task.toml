@@ -1,0 +1,18 @@
+id = "bowling"
+room = "games"
+title = '''Score a game of ten-pin bowling'''
+signature = '''def bowling_score(rolls: list[int]) -> int'''
+prompt = '''
+Write `bowling_score(rolls)` that returns the total score of one complete game of ten-pin
+bowling. `rolls` lists the pins knocked down by each roll, in order, and is always a valid, complete game.
+Standard rules: 10 frames; a strike scores 10 plus the next two rolls; a spare scores 10 plus the next roll.
+'''
+trap = '''The 10th frame: bonus rolls after a strike or spare in frame 10 count only as bonuses, never as extra frames. Code that loops over rolls instead of exactly 10 frames over-counts (a perfect game > 300).'''
+
+[[examples]]
+call = '''bowling_score([0] * 20)'''
+result = '''0'''
+
+[[examples]]
+call = '''bowling_score([10, 3, 4] + [0] * 16)'''
+result = '''24'''

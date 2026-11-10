@@ -1,0 +1,17 @@
+id = "iso_week"
+room = "time"
+title = '''ISO week label'''
+signature = '''def iso_week(day: str) -> str'''
+prompt = '''
+Write `iso_week(day)` that takes a date as "YYYY-MM-DD" and returns its ISO 8601 week label
+"YYYY-Www" (week number always two digits), as used in project plans and payroll.
+'''
+trap = '''The ISO week-numbering year differs from the calendar year near New Year: 2024-12-30 is in 2025-W01 and 2021-01-03 is in 2020-W53. strftime('%Y-W%W') or (year, week) mixes are wrong.'''
+
+[[examples]]
+call = '''iso_week('2026-11-10')'''
+result = ''''2026-W46''''
+
+[[examples]]
+call = '''iso_week('2026-03-02')'''
+result = ''''2026-W10''''

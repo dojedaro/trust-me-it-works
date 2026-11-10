@@ -1,0 +1,18 @@
+id = "dedupe"
+room = "spec"
+title = '''Remove duplicates, keep order, any item type'''
+signature = '''def dedupe(items: list) -> list'''
+prompt = '''
+Write `dedupe(items)` that returns a new list with duplicates removed, keeping the first
+occurrence of each item and the original order. Two items are duplicates if they are equal (==). Items can
+be of any type, including lists and dicts.
+'''
+trap = '''set() and dict.fromkeys() lose order or crash with TypeError on unhashable items like lists and dicts; the spec explicitly allows them.'''
+
+[[examples]]
+call = '''dedupe([3, 1, 3, 2, 1])'''
+result = '''[3, 1, 2]'''
+
+[[examples]]
+call = '''dedupe([[1], [1], [2]])'''
+result = '''[[1], [2]]'''

@@ -1,0 +1,18 @@
+id = "palindrome"
+room = "text"
+title = '''Multilingual palindrome check'''
+signature = '''def is_palindrome(text: str) -> bool'''
+prompt = '''
+Write `is_palindrome(text)` that returns True if `text` reads the same forwards and backwards
+when you consider only letters and digits, ignore case, and ignore accents (é counts as e). The empty
+string is a palindrome.
+'''
+trap = '''Accented letters must be stripped of their accent (decompose with NFD and drop combining marks), and a decomposed accent is a separate code point that isalnum() rejects but lower() keeps unchanged.'''
+
+[[examples]]
+call = '''is_palindrome('Never odd or even')'''
+result = '''True'''
+
+[[examples]]
+call = '''is_palindrome('abc')'''
+result = '''False'''

@@ -1,0 +1,18 @@
+id = "business_days"
+room = "time"
+title = '''Count business days'''
+signature = '''def business_days(start: str, end: str, holidays: list[str]) -> int'''
+prompt = '''
+Write `business_days(start, end, holidays)` that counts the business days from `start`
+(inclusive) to `end` (exclusive). Dates are "YYYY-MM-DD" strings. A business day is Monday to Friday and
+not in `holidays`. If `end` is not after `start`, return 0.
+'''
+trap = '''Subtracting len(holidays) from the weekday count double-counts holidays that fall on weekends, holidays outside the range, and duplicates in the list.'''
+
+[[examples]]
+call = '''business_days('2026-11-09', '2026-11-16', [])'''
+result = '''5'''
+
+[[examples]]
+call = '''business_days('2026-11-09', '2026-11-16', ['2026-11-11'])'''
+result = '''4'''

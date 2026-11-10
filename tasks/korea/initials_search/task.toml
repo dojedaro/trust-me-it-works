@@ -1,0 +1,21 @@
+id = "initials_search"
+room = "korea"
+title = '''Search Korean words by initial consonants'''
+signature = '''def matches_initials(query: str, word: str) -> bool'''
+prompt = '''
+Korean apps let you search by typing only initial consonants: "ㄱㅅ" finds "감사합니다".
+Write `matches_initials(query, word)` that returns True if `query` matches the beginning of `word`.
+Compare the strings position by position. A query character matches a word character if they are the
+same character, OR if the query character is a consonant letter (Hangul Compatibility Jamo, as typed on a
+keyboard) and the word character is a Hangul syllable whose initial consonant is that same letter.
+An empty query matches every word.
+'''
+trap = '''Initial consonants must be mapped to *compatibility* jamo (NFD gives conjoining jamo that never equal typed letters); double consonants are distinct letters (ㄱ must not match 까); a consonant must not match a syllable where it is only the final consonant.'''
+
+[[examples]]
+call = '''matches_initials('ㄱㅅ', '감사합니다')'''
+result = '''True'''
+
+[[examples]]
+call = '''matches_initials('ㄱㅅ', '강아지')'''
+result = '''False'''

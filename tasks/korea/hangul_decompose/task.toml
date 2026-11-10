@@ -1,0 +1,20 @@
+id = "hangul_decompose"
+room = "korea"
+title = '''Break Hangul syllables into letters'''
+signature = '''def decompose(text: str) -> str'''
+prompt = '''
+Write `decompose(text)` that replaces every precomposed Hangul syllable in `text` with the
+letters (jamo) it is built from, in order: initial consonant, vowel, then final consonant if any.
+Output the letters as Hangul Compatibility Jamo (the letters you type on a Korean keyboard, U+3131-U+318E).
+A compound final consonant such as the one in 닭 stays a single letter (ㄺ). Every other character,
+including letters that are already jamo, is copied unchanged.
+'''
+trap = '''unicodedata.normalize('NFD') looks right but produces *conjoining* jamo (U+1100 block), which are different code points from the compatibility jamo users type; correct code uses the 0xAC00 arithmetic (588 = 21*28) and maps to compatibility letters, including compound finals like ㄺ.'''
+
+[[examples]]
+call = '''decompose('한국어')'''
+result = ''''ㅎㅏㄴㄱㅜㄱㅇㅓ''''
+
+[[examples]]
+call = '''decompose('hi 가')'''
+result = ''''hi ㄱㅏ''''

@@ -1,0 +1,22 @@
+# Free-tier configuration: open-weight models hosted by Groq (no cost, rate-limited).
+# Model IDs change over time. Before a real run, check what exists with:
+#     python -m trustme models --provider groq
+# and update the two `model` values below.
+
+[providers.groq]
+base_url = "https://api.groq.com/openai/v1"
+api_key_env = "GROQ_API_KEY"
+min_interval_s = 2.5   # seconds between calls, to stay under free-tier requests-per-minute limits
+
+[roles.maker]          # writes the code: a small, fast model (makes more mistakes, which is the point)
+provider = "groq"
+model = "llama-3.1-8b-instant"
+
+[roles.checker]        # checks the code: a different, larger model (maker != checker)
+provider = "groq"
+model = "llama-3.3-70b-versatile"
+
+[run]
+max_iters = 5
+max_calls = 1500       # hard cap on model calls per command, across all variants
+temperature = 0.0

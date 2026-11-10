@@ -1,0 +1,18 @@
+id = "straight"
+room = "games"
+title = '''Find the high card of a poker straight'''
+signature = '''def straight_high(ranks: list[str]) -> str | None'''
+prompt = '''
+Write `straight_high(ranks)` for a five-card poker hand. `ranks` has 5 ranks, in any order,
+from "23456789TJQKA". If the five ranks form a straight (five consecutive ranks), return the rank of the
+straight's highest card; otherwise return None. Standard poker rules apply.
+'''
+trap = '''In standard poker the ace can be low: A-2-3-4-5 (the 'wheel') is a straight whose high card is 5, not A. The ace cannot wrap around (Q-K-A-2-3 is not a straight).'''
+
+[[examples]]
+call = '''straight_high(['9', 'T', 'J', 'Q', 'K'])'''
+result = ''''K''''
+
+[[examples]]
+call = '''straight_high(['2', '2', '3', '4', '5'])'''
+result = '''None'''

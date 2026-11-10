@@ -1,0 +1,19 @@
+id = "split_bill"
+room = "money"
+title = '''Split a bill to the cent'''
+signature = '''def split_bill(total: str, n: int) -> list[str]'''
+prompt = '''
+Write `split_bill(total, n)` that splits a bill between `n` people (n >= 1). `total` is a
+decimal string with exactly two decimal places, such as "100.00". Return `n` shares as strings with two
+decimal places. The shares must add up to exactly `total`, no two shares may differ by more than 0.01, and
+larger shares come first.
+'''
+trap = '''Float division and rounding each share (or round(x, 2)) loses or invents cents: 100/3 rounded three times sums to 99.99. Work in integer cents and hand out the remainder.'''
+
+[[examples]]
+call = '''split_bill('10.00', 4)'''
+result = '''['2.50', '2.50', '2.50', '2.50']'''
+
+[[examples]]
+call = '''split_bill('100.00', 3)'''
+result = '''['33.34', '33.33', '33.33']'''

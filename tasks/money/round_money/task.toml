@@ -1,0 +1,18 @@
+id = "round_money"
+room = "money"
+title = '''Round money the way a cashier does'''
+signature = '''def round_money(amount: str) -> str'''
+prompt = '''
+Write `round_money(amount)` that rounds a decimal amount, given as a string, to two decimal
+places and returns it as a string with exactly two decimals. Halves round away from zero, as on a receipt:
+"0.125" becomes "0.13" and "-0.125" becomes "-0.13". Never return a negative zero ("-0.00").
+'''
+trap = '''Python's round() uses banker's rounding and floats cannot represent 2.675 exactly, so round(float('2.675'), 2) gives 2.67. Use Decimal with ROUND_HALF_UP, and normalize -0.00.'''
+
+[[examples]]
+call = '''round_money('2.5')'''
+result = ''''2.50''''
+
+[[examples]]
+call = '''round_money('0.125')'''
+result = ''''0.13''''
