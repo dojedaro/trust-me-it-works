@@ -119,21 +119,33 @@ def load_traces(run_dir: Path) -> list[dict]:
 
 
 def summarize(traces: list[dict]) -> list[dict]:
-    """Per-variant headline numbers. 'False FINAL' = the checker approved code that fails hidden tests."""
+    """Per-variant headline numbers.
+
+    false_final:   the checker said FINAL, but the code fails hidden tests (a confident mistake).
+    false_alarms:  iterations where the checker rejected code that already passed every hidden test.
+    broke_working: the first attempt was correct but the final answer is not ("fixing" made it worse).
+    """
     rows = []
     for variant in sorted({t["variant"] for t in traces}):
         ts = [t for t in traces if t["variant"] == variant]
         finals = [t for t in ts if t["final_decision"] == "FINAL"]
         false_finals = [t for t in finals if not t["final_correct"]]
+        first_ok = [t for t in ts if t["iterations"][0]["ground_truth"]["all_passed"]]
         rows.append(
             {
                 "variant": variant,
                 "tasks": len(ts),
-                "first_try_correct": sum(t["iterations"][0]["ground_truth"]["all_passed"] for t in ts),
+                "first_try_correct": len(first_ok),
                 "final_correct": sum(t["final_correct"] for t in ts),
                 "said_final": len(finals),
                 "false_final": len(false_finals),
                 "false_final_rate": round(len(false_finals) / len(finals), 3) if finals else None,
+                "false_alarms": sum(
+                    it["verdict"] == "ITERATING" and it["ground_truth"]["all_passed"]
+                    for t in ts
+                    for it in t["iterations"]
+                ),
+                "broke_working": sum(not t["final_correct"] for t in first_ok),
                 "avg_iterations": round(sum(len(t["iterations"]) for t in ts) / len(ts), 2),
                 "model_calls": sum(
                     it["maker_usage"]["calls"] + it["checker_usage"]["calls"] for t in ts for it in t["iterations"]

@@ -1,0 +1,50 @@
+{
+  "task_id": "bowling",
+  "room": "games",
+  "variant": "B",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "score",
+  "checker_model": "openai/gpt-oss-20b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement a straightforward frame‑by‑frame scorer that iterates over the rolls, handling strikes, spares, and normal frames, and returns the total score.",
+      "code": "def bowling_score(rolls: list[int]) -> int:\n    \"\"\"\n    Compute the total score for a complete ten‑pin bowling game.\n\n    Parameters\n    ----------\n    rolls : list[int]\n        A list of integers representing the pins knocked down on each roll.\n        The list is guaranteed to represent a valid, complete game.\n\n    Returns\n    -------\n    int\n        The total score for the game.\n    \"\"\"\n    score = 0\n    i = 0  # index into rolls\n    for frame in range(10):\n        # Strike: first roll is 10\n        if rolls[i] == 10:\n            score += 10 + rolls[i + 1] + rolls[i + 2]\n            i += 1\n        else:\n            first = rolls[i]\n            second = rolls[i + 1]\n            if first + second == 10:  # Spare\n                score += 10 + rolls[i + 2]\n            else:  # Open frame\n                score += first + second\n            i += 2\n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 10, 'spec_compliance': 10}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 271,
+        "output_tokens": 293,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 571,
+        "output_tokens": 152,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,50 @@
+{
+  "task_id": "split_bill",
+  "room": "money",
+  "variant": "C",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "score",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert the total to cents, compute the base share and distribute the remainder to the first few shares, then format each share back to a two‑decimal string.",
+      "code": "def split_bill(total: str, n: int) -> list[str]:\n    \"\"\"\n    Split a bill represented as a decimal string into n shares.\n    Each share is a string with two decimal places.\n    The shares sum to the original total, differ by at most 0.01,\n    and larger shares come first.\n    \"\"\"\n    # Convert total to integer cents\n    dollars, cents = total.split('.')\n    total_cents = int(dollars) * 100 + int(cents)\n\n    # Base share in cents and how many people get an extra cent\n    base = total_cents // n\n    remainder = total_cents % n\n\n    # Build the list of shares in cents\n    shares_cents = [base + 1 if i < remainder else base for i in range(n)]\n\n    # Format each share back to a string with two decimal places\n    shares = [f\"{cents//100}.{cents%100:02d}\" for cents in shares_cents]\n    return shares\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 10, 'spec_compliance': 10}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 311,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 593,
+        "output_tokens": 167,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

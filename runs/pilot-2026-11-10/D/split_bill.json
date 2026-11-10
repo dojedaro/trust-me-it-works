@@ -1,0 +1,103 @@
+{
+  "task_id": "split_bill",
+  "room": "money",
+  "variant": "D",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "tests",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert the total to cents, distribute the remainder by adding one cent to the first few shares, then format each share back to a two‑decimal string.",
+      "code": "def split_bill(total: str, n: int) -> list[str]:\n    \"\"\"\n    Split a bill represented as a decimal string into n shares.\n    Each share is returned as a string with two decimal places.\n    The shares sum to the original total, differ by at most 0.01,\n    and larger shares come first.\n    \"\"\"\n    # Convert total to integer cents\n    dollars, cents = total.split('.')\n    total_cents = int(dollars) * 100 + int(cents)\n\n    # Base share in cents and how many people get an extra cent\n    base = total_cents // n\n    remainder = total_cents % n\n\n    # Build the list of shares in cents\n    shares_cents = [base + 1 if i < remainder else base for i in range(n)]\n\n    # Format each share back to a string with two decimal places\n    shares = [f\"{cents//100}.{cents%100:02d}\" for cents in shares_cents]\n    return shares\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n9/11 tests passed.\n- test_negative_total_not_allowed: Failed: DID NOT RAISE Exception\n- test_total_not_two_decimal_places_should_raise: Failed: DID NOT RAISE Exception",
+      "checker_details": {
+        "tests": "import pytest\nfrom decimal import Decimal, ROUND_HALF_UP\nfrom solution import split_bill\n\ndef to_cents(s: str) -> int:\n    \"\"\"Helper to convert a money string to integer cents.\"\"\"\n    dollars, cents = s.split('.')\n    return int(dollars) * 100 + int(cents)\n\ndef test_basic_even_split():\n    shares = split_bill('10.00', 4)\n    assert shares == ['2.50', '2.50', '2.50', '2.50']\n    assert sum(to_cents(s) for s in shares) == 1000\n    # ensure ordering (all equal)\n    assert all(shares[i] >= shares[i+1] for i in range(len(shares)-1))\n\ndef test_basic_uneven_split():\n    shares = split_bill('100.00', 3)\n    # correct expected result per spec\n    assert shares == ['33.34', '33.33', '33.33']\n    assert sum(to_cents(s) for s in shares) == 10000\n    # check max difference\n    diffs = [Decimal(a) - Decimal(b) for a, b in zip(shares, shares[1:])]\n    assert all(d <= Decimal('0.01') for d in diffs)\n\ndef test_one_person():\n    shares = split_bill('1234.56', 1)\n    assert shares == ['1234.56']\n    assert sum(to_cents(s) for s in shares) == 123456\n\ndef test_large_number_of_people():\n    total = '9999.99'\n    n = 1000\n    shares = split_bill(total, n)\n    assert len(shares) == n\n    # sum must match\n    assert sum(to_cents(s) for s in shares) == 999999\n    # difference constraint\n    max_share = Decimal(shares[0])\n    min_share = Decimal(shares[-1])\n    assert (max_share - min_share) <= Decimal('0.01')\n    # ordering\n    assert all(Decimal(shares[i]) >= Decimal(shares[i+1]) for i in range(n-1))\n\ndef test_zero_total():\n    shares = split_bill('0.00', 5)\n    assert shares == ['0.00'] * 5\n    assert sum(to_cents(s) for s in shares) == 0\n\ndef test_total_with_leading_zeros():\n    shares = split_bill('0010.00', 2)\n    assert shares == ['5.00', '5.00']\n    assert sum(to_cents(s) for s in shares) == 1000\n\ndef test_total_not_two_decimal_places_should_raise():\n    # The spec requires exactly two decimal places; the implementation does not validate this.\n    # We expect a ValueError (or any exception) for malformed input.\n    with pytest.raises(Exception):\n        split_bill('10.5', 2)   # only one decimal digit\n    with pytest.raises(Exception):\n        split_bill('10', 2)     # no decimal point\n    with pytest.raises(Exception):\n        split_bill('10.000', 2) # three decimal digits\n\ndef test_negative_total_not_allowed():\n    # Negative totals are outside the problem domain; implementation should not accept them.\n    with pytest.raises(Exception):\n        split_bill('-10.00', 2)\n\ndef test_n_is_zero_should_raise():\n    # n must be >=1; division by zero would occur.\n    with pytest.raises(Exception):\n        split_bill('10.00', 0)\n\ndef test_n_greater_than_total_cents():\n    # More people than cents forces many zero shares.\n    shares = split_bill('0.05', 10)\n    # Expected: first 5 people get 0.01, rest get 0.00\n    expected = ['0.01'] * 5 + ['0.00'] * 5\n    assert shares == expected\n    assert sum(to_cents(s) for s in shares) == 5\n\ndef test_difference_not_exceeding_one_cent():\n    # Random large total with prime number of people to stress remainder distribution.\n    total = '1234567.89'\n    n = 997  # prime\n    shares = split_bill(total, n)\n    cents = [to_cents(s) for s in shares]\n    assert sum(cents) == 123456789\n    # max-min <= 1 cent\n    assert max(cents) - min(cents) <= 1\n    # ordering\n    assert all(cents[i] >= cents[i+1] for i in range(len(cents)-1))\n",
+        "report": {
+          "passed": 9,
+          "total": 11,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_negative_total_not_allowed",
+              "message": "Failed: DID NOT RAISE Exception"
+            },
+            {
+              "name": "test_total_not_two_decimal_places_should_raise",
+              "message": "Failed: DID NOT RAISE Exception"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 312,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 574,
+        "output_tokens": 1304,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Add validation for total format and negativity, raising ValueError when invalid.",
+      "code": "import re\n\ndef split_bill(total: str, n: int) -> list[str]:\n    \"\"\"\n    Split a bill represented as a decimal string into n shares.\n    Each share is returned as a string with two decimal places.\n    The shares sum to the original total, differ by at most 0.01,\n    and larger shares come first.\n\n    Raises ValueError if total is negative, not a decimal string with\n    exactly two decimal places, or if n < 1.\n    \"\"\"\n    if n < 1:\n        raise ValueError(\"n must be at least 1\")\n\n    # Validate total format: non-negative decimal with two places\n    if not re.fullmatch(r'\\d+\\.\\d{2}', total):\n        raise ValueError(\"total must be a non-negative decimal string with two decimal places\")\n\n    # Convert total to integer cents\n    dollars, cents = total.split('.')\n    total_cents = int(dollars) * 100 + int(cents)\n\n    # Base share in cents and how many people get an extra cent\n    base = total_cents // n\n    remainder = total_cents % n\n\n    # Build the list of shares in cents\n    shares_cents = [base + 1 if i < remainder else base for i in range(n)]\n\n    # Format each share back to a string with two decimal places\n    shares = [f\"{cents//100}.{cents%100:02d}\" for cents in shares_cents]\n    return shares\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n16/16 tests passed.",
+      "checker_details": {
+        "tests": "import pytest\nfrom decimal import Decimal\nfrom solution import split_bill\n\ndef sum_shares(shares):\n    return sum(Decimal(s) for s in shares)\n\ndef max_diff(shares):\n    vals = [Decimal(s) for s in shares]\n    return max(vals) - min(vals)\n\ndef test_basic_even_split():\n    shares = split_bill('10.00', 4)\n    assert shares == ['2.50', '2.50', '2.50', '2.50']\n    assert sum_shares(shares) == Decimal('10.00')\n    assert max_diff(shares) == Decimal('0.00')\n    # ensure ordering (larger first)\n    assert all(Decimal(shares[i]) >= Decimal(shares[i+1]) for i in range(len(shares)-1))\n\ndef test_basic_uneven_split():\n    shares = split_bill('100.00', 3)\n    assert shares == ['33.34', '33.33', '33.33']\n    assert sum_shares(shares) == Decimal('100.00')\n    assert max_diff(shares) == Decimal('0.01')\n    assert Decimal(shares[0]) >= Decimal(shares[1]) >= Decimal(shares[2])\n\ndef test_single_person():\n    shares = split_bill('1234.56', 1)\n    assert shares == ['1234.56']\n    assert sum_shares(shares) == Decimal('1234.56')\n    assert max_diff(shares) == Decimal('0.00')\n\ndef test_zero_total_multiple_people():\n    shares = split_bill('0.00', 5)\n    assert shares == ['0.00'] * 5\n    assert sum_shares(shares) == Decimal('0.00')\n    assert max_diff(shares) == Decimal('0.00')\n\ndef test_one_cent_total_multiple_people():\n    shares = split_bill('0.01', 3)\n    # one person gets the cent, others get zero\n    assert shares == ['0.01', '0.00', '0.00']\n    assert sum_shares(shares) == Decimal('0.01')\n    assert max_diff(shares) == Decimal('0.01')\n    assert Decimal(shares[0]) >= Decimal(shares[1]) >= Decimal(shares[2])\n\ndef test_large_number_of_people():\n    shares = split_bill('1.00', 100)\n    # 100 cents split among 100 people => all 0.01\n    assert shares == ['0.01'] * 100\n    assert sum_shares(shares) == Decimal('1.00')\n    assert max_diff(shares) == Decimal('0.00')\n\ndef test_remainder_distribution_order():\n    # total 0.05 split among 3 => 2 cents, 2 cents, 1 cent\n    shares = split_bill('0.05', 3)\n    assert shares == ['0.02', '0.02', '0.01']\n    assert sum_shares(shares) == Decimal('0.05')\n    assert max_diff(shares) == Decimal('0.01')\n    # larger shares first\n    assert Decimal(shares[0]) >= Decimal(shares[1]) >= Decimal(shares[2])\n\ndef test_invalid_total_missing_decimal():\n    with pytest.raises(ValueError):\n        split_bill('100', 2)\n\ndef test_invalid_total_wrong_precision():\n    with pytest.raises(ValueError):\n        split_bill('100.0', 2)\n    with pytest.raises(ValueError):\n        split_bill('100.000', 2)\n\ndef test_invalid_total_negative():\n    with pytest.raises(ValueError):\n        split_bill('-10.00', 2)\n\ndef test_invalid_total_non_numeric():\n    with pytest.raises(ValueError):\n        split_bill('abc.de', 2)\n\ndef test_invalid_n_zero():\n    with pytest.raises(ValueError):\n        split_bill('10.00', 0)\n\ndef test_invalid_n_negative():\n    with pytest.raises(ValueError):\n        split_bill('10.00', -5)\n\ndef test_non_string_total_type_error():\n    # Passing a non-string should raise a TypeError from re.fullmatch\n    with pytest.raises(TypeError):\n        split_bill(10.00, 2)\n\ndef test_total_with_leading_zeros():\n    shares = split_bill('0010.00', 2)\n    # Leading zeros should be ignored in numeric value\n    assert shares == ['5.00', '5.00']\n    assert sum_shares(shares) == Decimal('10.00')\n\ndef test_total_with_large_amount():\n    shares = split_bill('12345678901234567890.12', 3)\n    # Verify sum and ordering without caring about exact split values\n    assert sum_shares(shares) == Decimal('12345678901234567890.12')\n    assert max_diff(shares) <= Decimal('0.01')\n    assert Decimal(shares[0]) >= Decimal(shares[1]) >= Decimal(shares[2])\n",
+        "report": {
+          "passed": 16,
+          "total": 16,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 597,
+        "output_tokens": 387,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 673,
+        "output_tokens": 1815,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

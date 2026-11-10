@@ -1,0 +1,53 @@
+{
+  "task_id": "dedupe",
+  "room": "spec",
+  "variant": "E",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement dedupe by iterating through items and keeping a list of seen items, checking equality with each new item to avoid duplicates.",
+      "code": "def dedupe(items: list) -> list:\n    \"\"\"\n    Return a new list with duplicates removed, preserving the first occurrence\n    of each item and the original order. Items may be of any type, including\n    unhashable types like lists and dicts.\n    \"\"\"\n    result = []\n    for item in items:\n        # Check if item is already in result using equality comparison\n        if not any(item == existing for existing in result):\n            result.append(item)\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "6/6 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 6,
+          "total": 6,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 254,
+        "output_tokens": 197,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

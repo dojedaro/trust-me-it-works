@@ -1,0 +1,50 @@
+{
+  "task_id": "leaderboard",
+  "room": "spec",
+  "variant": "B",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "score",
+  "checker_model": "openai/gpt-oss-20b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Return a new list sorted by score descending while preserving original order for ties.",
+      "code": "def leaderboard(players: list[dict]) -> list[dict]:\n    \"\"\"\n    Return a new list of player dictionaries sorted by descending score.\n    Players with equal scores retain their original relative order.\n    The input list is not modified.\n    \"\"\"\n    # sorted is stable, so ties keep original order\n    return sorted(players, key=lambda p: p['score'], reverse=True)\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 9, 'spec_compliance': 10}. Weakest criterion: edge_cases. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 9,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 252,
+        "output_tokens": 132,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 407,
+        "output_tokens": 95,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

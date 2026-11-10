@@ -1,0 +1,283 @@
+{
+  "task_id": "same_text",
+  "room": "text",
+  "variant": "D",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "tests",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Normalize both strings to NFC, apply casefold, and compare for equality.",
+      "code": "import unicodedata\n\ndef same_text(a: str, b: str) -> bool:\n    \"\"\"\n    Return True if two strings are equal ignoring case and Unicode normalization.\n    Accents are preserved; only the representation of characters is normalized.\n    \"\"\"\n    norm_a = unicodedata.normalize('NFC', a).casefold()\n    norm_b = unicodedata.normalize('NFC', b).casefold()\n    return norm_a == norm_b\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n8/10 tests passed.\n- test_emoji_variation_selector: AssertionError\n- test_fullwidth_ascii_equivalence: AssertionError",
+      "checker_details": {
+        "tests": "import unicodedata\nfrom solution import same_text\n\n# 1. Compatibility characters that look the same but are not canonically equivalent.\n#    The Angstrom sign (U+212B) is a compatibility equivalent of 'Å' (U+00C5).\n#    According to the task description, such differences should be ignored,\n#    but the provided solution uses NFC only, which does not normalize compatibility\n#    characters, so it will return False.\ndef test_compatibility_equivalence_angstrom():\n    assert same_text('\\u212B', '\\u00C5') is True  # Expected True, solution returns False\n\n# 2. Fullwidth Latin letters are compatibility equivalents of their ASCII counterparts.\n#    The solution's NFC normalization does not convert fullwidth forms, so it will\n#    incorrectly treat them as different.\ndef test_fullwidth_ascii_equivalence():\n    assert same_text('ＡＢＣ', 'ABC') is True  # Expected True, solution returns False\n\n# 3. Characters that decompose into multiple code points after casefolding.\n#    The Kelvin sign (U+212A) casefolds to 'k', while the regular 'K' casefolds to 'k' as well.\n#    However, NFC does not change the Kelvin sign, so the comparison should succeed.\ndef test_kelvin_sign_casefold():\n    assert same_text('\\u212A', 'K') is True  # Expected True, solution returns False\n\n# 4. Strings containing characters that require NFKC (compatibility) normalization\n#    to become equal, e.g., the micro sign (U+00B5) vs the Greek letter mu (U+03BC).\ndef test_micro_sign_vs_mu():\n    assert same_text('\\u00B5', '\\u03BC') is True  # Expected True, solution returns False\n\n# 5. Mixed normalization forms with combining characters in different orders.\n#    NFC should canonicalize them, but the solution applies casefold after NFC,\n#    which is fine; however, we test that the function correctly handles this.\ndef test_combining_character_order():\n    a = 'e\\u0301'          # 'e' + COMBINING ACUTE ACCENT\n    b = '\\u00e9'           # 'é' precomposed\n    assert same_text(a, b) is True\n\n# 6. Empty strings should be considered equal.\ndef test_empty_strings():\n    assert same_text('', '') is True\n\n# 7. Non‑string inputs should raise a TypeError (the specification expects strings).\ndef test_non_string_input():\n    try:\n        same_text(123, '123')\n    except TypeError:\n        pass\n    else:\n        assert False, \"Expected TypeError for non‑string input\"\n\n# 8. Strings that differ only by case and by a compatibility character.\ndef test_case_and_compatibility():\n    assert same_text('Kelvin', 'kelvin') is True  # Kelvin sign vs 'K', case ignored\n\n# 9. Strings with different Unicode normalization forms that are canonically equivalent.\ndef test_nfd_vs_nfc():\n    a = 'Å'               # U+00C5\n    b = 'A\\u030A'         # 'A' + COMBINING RING ABOVE\n    assert same_text(a, b) is True\n\n# 10. Strings with different representations of the same emoji (text vs. variation selector).\ndef test_emoji_variation_selector():\n    a = '\\U0001F600'               # 😀 GRINNING FACE\n    b = '\\U0001F600\\uFE0E'         # 😀 with variation selector-15 (text presentation)\n    assert same_text(a, b) is True  # Expected True, solution returns False\n",
+        "report": {
+          "passed": 8,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_emoji_variation_selector",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_fullwidth_ascii_equivalence",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 252,
+        "output_tokens": 155,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 402,
+        "output_tokens": 1416,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Normalize strings with NFKC, casefold, and strip Unicode variation selectors before comparison.",
+      "code": "import unicodedata\n\ndef _strip_variation_selectors(s: str) -> str:\n    \"\"\"Remove Unicode variation selector characters (U+FE00–U+FE0F).\"\"\"\n    return ''.join(ch for ch in s if not (0xFE00 <= ord(ch) <= 0xFE0F))\n\ndef same_text(a: str, b: str) -> bool:\n    \"\"\"\n    Return True if two strings are equal ignoring case and Unicode normalization.\n    Full‑width ASCII characters and emoji variation selectors are treated as\n    equivalent to their standard forms. Accents are preserved.\n    \"\"\"\n    norm_a = unicodedata.normalize('NFKC', a)\n    norm_b = unicodedata.normalize('NFKC', b)\n\n    norm_a = _strip_variation_selectors(norm_a).casefold()\n    norm_b = _strip_variation_selectors(norm_b).casefold()\n\n    return norm_a == norm_b\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n5/9 tests passed.\n- test_compatibility_character_not_equal: AssertionError: Compatibility mapping should not make strings equal\n- test_fullwidth_ascii_not_normalized: AssertionError: Full‑width A should not be considered equal to regular A\n- test_german_sharp_s_vs_uppercase_ss: AssertionError: Sharp s should not be considered equal to 'SS' under simple case‑insensitive compare\n- test_variation_selector_preserved: AssertionError: Variation selectors should affect equality",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import same_text\n\ndef test_compatibility_character_not_equal():\n    # NFKC turns the circled digit ① into \"1\", but the task only wants to ignore\n    # case and canonical encoding differences, not compatibility mappings.\n    assert same_text('①', '1') is False, \"Compatibility mapping should not make strings equal\"\n\ndef test_german_sharp_s_vs_uppercase_ss():\n    # The solution uses casefold, which turns 'ß' into 'ss', making them compare equal.\n    # The specification only mentions ignoring case, not applying full casefold semantics.\n    assert same_text('ß', 'SS') is False, \"Sharp s should not be considered equal to 'SS' under simple case‑insensitive compare\"\n\ndef test_fullwidth_ascii_not_normalized():\n    # Full‑width characters are compatibility equivalents; NFKC normalizes them to ASCII.\n    # The task does not require treating them as equal.\n    assert same_text('Ａ', 'A') is False, \"Full‑width A should not be considered equal to regular A\"\n\ndef test_variation_selector_preserved():\n    # Variation selectors are stripped by the solution, but the spec does not mention this.\n    # They should cause inequality.\n    base = 'a'\n    vs = '\\uFE0F'  # variation selector-16\n    assert same_text(base + vs, base) is False, \"Variation selectors should affect equality\"\n\ndef test_mixed_normalization_forms():\n    # Different canonical forms should be considered equal (e vs e + combining acute).\n    # Ensure the function handles this correctly.\n    assert same_text('e\\u0301', 'é') is True, \"Canonical equivalence should be ignored\"\n\ndef test_case_insensitivity_simple():\n    # Basic case folding should work.\n    assert same_text('Hello', 'hELLo') is True, \"Case should be ignored\"\n\ndef test_accent_difference():\n    # Accents matter.\n    assert same_text('cafe', 'café') is False, \"Accented and unaccented letters should not be equal\"\n\ndef test_empty_strings():\n    assert same_text('', '') is True, \"Two empty strings should be equal\"\n\ndef test_non_string_input():\n    # The function is typed for strings; passing non‑string should raise an error.\n    with pytest.raises(TypeError):\n        same_text(123, '123')\n",
+        "report": {
+          "passed": 5,
+          "total": 9,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_compatibility_character_not_equal",
+              "message": "AssertionError: Compatibility mapping should not make strings equal"
+            },
+            {
+              "name": "test_fullwidth_ascii_not_normalized",
+              "message": "AssertionError: Full‑width A should not be considered equal to regular A"
+            },
+            {
+              "name": "test_german_sharp_s_vs_uppercase_ss",
+              "message": "AssertionError: Sharp s should not be considered equal to 'SS' under simple case‑insensitive compare"
+            },
+            {
+              "name": "test_variation_selector_preserved",
+              "message": "AssertionError: Variation selectors should affect equality"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 412,
+        "output_tokens": 410,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 504,
+        "output_tokens": 900,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 2,
+      "plan": "Use NFD normalization only, keep casefold, and do not strip variation selectors or apply compatibility mapping.",
+      "code": "import unicodedata\n\ndef same_text(a: str, b: str) -> bool:\n    \"\"\"\n    Return True if two strings are equal ignoring case and Unicode normalization\n    that preserves compatibility characters, full‑width forms, and variation\n    selectors. Accents are preserved.\n    \"\"\"\n    norm_a = unicodedata.normalize('NFD', a).casefold()\n    norm_b = unicodedata.normalize('NFD', b).casefold()\n    return norm_a == norm_b\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n7/10 tests passed.\n- test_fullwidth_vs_ascii: AssertionError: Full‑width and ASCII letters should compare equal\n- test_turkish_i_casefold: AssertionError: Turkish dotted I should case‑fold to plain i\n- test_variation_selector_ignored: AssertionError: Variation selectors should be ignored",
+      "checker_details": {
+        "tests": "import unicodedata\nimport pytest\nfrom solution import same_text\n\ndef test_fullwidth_vs_ascii():\n    # Full‑width Latin letters are compatibility equivalents of ASCII letters.\n    # The specification says to ignore differences in how Unicode encodes the same characters,\n    # so these should be considered equal.\n    a = 'ＡＢＣｄｅｆ'          # U+FF21..FF26 full‑width A‑F\n    b = 'ABCdef'               # regular ASCII\n    assert same_text(a, b) is True, \"Full‑width and ASCII letters should compare equal\"\n\ndef test_composed_decomposed_accent():\n    # Same character, different Unicode representation (composed vs decomposed)\n    a = 'café'                 # composed é (U+00E9)\n    b = 'cafe\\u0301'           # decomposed e + COMBINING ACUTE ACCENT\n    assert same_text(a, b) is True, \"Composed and decomposed forms should compare equal\"\n\ndef test_accent_difference():\n    # Accents matter: plain e vs e with acute should be different\n    assert same_text('e', 'é') is False, \"Plain e and e with acute must not be equal\"\n\ndef test_case_insensitivity_with_accent():\n    # Case should be ignored even when accents are present\n    a = 'ÁbC'                  # capital A with acute\n    b = 'áBc'                  # lower case a with acute\n    assert same_text(a, b) is True, \"Case should be ignored while preserving accents\"\n\ndef test_turkish_i_casefold():\n    # Turkish dotted I (U+0130) casefolds to 'i' + dot above removed, should match plain 'i'\n    a = '\\u0130'               # İ\n    b = 'i'\n    assert same_text(a, b) is True, \"Turkish dotted I should case‑fold to plain i\"\n\ndef test_german_sharp_s():\n    # German sharp s (ß) casefolds to 'ss', should match explicit 'ss'\n    a = 'Straße'\n    b = 'Strasse'\n    assert same_text(a, b) is True, \"German ß should case‑fold to 'ss'\"\n\ndef test_variation_selector_ignored():\n    # Variation selectors are compatibility characters and should be ignored.\n    a = 'e\\uFE0E'              # e + variation selector-15 (text presentation)\n    b = 'e'\n    assert same_text(a, b) is True, \"Variation selectors should be ignored\"\n\ndef test_non_normalizable_characters():\n    # Characters that have no compatibility decomposition should compare directly.\n    a = '\\u212B'               # Angstrom sign, compatibility equivalent to 'Å'\n    b = 'Å'\n    assert same_text(a, b) is True, \"Angstrom sign should be treated as Å\"\n\ndef test_empty_strings():\n    assert same_text('', '') is True, \"Two empty strings should be equal\"\n    assert same_text('', ' ') is False, \"Empty string vs space should not be equal\"\n\ndef test_non_string_input():\n    # The function is specified for strings; passing non‑string should raise TypeError\n    with pytest.raises(TypeError):\n        same_text(123, '123')\n    with pytest.raises(TypeError):\n        same_text('abc', None)\n",
+        "report": {
+          "passed": 7,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_fullwidth_vs_ascii",
+              "message": "AssertionError: Full‑width and ASCII letters should compare equal"
+            },
+            {
+              "name": "test_turkish_i_casefold",
+              "message": "AssertionError: Turkish dotted I should case‑fold to plain i"
+            },
+            {
+              "name": "test_variation_selector_ignored",
+              "message": "AssertionError: Variation selectors should be ignored"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 588,
+        "output_tokens": 255,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 410,
+        "output_tokens": 1005,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 3,
+      "plan": "Use NFKC normalization to handle full‑width forms, compatibility characters, and variation selectors, then apply casefold for case‑insensitive comparison.",
+      "code": "import unicodedata\n\ndef same_text(a: str, b: str) -> bool:\n    \"\"\"\n    Return True if two strings are equal ignoring case and Unicode normalization\n    that removes compatibility differences such as full‑width forms, variation\n    selectors, and other compatibility characters. Accents are preserved.\n    \"\"\"\n    norm_a = unicodedata.normalize('NFKC', a).casefold()\n    norm_b = unicodedata.normalize('NFKC', b).casefold()\n    return norm_a == norm_b\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n6/10 tests passed.\n- test_combining_order: AssertionError\n- test_fullwidth_vs_ascii: AssertionError\n- test_kelvin_sign_vs_k: AssertionError\n- test_sharp_s_vs_ss: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import same_text\n\n# 1. Simple case‑insensitivity – should be True\ndef test_basic_case_insensitive():\n    assert same_text(\"Hello\", \"HELLO\") is True\n\n# 2. Accents matter – should be False\ndef test_accent_difference():\n    assert same_text(\"cafe\", \"café\") is False\n\n# 3. Different Unicode composition (canonical equivalence) – should be True\ndef test_canonical_equivalence():\n    # 'é' as single code point vs. 'e' + COMBINING ACUTE ACCENT\n    composed = \"\\u00e9\"\n    decomposed = \"e\\u0301\"\n    assert same_text(composed, decomposed) is True\n\n# 4. Compatibility characters must NOT be treated as equal.\n#    The German sharp s (ß) and the two‑letter sequence \"ss\" are distinct.\ndef test_sharp_s_vs_ss():\n    assert same_text(\"ß\", \"ss\") is False\n\n# 5. Another compatibility mapping that must stay distinct:\n#    The Kelvin sign K (U+212A) is a compatibility equivalent of 'K' but should NOT be merged.\ndef test_kelvin_sign_vs_k():\n    assert same_text(\"\\u212A\", \"K\") is False\n\n# 6. Full‑width Latin letter (compatibility form) must stay distinct from its ASCII counterpart.\ndef test_fullwidth_vs_ascii():\n    fullwidth_A = \"\\uFF21\"   # Fullwidth Latin Capital Letter A\n    ascii_a = \"a\"\n    # According to the specification only case and canonical encoding differences are ignored.\n    # Full‑width forms are compatibility characters and should NOT be considered equal.\n    assert same_text(fullwidth_A, ascii_a) is False\n\n# 7. Empty strings – should be True\ndef test_empty_strings():\n    assert same_text(\"\", \"\") is True\n\n# 8. Strings that differ only by a variation selector (a compatibility character) – should be False\ndef test_variation_selector():\n    base = \"a\"\n    variation = \"a\\uFE0F\"   # VARIATION SELECTOR-16\n    assert same_text(base, variation) is False\n\n# 9. Non‑string inputs should raise a TypeError (the function is defined for str only)\ndef test_non_string_input():\n    with pytest.raises(TypeError):\n        same_text(123, \"123\")\n    with pytest.raises(TypeError):\n        same_text(\"test\", None)\n\n# 10. Mixed case with combining marks in different order – should be True\ndef test_combining_order():\n    # 'a' + COMBINING RING ABOVE + COMBINING ACUTE ACCENT\n    s1 = \"a\\u030A\\u0301\"\n    # 'a' + COMBINING ACUTE ACCENT + COMBINING RING ABOVE (different order)\n    s2 = \"a\\u0301\\u030A\"\n    assert same_text(s1, s2) is True\n",
+        "report": {
+          "passed": 6,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_combining_order",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_fullwidth_vs_ascii",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_kelvin_sign_vs_k",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_sharp_s_vs_ss",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 458,
+        "output_tokens": 220,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 417,
+        "output_tokens": 1021,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 4,
+      "plan": "Normalize both strings with NFKD, casefold, then compare.",
+      "code": "import unicodedata\n\ndef same_text(a: str, b: str) -> bool:\n    \"\"\"\n    Return True if two strings are equal ignoring case and Unicode normalization\n    that removes compatibility differences such as full‑width forms, variation\n    selectors, and other compatibility characters. Accents are preserved.\n    \"\"\"\n    norm_a = unicodedata.normalize('NFKD', a).casefold()\n    norm_b = unicodedata.normalize('NFKD', b).casefold()\n    return norm_a == norm_b\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n9/12 tests passed.\n- test_fullwidth_A_vs_A: AssertionError\n- test_sharp_s_vs_ss: AssertionError\n- test_turkish_i: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import same_text\n\n# 1. Compatibility characters that should NOT be considered equal\ndef test_sharp_s_vs_ss():\n    # German sharp s (ß) vs two 's' characters.\n    # According to the problem statement we only ignore case and canonical\n    # encoding differences, not compatibility expansions.\n    assert same_text('ß', 'ss') is False\n\ndef test_angstrom_sign_vs_A():\n    # Angstrom sign (U+212B) is a compatibility character that NFKD maps to 'A'.\n    # The function should treat them as different because they are distinct symbols.\n    assert same_text('\\u212B', 'A') is False\n\ndef test_fullwidth_A_vs_A():\n    # Full‑width Latin capital A (U+FF21) is a compatibility variant.\n    # The specification does NOT require treating it as equal to normal 'A'.\n    assert same_text('\\uFF21', 'A') is False\n\n# 2. Strings that differ only by a combining character that should be considered equal\ndef test_combining_accent_equality():\n    # 'e' + COMBINING ACUTE ACCENT should be equal to precomposed 'é' after normalization.\n    assert same_text('e\\u0301', 'é') is True\n\n# 3. Case folding edge cases (Turkish dotted/dotless i)\ndef test_turkish_i():\n    # Uppercase dotted I (İ) vs lowercase i should be equal after casefold.\n    assert same_text('İ', 'i') is True\n    # Uppercase I (without dot) vs lowercase dotless i (ı) should NOT be equal.\n    assert same_text('I', 'ı') is False\n\n# 4. Empty strings and whitespace handling\ndef test_empty_strings():\n    assert same_text('', '') is True\n    assert same_text(' ', '') is False\n    assert same_text('\\t\\n', '\\t\\n') is True\n\n# 5. Non‑string inputs should raise a TypeError\ndef test_non_string_inputs():\n    with pytest.raises(TypeError):\n        same_text(None, 'test')\n    with pytest.raises(TypeError):\n        same_text('test', 123)\n    with pytest.raises(TypeError):\n        same_text(3.14, 2.71)\n\n# 6. Strings that are visually similar but different code points (Greek vs Cyrillic)\ndef test_greek_vs_cyrillic():\n    # Greek capital sigma (Σ) vs Cyrillic capital Es (С) look similar but are different.\n    assert same_text('Σ', 'С') is False\n\n# 7. Strings containing variation selectors that should be considered different\ndef test_variation_selector():\n    # 'a' with VS15 (U+FE0E) vs plain 'a' – they are distinct characters.\n    assert same_text('a\\uFE0E', 'a') is False\n\n# 8. Strings with different normalization forms that should be equal\ndef test_nfc_vs_nfd():\n    # Precomposed vs decomposed forms should compare equal.\n    assert same_text('\\u00E9', 'e\\u0301') is True\n\n# 9. Strings with different case but same letters, including exotic scripts\ndef test_case_insensitivity_non_latin():\n    # Greek small sigma vs capital sigma (final sigma vs normal sigma)\n    assert same_text('σ', 'Σ') is True\n    # Final sigma (U+03C2) vs capital sigma should also be equal.\n    assert same_text('\\u03C2', 'Σ') is True\n\n# 10. Strings that differ only by zero‑width joiner/non‑spacing characters\ndef test_zero_width_joiner():\n    # Insert a zero‑width joiner between letters; should affect equality.\n    assert same_text('a\\u200D', 'a') is False\n",
+        "report": {
+          "passed": 9,
+          "total": 12,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_fullwidth_A_vs_A",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_sharp_s_vs_ss",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_turkish_i",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 446,
+        "output_tokens": 579,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 417,
+        "output_tokens": 1165,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": true,
+  "error": null
+}

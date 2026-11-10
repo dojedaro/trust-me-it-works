@@ -1,0 +1,242 @@
+{
+  "task_id": "straight",
+  "room": "games",
+  "variant": "D",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "tests",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Map ranks to indices, check for straight including Ace low, return highest rank or None.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the highest rank of a straight if ranks form a straight, else None.\"\"\"\n    # Order of ranks from lowest to highest\n    order = \"23456789TJQKA\"\n    # Convert each rank to its index in the order string\n    indices = sorted(order.index(r) for r in ranks)\n\n    # Check for normal straight: consecutive indices\n    if all(indices[i] + 1 == indices[i + 1] for i in range(4)):\n        return order[indices[-1]]\n\n    # Check for Ace-low straight (A,2,3,4,5)\n    # In this case indices will be [0,1,2,3,12] (A is 12)\n    if indices == [0, 1, 2, 3, 12]:\n        return \"5\"\n\n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n6/9 tests passed.\n- test_incorrect_length: Failed: DID NOT RAISE Exception\n- test_invalid_characters: ValueError: substring not found\n- test_lowercase_input: ValueError: substring not found",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import straight_high\n\n# Basic valid straights\ndef test_highest_normal_straight():\n    assert straight_high(['9', 'T', 'J', 'Q', 'K']) == 'K'\n    assert straight_high(['T', 'J', 'Q', 'K', 'A']) == 'A'\n    assert straight_high(['2', '3', '4', '5', '6']) == '6'\n\n# Ace‑low straight (wheel)\ndef test_ace_low_straight():\n    # Various orderings should still be recognised\n    assert straight_high(['A', '2', '3', '4', '5']) == '5'\n    assert straight_high(['5', '4', '3', '2', 'A']) == '5'\n    assert straight_high(['2', 'A', '5', '3', '4']) == '5'\n\n# Non‑straights\ndef test_non_straight_due_to_gap():\n    assert straight_high(['9', 'T', 'J', 'Q', 'A']) is None  # missing K\n    assert straight_high(['2', '3', '4', '6', '7']) is None  # gap at 5\n\ndef test_non_straight_due_to_duplicate():\n    assert straight_high(['2', '2', '3', '4', '5']) is None\n    assert straight_high(['9', '9', 'T', 'J', 'Q']) is None\n\n# Invalid rank characters should not raise but return None\ndef test_invalid_characters():\n    assert straight_high(['X', '2', '3', '4', '5']) is None\n    assert straight_high(['9', 'T', 'J', 'Q', 'Z']) is None\n\n# Lower‑case input should be treated as invalid\ndef test_lowercase_input():\n    assert straight_high(['a', '2', '3', '4', '5']) is None\n    assert straight_high(['9', 't', 'j', 'q', 'k']) is None\n\n# Edge case: correct indices but wrong multiset (e.g., Ace‑low pattern with extra Ace)\ndef test_ace_low_pattern_with_extra_ace():\n    # This is not a straight because there are two Aces\n    assert straight_high(['A', 'A', '2', '3', '4']) is None\n\n# Edge case: correct indices but unsorted duplicate causing false positive in the\n# consecutive‑check logic (should not happen, but test robustness)\ndef test_consecutive_check_with_duplicate_high():\n    # Indices would be [0,1,2,3,12] after sorting, but duplicate '5' instead of 'A'\n    assert straight_high(['5', '2', '3', '4', '5']) is None\n\n# Edge case: list length not equal to 5 (function is not required to handle, but should not crash)\ndef test_incorrect_length():\n    with pytest.raises(Exception):\n        straight_high(['2', '3', '4', '5'])  # too short\n    with pytest.raises(Exception):\n        straight_high(['2', '3', '4', '5', '6', '7'])  # too long\n",
+        "report": {
+          "passed": 6,
+          "total": 9,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_incorrect_length",
+              "message": "Failed: DID NOT RAISE Exception"
+            },
+            {
+              "name": "test_invalid_characters",
+              "message": "ValueError: substring not found"
+            },
+            {
+              "name": "test_lowercase_input",
+              "message": "ValueError: substring not found"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 267,
+        "output_tokens": 244,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 515,
+        "output_tokens": 1016,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Add input validation for length, characters, and case handling, raising ValueError when appropriate.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the highest rank of a straight if ranks form a straight, else None.\n\n    Raises:\n        ValueError: If the input list does not contain exactly five valid ranks.\n    \"\"\"\n    # Validate length\n    if len(ranks) != 5:\n        raise ValueError(\"Exactly five ranks required\")\n\n    # Standard rank order\n    order = \"23456789TJQKA\"\n\n    # Convert to uppercase and validate characters\n    try:\n        indices = sorted(order.index(r.upper()) for r in ranks)\n    except ValueError as exc:\n        raise ValueError(\"Invalid rank character\") from exc\n\n    # Normal straight: consecutive indices\n    if all(indices[i] + 1 == indices[i + 1] for i in range(4)):\n        return order[indices[-1]]\n\n    # Ace-low straight (A,2,3,4,5)\n    if indices == [0, 1, 2, 3, 12]:\n        return \"5\"\n\n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n7/8 tests passed.\n- test_invalid_characters: Failed: DID NOT RAISE ValueError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import straight_high\n\n# 1. Basic valid straights (including mixed case)\ndef test_basic_straights():\n    assert straight_high(['9', 'T', 'J', 'Q', 'K']) == 'K'\n    assert straight_high(['a', '2', '3', '4', '5']) == '5'   # ace‑low, lower case\n    assert straight_high(['2', '3', '4', '5', '6']) == '6'\n    assert straight_high(['T', 'J', 'Q', 'K', 'A']) == 'A'   # ace‑high\n\n# 2. Non‑straights should return None\ndef test_non_straights():\n    assert straight_high(['2', '2', '3', '4', '5']) is None   # duplicate\n    assert straight_high(['2', '3', '4', '5', '7']) is None   # gap\n    assert straight_high(['Q', 'K', 'A', '2', '3']) is None   # wrap‑around not allowed\n    assert straight_high(['A', 'K', 'Q', 'J', '9']) is None   # missing T\n\n# 3. Ace‑low detection must be exact; any deviation yields None\ndef test_ace_low_edge_cases():\n    # Correct ace‑low\n    assert straight_high(['A', '2', '3', '4', '5']) == '5'\n    # Wrong order but same set – still a straight, highest should be 5\n    assert straight_high(['5', '4', '3', '2', 'A']) == '5'\n    # Duplicate ace – not a straight\n    assert straight_high(['A', 'A', '2', '3', '4']) is None\n    # Ace‑low pattern with an extra high card – not a straight\n    assert straight_high(['A', '2', '3', '4', '6']) is None\n\n# 4. Invalid input length should raise ValueError\ndef test_invalid_length():\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5'])          # only 4 cards\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5', '6', '7'])# 6 cards\n\n# 5. Invalid rank characters should raise ValueError\ndef test_invalid_characters():\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5', 'Z'])   # Z not a rank\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5', '10'])  # multi‑char token\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5', ''])    # empty string\n\n# 6. Ensure function is case‑insensitive but rejects non‑alphabetic symbols\ndef test_case_insensitivity_and_symbols():\n    assert straight_high(['t', 'j', 'q', 'k', 'a']) == 'A'   # lower case straight\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5', '@'])            # symbol\n\n# 7. Verify that sorting does not mask non‑consecutive duplicates\ndef test_duplicate_non_consecutive():\n    # Duplicate 4 but still not consecutive after sorting\n    assert straight_high(['2', '3', '4', '4', '5']) is None\n\n# 8. Verify that a straight with Ace high is recognized correctly\ndef test_ace_high_straight():\n    assert straight_high(['9', 'T', 'J', 'Q', 'K']) == 'K'\n    assert straight_high(['T', 'J', 'Q', 'K', 'A']) == 'A'\n    # Ensure Ace‑low is not mistakenly returned for ace‑high\n    assert straight_high(['9', 'T', 'J', 'Q', 'A']) is None\n",
+        "report": {
+          "passed": 7,
+          "total": 8,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_invalid_characters",
+              "message": "Failed: DID NOT RAISE ValueError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 544,
+        "output_tokens": 279,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 547,
+        "output_tokens": 1069,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 2,
+      "plan": "Add explicit validation for each rank to ensure it is a single-character string before processing.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the highest rank of a straight if ranks form a straight, else None.\n\n    Raises:\n        ValueError: If the input list does not contain exactly five valid ranks.\n    \"\"\"\n    # Validate length\n    if len(ranks) != 5:\n        raise ValueError(\"Exactly five ranks required\")\n\n    # Standard rank order\n    order = \"23456789TJQKA\"\n\n    # Validate each rank and convert to indices\n    indices = []\n    for r in ranks:\n        if not isinstance(r, str) or len(r) != 1:\n            raise ValueError(\"Invalid rank character\")\n        try:\n            idx = order.index(r.upper())\n        except ValueError as exc:\n            raise ValueError(\"Invalid rank character\") from exc\n        indices.append(idx)\n\n    indices.sort()\n\n    # Normal straight: consecutive indices\n    if all(indices[i] + 1 == indices[i + 1] for i in range(4)):\n        return order[indices[-1]]\n\n    # Ace-low straight (A,2,3,4,5)\n    if indices == [0, 1, 2, 3, 12]:\n        return \"5\"\n\n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n7/8 tests passed.\n- test_invalid_rank_character_raises: TypeError: test_invalid_rank_character_raises() missing 1 required positional argument: 'bad_rank'",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import straight_high\n\n# Valid straight detection (normal)\ndef test_normal_straight_highest():\n    assert straight_high(['9', 'T', 'J', 'Q', 'K']) == 'K'\n    assert straight_high(['A', 'K', 'Q', 'J', 'T']) == 'A'  # order reversed\n    assert straight_high(['2', '3', '4', '5', '6']) == '6'\n\n# Ace‑low straight detection\ndef test_ace_low_straight():\n    assert straight_high(['A', '2', '3', '4', '5']) == '5'\n    # shuffled order\n    assert straight_high(['5', 'A', '3', '2', '4']) == '5'\n\n# Non‑straight cases\ndef test_non_straight_returns_none():\n    assert straight_high(['2', '2', '3', '4', '5']) is None  # duplicate\n    assert straight_high(['Q', 'K', 'A', '2', '3']) is None  # wrap‑around not allowed\n    assert straight_high(['9', '9', '9', '9', '9']) is None  # all same\n\n# Invalid input length\ndef test_invalid_length_raises():\n    with pytest.raises(ValueError):\n        straight_high(['A', 'K', 'Q', 'J'])          # too few\n    with pytest.raises(ValueError):\n        straight_high(['A', 'K', 'Q', 'J', 'T', '9'])  # too many\n\n# Invalid rank characters\n@pytest.mark.parametrize(\"bad_rank\", ['1', '0', 'B', 'Z', '@', '10', ''])\ndef test_invalid_rank_character_raises(bad_rank):\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5', bad_rank])\n\n# Non‑string inputs\ndef test_non_string_inputs_raise():\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', 4, '5', '6'])   # integer in list\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', None, '5', '6'])  # None in list\n\n# Case insensitivity\ndef test_lowercase_input():\n    assert straight_high(['a', 'k', 'q', 'j', 't']) == 'A'  # Ace‑high straight\n    assert straight_high(['t', 'j', 'q', 'k', 'a']) == 'A'\n    assert straight_high(['a', '2', '3', '4', '5']) == '5'  # Ace‑low\n\n# Whitespace or multi‑character strings should be rejected\ndef test_whitespace_or_multi_char_strings():\n    with pytest.raises(ValueError):\n        straight_high([' A', 'K', 'Q', 'J', 'T'])\n    with pytest.raises(ValueError):\n        straight_high(['A ', 'K', 'Q', 'J', 'T'])\n    with pytest.raises(ValueError):\n        straight_high(['AA', 'K', 'Q', 'J', 'T'])\n",
+        "report": {
+          "passed": 7,
+          "total": 8,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_invalid_rank_character_raises",
+              "message": "TypeError: test_invalid_rank_character_raises() missing 1 required positional argument: 'bad_rank'"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 551,
+        "output_tokens": 741,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 586,
+        "output_tokens": 1011,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 3,
+      "plan": "Update rank validation to raise TypeError for non-string or wrong-length ranks, and keep ValueError for invalid characters.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the highest rank of a straight if ranks form a straight, else None.\n\n    Raises:\n        TypeError: If any rank is not a single-character string.\n        ValueError: If the input list does not contain exactly five valid ranks.\n    \"\"\"\n    # Validate length\n    if len(ranks) != 5:\n        raise ValueError(\"Exactly five ranks required\")\n\n    # Standard rank order\n    order = \"23456789TJQKA\"\n\n    # Validate each rank and convert to indices\n    indices = []\n    for r in ranks:\n        if not isinstance(r, str) or len(r) != 1:\n            raise TypeError(\"Each rank must be a single-character string\")\n        try:\n            idx = order.index(r.upper())\n        except ValueError as exc:\n            raise ValueError(\"Invalid rank character\") from exc\n        indices.append(idx)\n\n    indices.sort()\n\n    # Normal straight: consecutive indices\n    if all(indices[i] + 1 == indices[i + 1] for i in range(4)):\n        return order[indices[-1]]\n\n    # Ace-low straight (A,2,3,4,5)\n    if indices == [0, 1, 2, 3, 12]:\n        return \"5\"\n\n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n8/9 tests passed.\n- test_invalid_rank_raises_value_error: TypeError: Each rank must be a single-character string",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import straight_high\n\n# Normal straight cases\ndef test_normal_straight_highest():\n    assert straight_high(['9', 'T', 'J', 'Q', 'K']) == 'K'\n    assert straight_high(['2', '3', '4', '5', '6']) == '6'\n    # unordered input\n    assert straight_high(['Q', '9', 'J', 'K', 'T']) == 'K'\n\n# Ace‑low straight\ndef test_ace_low_straight():\n    assert straight_high(['A', '2', '3', '4', '5']) == '5'\n    # mixed case and unordered\n    assert straight_high(['5', 'a', '4', '3', '2']) == '5'\n\n# Non‑straight hands should return None\ndef test_non_straight_returns_none():\n    assert straight_high(['2', '2', '3', '4', '5']) is None\n    assert straight_high(['K', 'A', '2', '3', '4']) is None\n    assert straight_high(['9', 'J', 'Q', 'K', 'A']) is None  # gap at 10\n\n# Invalid rank characters raise ValueError\ndef test_invalid_rank_raises_value_error():\n    with pytest.raises(ValueError):\n        straight_high(['Z', '2', '3', '4', '5'])\n    with pytest.raises(ValueError):\n        straight_high(['10', 'J', 'Q', 'K', 'A'])  # '10' is two characters\n\n# Non‑string inputs raise TypeError\ndef test_non_string_input_raises_type_error():\n    with pytest.raises(TypeError):\n        straight_high([2, '3', '4', '5', '6'])\n    with pytest.raises(TypeError):\n        straight_high([None, '3', '4', '5', '6'])\n\n# Incorrect list length raises ValueError\ndef test_wrong_length_raises_value_error():\n    with pytest.raises(ValueError):\n        straight_high(['A', '2', '3', '4'])          # 4 cards\n    with pytest.raises(ValueError):\n        straight_high(['A', '2', '3', '4', '5', '6'])  # 6 cards\n\n# Ensure lower‑case ranks are accepted (via .upper())\ndef test_lowercase_ranks():\n    assert straight_high(['a', '2', '3', '4', '5']) == '5'\n    assert straight_high(['t', 'j', 'q', 'k', '9']) == 'K'\n\n# Edge case: duplicate Ace in Ace‑low pattern should not be considered a straight\ndef test_duplicate_ace_low_not_straight():\n    assert straight_high(['A', 'A', '2', '3', '4']) is None\n\n# Edge case: straight that wraps around (e.g., Q K A 2 3) must be None\ndef test_wrap_around_not_straight():\n    assert straight_high(['Q', 'K', 'A', '2', '3']) is None\n",
+        "report": {
+          "passed": 8,
+          "total": 9,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_invalid_rank_raises_value_error",
+              "message": "TypeError: Each rank must be a single-character string"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 603,
+        "output_tokens": 433,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 605,
+        "output_tokens": 913,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 4,
+      "plan": "Update the error handling to raise ValueError instead of TypeError for invalid rank inputs.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the highest rank of a straight if ranks form a straight, else None.\n\n    Raises:\n        ValueError: If any rank is not a single-character string or if the input list\n                    does not contain exactly five valid ranks.\n    \"\"\"\n    # Validate length\n    if len(ranks) != 5:\n        raise ValueError(\"Exactly five ranks required\")\n\n    # Standard rank order\n    order = \"23456789TJQKA\"\n\n    # Validate each rank and convert to indices\n    indices = []\n    for r in ranks:\n        if not isinstance(r, str) or len(r) != 1:\n            raise ValueError(\"Each rank must be a single-character string\")\n        try:\n            idx = order.index(r.upper())\n        except ValueError as exc:\n            raise ValueError(\"Invalid rank character\") from exc\n        indices.append(idx)\n\n    indices.sort()\n\n    # Normal straight: consecutive indices\n    if all(indices[i] + 1 == indices[i + 1] for i in range(4)):\n        return order[indices[-1]]\n\n    # Ace-low straight (A,2,3,4,5)\n    if indices == [0, 1, 2, 3, 12]:\n        return \"5\"\n\n    return None\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n11/11 tests passed.",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import straight_high\n\n# Basic correct straights\ndef test_high_straight_normal():\n    assert straight_high(['9', 'T', 'J', 'Q', 'K']) == 'K'\n    assert straight_high(['5', '4', '3', '2', 'A']) == '5'  # Ace‑low straight\n    assert straight_high(['A', 'K', 'Q', 'J', 'T']) == 'A'  # Ace‑high straight\n    assert straight_high(['6', '5', '4', '3', '2']) == '6'\n\n# Order should not matter\ndef test_unordered_input():\n    assert straight_high(['K', '9', 'Q', 'J', 'T']) == 'K'\n    assert straight_high(['2', '5', '4', '3', 'A']) == '5'\n\n# Case insensitivity\ndef test_lowercase_ranks():\n    assert straight_high(['a', 'k', 'q', 'j', 't']) == 'A'\n    assert straight_high(['a', '2', '3', '4', '5']) == '5'\n\n# Duplicate ranks must not be considered a straight\ndef test_duplicates_not_straight():\n    assert straight_high(['2', '2', '3', '4', '5']) is None\n    assert straight_high(['9', '9', 'T', 'J', 'Q']) is None\n\n# Non‑consecutive ranks should return None\ndef test_non_consecutive():\n    assert straight_high(['2', '4', '5', '6', '7']) is None\n    assert straight_high(['9', 'J', 'Q', 'K', 'A']) is None  # gap between 9 and J\n\n# Invalid rank characters raise ValueError\ndef test_invalid_characters():\n    with pytest.raises(ValueError):\n        straight_high(['X', '2', '3', '4', '5'])\n    with pytest.raises(ValueError):\n        straight_high(['1', '2', '3', '4', '5'])\n    with pytest.raises(ValueError):\n        straight_high(['@', '2', '3', '4', '5'])\n\n# Non‑string elements raise ValueError\ndef test_non_string_elements():\n    with pytest.raises(ValueError):\n        straight_high([2, '3', '4', '5', '6'])\n    with pytest.raises(ValueError):\n        straight_high(['2', None, '4', '5', '6'])\n\n# Wrong list length raises ValueError\ndef test_wrong_length():\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5'])          # too short\n    with pytest.raises(ValueError):\n        straight_high(['2', '3', '4', '5', '6', '7']) # too long\n\n# Strings longer than one character raise ValueError\ndef test_multi_char_strings():\n    with pytest.raises(ValueError):\n        straight_high(['10', 'J', 'Q', 'K', 'A'])\n    with pytest.raises(ValueError):\n        straight_high([' 2', '3', '4', '5', '6'])\n\n# Ensure Ace‑low detection is exact (no false positives)\ndef test_ace_low_false_positive():\n    # Sorted indices [0,1,2,11,12] is not a valid ace‑low straight\n    assert straight_high(['A', '2', '3', '4', 'K']) is None\n    # Close but not exact\n    assert straight_high(['A', '2', '3', '5', '4']) == '5'  # actually a valid ace‑low straight\n    # Shuffle order, still valid\n    assert straight_high(['4', 'A', '3', '5', '2']) == '5'\n\n# Edge case: all ranks are valid but not a straight due to wrap‑around\ndef test_wrap_around_not_straight():\n    assert straight_high(['K', 'A', '2', '3', '4']) is None  # not a straight in poker\n",
+        "report": {
+          "passed": 11,
+          "total": 11,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 614,
+        "output_tokens": 335,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 603,
+        "output_tokens": 1209,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

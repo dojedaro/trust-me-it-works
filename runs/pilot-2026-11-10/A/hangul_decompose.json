@@ -1,0 +1,43 @@
+{
+  "task_id": "hangul_decompose",
+  "room": "korea",
+  "variant": "A",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement decompose by mapping Hangul syllables to compatibility jamo using precomputed lists.",
+      "code": "def decompose(text: str) -> str:\n    # Compatibility Jamo lists\n    INITIALS = [\n        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',\n        'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n    VOWELS = [\n        'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ',\n        'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ',\n        'ㅡ', 'ㅢ', 'ㅣ'\n    ]\n    FINALS = [\n        '',  # no final\n        'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ',\n        'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ',\n        'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n\n    result = []\n    for ch in text:\n        code = ord(ch)\n        if 0xAC00 <= code <= 0xD7A3:  # Hangul syllable\n            s_index = code - 0xAC00\n            l = s_index // (21 * 28)\n            v = (s_index // 28) % 21\n            t = s_index % 28\n            result.append(INITIALS[l])\n            result.append(VOWELS[v])\n            if t:\n                result.append(FINALS[t])\n        else:\n            result.append(ch)\n    return ''.join(result)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 842,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

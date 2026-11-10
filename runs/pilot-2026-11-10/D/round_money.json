@@ -1,0 +1,99 @@
+{
+  "task_id": "round_money",
+  "room": "money",
+  "variant": "D",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "tests",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Use Decimal with ROUND_HALF_UP to round to two places, then format to two decimals and strip negative zero.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef round_money(amount: str) -> str:\n    \"\"\"\n    Round a decimal amount given as a string to two decimal places,\n    rounding halves away from zero (ROUND_HALF_UP). Return the result\n    as a string with exactly two decimal digits. Never return \"-0.00\".\n    \"\"\"\n    # Convert to Decimal for precise arithmetic\n    d = Decimal(amount)\n\n    # Round to two decimal places using ROUND_HALF_UP\n    rounded = d.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)\n\n    # Convert to string with exactly two decimal places\n    result = f\"{rounded:.2f}\"\n\n    # Avoid negative zero\n    if result == \"-0.00\":\n        result = \"0.00\"\n\n    return result\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n13/14 tests passed.\n- test_small_numbers: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import round_money\n\n# Basic rounding to two decimals\ndef test_simple_no_fraction():\n    assert round_money(\"2\") == \"2.00\"\n    assert round_money(\"-3\") == \"-3.00\"\n\ndef test_one_decimal_place():\n    assert round_money(\"2.5\") == \"2.50\"\n    assert round_money(\"-2.5\") == \"-2.50\"\n\n# Half‑away‑from‑zero behavior\ndef test_half_away_from_zero_positive():\n    assert round_money(\"0.125\") == \"0.13\"\n    assert round_money(\"1.235\") == \"1.24\"\n    assert round_money(\"123.455\") == \"123.46\"\n\ndef test_half_away_from_zero_negative():\n    assert round_money(\"-0.125\") == \"-0.13\"\n    assert round_money(\"-1.235\") == \"-1.24\"\n    assert round_money(\"-123.455\") == \"-123.46\"\n\n# Edge of rounding boundary (exact .005)\ndef test_exact_half_boundary():\n    assert round_money(\"0.005\") == \"0.01\"\n    assert round_money(\"-0.005\") == \"-0.01\"\n\n# Negative zero must be avoided\ndef test_negative_zero_handling():\n    # -0.004 rounds to -0.00 but should be returned as 0.00\n    assert round_money(\"-0.004\") == \"0.00\"\n    # -0.0001 also rounds to -0.00 -> 0.00\n    assert round_money(\"-0.0001\") == \"0.00\"\n\n# Very large numbers (beyond typical float range)\ndef test_large_numbers():\n    large = \"12345678901234567890.125\"\n    assert round_money(large) == \"12345678901234567890.13\"\n    # Negative large\n    large_neg = \"-98765432109876543210.125\"\n    assert round_money(large_neg) == \"-98765432109876543210.13\"\n\n# Very small numbers (many leading zeros)\ndef test_small_numbers():\n    assert round_money(\"0.0004\") == \"0.00\"\n    assert round_money(\"-0.0004\") == \"0.00\"\n    # 0.0049 should round up to 0.01\n    assert round_money(\"0.0049\") == \"0.01\"\n    # -0.0049 should round down to -0.01\n    assert round_money(\"-0.0049\") == \"-0.01\"\n\n# Input with explicit plus sign\ndef test_explicit_plus_sign():\n    assert round_money(\"+2.5\") == \"2.50\"\n    assert round_money(\"+0.125\") == \"0.13\"\n\n# Input with surrounding whitespace\ndef test_whitespace_handling():\n    assert round_money(\"  3.1415  \") == \"3.14\"\n    assert round_money(\"\\n-2.675\\n\") == \"-2.68\"\n\n# Scientific notation input (Decimal supports it)\ndef test_scientific_notation():\n    assert round_money(\"1e-2\") == \"0.01\"\n    assert round_money(\"-1e-2\") == \"-0.01\"\n    assert round_money(\"1.2345e2\") == \"123.45\"\n    assert round_money(\"-1.2345e2\") == \"-123.45\"\n\n# Very long fractional part (more than typical precision)\ndef test_long_fraction():\n    # 0.123456789 rounds to 0.12\n    assert round_money(\"0.123456789\") == \"0.12\"\n    # 0.125999 rounds to 0.13 (half up on the third digit)\n    assert round_money(\"0.125999\") == \"0.13\"\n    # -0.125999 rounds to -0.13\n    assert round_money(\"-0.125999\") == \"-0.13\"\n\n# Zero input variations\ndef test_zero_variants():\n    for val in [\"0\", \"0.0\", \"0.00\", \"-0\", \"-0.0\", \"-0.00\", \"+0\", \"+0.00\"]:\n        assert round_money(val) == \"0.00\"\n\n# Invalid input should raise an exception (Decimal will raise)\ndef test_invalid_input():\n    with pytest.raises(Exception):\n        round_money(\"abc\")\n    with pytest.raises(Exception):\n        round_money(\"\")\n    with pytest.raises(Exception):\n        round_money(\"1.2.3\")\n",
+        "report": {
+          "passed": 13,
+          "total": 14,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_small_numbers",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 260,
+        "output_tokens": 213,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 479,
+        "output_tokens": 1072,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Provide a robust implementation that handles all edge cases, including very small numbers, negative zero, and ensures two decimal places without converting to float.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef round_money(amount: str) -> str:\n    \"\"\"\n    Round a decimal amount given as a string to two decimal places,\n    rounding halves away from zero (ROUND_HALF_UP). Return the result\n    as a string with exactly two decimal digits. Never return \"-0.00\".\n    \"\"\"\n    # Convert to Decimal for precise arithmetic\n    d = Decimal(amount)\n\n    # Round to two decimal places using ROUND_HALF_UP\n    rounded = d.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)\n\n    # Convert to string with exactly two decimal places\n    # Use quantized Decimal's string representation to avoid float conversion\n    result = f\"{rounded:.2f}\"\n\n    # Avoid negative zero\n    if result == \"-0.00\":\n        result = \"0.00\"\n\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n12/12 tests passed.",
+      "checker_details": {
+        "tests": "from solution import round_money\n\ndef test_basic_integer():\n    assert round_money(\"2\") == \"2.00\"\n    assert round_money(\"-7\") == \"-7.00\"\n\ndef test_basic_one_decimal():\n    assert round_money(\"2.5\") == \"2.50\"\n    assert round_money(\"-3.1\") == \"-3.10\"\n\ndef test_half_away_from_zero_positive():\n    # exactly half should round up\n    assert round_money(\"0.125\") == \"0.13\"\n    assert round_money(\"1.235\") == \"1.24\"\n    assert round_money(\"123.455\") == \"123.46\"\n\ndef test_half_away_from_zero_negative():\n    # exactly half should round away from zero (more negative)\n    assert round_money(\"-0.125\") == \"-0.13\"\n    assert round_money(\"-1.235\") == \"-1.24\"\n    assert round_money(\"-123.455\") == \"-123.46\"\n\ndef test_round_down():\n    assert round_money(\"0.1249\") == \"0.12\"\n    assert round_money(\"-0.1249\") == \"-0.12\"\n    assert round_money(\"2.994\") == \"2.99\"\n    assert round_money(\"-2.994\") == \"-2.99\"\n\ndef test_round_up_non_half():\n    assert round_money(\"0.126\") == \"0.13\"\n    assert round_money(\"-0.126\") == \"-0.13\"\n    assert round_money(\"9.999\") == \"10.00\"\n    assert round_money(\"-9.999\") == \"-10.00\"\n\ndef test_negative_zero_handling():\n    # values that would produce -0.00 after rounding must become 0.00\n    assert round_money(\"-0.001\") == \"0.00\"\n    assert round_money(\"-0.0049\") == \"0.00\"\n    # exact half away from zero should not become negative zero\n    assert round_money(\"-0.005\") == \"-0.01\"\n\ndef test_leading_plus_sign():\n    assert round_money(\"+2.345\") == \"2.35\"\n    assert round_money(\"+0.125\") == \"0.13\"\n\ndef test_scientific_notation():\n    assert round_money(\"1e3\") == \"1000.00\"\n    assert round_money(\"-2e-2\") == \"-0.02\"\n    assert round_money(\"5.555e-1\") == \"0.56\"\n\ndef test_large_number_of_digits():\n    # many digits before and after decimal\n    assert round_money(\"12345678901234567890.125\") == \"12345678901234567890.13\"\n    assert round_money(\"-98765432109876543210.875\") == \"-98765432109876543210.88\"\n\ndef test_trailing_zeros_preserved():\n    # ensure exactly two decimal places even if input has many zeros\n    assert round_money(\"3.0000\") == \"3.00\"\n    assert round_money(\"-4.5000\") == \"-4.50\"\n\ndef test_invalid_input_raises():\n    import pytest\n    with pytest.raises(Exception):\n        round_money(\"not_a_number\")\n    with pytest.raises(Exception):\n        round_money(\"\")\n",
+        "report": {
+          "passed": 12,
+          "total": 12,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 475,
+        "output_tokens": 1742,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 493,
+        "output_tokens": 1033,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

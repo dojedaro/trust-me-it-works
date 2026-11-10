@@ -1,0 +1,68 @@
+Running 5 variant(s) x 12 task(s) -> C:\Users\rames\portfolio\trust-me-it-works\runs\v1
+[A] bowling: FINAL after 1 iter(s), correct
+[A] straight: FINAL after 1 iter(s), correct
+[A] hangul_decompose: FINAL after 1 iter(s), correct
+[A] initials_search: FINAL after 1 iter(s), correct
+[A] round_money: FINAL after 1 iter(s), correct
+[A] split_bill: FINAL after 1 iter(s), correct
+[A] dedupe: FINAL after 1 iter(s), correct
+[A] leaderboard: FINAL after 1 iter(s), correct
+[A] palindrome: FINAL after 1 iter(s), correct
+[A] same_text: FINAL after 1 iter(s), correct
+[A] business_days: FINAL after 1 iter(s), correct
+[A] iso_week: FINAL after 1 iter(s), correct
+[B] bowling: FINAL after 1 iter(s), correct
+[B] straight: FINAL after 1 iter(s), correct
+[B] hangul_decompose: FINAL after 1 iter(s), correct
+[B] initials_search: FINAL after 1 iter(s), correct
+[B] round_money: FINAL after 1 iter(s), correct
+[B] split_bill: FINAL after 1 iter(s), correct
+[B] dedupe: FINAL after 1 iter(s), correct
+[B] leaderboard: FINAL after 1 iter(s), correct
+[B] palindrome: FINAL after 1 iter(s), correct
+[B] same_text: FINAL after 1 iter(s), correct
+[B] business_days: FINAL after 1 iter(s), correct
+[B] iso_week: FINAL after 1 iter(s), correct
+[C] bowling: FINAL after 1 iter(s), correct
+[C] straight: FINAL after 1 iter(s), correct
+[C] hangul_decompose: CAP_REACHED after 5 iter(s), WRONG
+[C] initials_search: FINAL after 1 iter(s), correct
+[C] round_money: FINAL after 1 iter(s), correct
+[C] split_bill: FINAL after 1 iter(s), correct
+[C] dedupe: FINAL after 1 iter(s), correct
+[C] leaderboard: FINAL after 1 iter(s), correct
+[C] palindrome: FINAL after 1 iter(s), correct
+[C] same_text: FINAL after 1 iter(s), correct
+[C] business_days: FINAL after 1 iter(s), correct
+[C] iso_week: FINAL after 1 iter(s), correct
+[D] bowling: FINAL after 5 iter(s), correct
+[D] straight: FINAL after 5 iter(s), correct
+[D] hangul_decompose: FINAL after 5 iter(s), correct
+[D] initials_search: FINAL after 5 iter(s), correct
+[D] round_money: FINAL after 2 iter(s), correct
+[D] split_bill: FINAL after 2 iter(s), correct
+[D] dedupe: CAP_REACHED after 5 iter(s), correct
+[D] leaderboard: FINAL after 1 iter(s), correct
+[D] palindrome: CAP_REACHED after 5 iter(s), correct
+[D] same_text: CAP_REACHED after 5 iter(s), correct
+[D] business_days: CAP_REACHED after 5 iter(s), correct
+[D] iso_week: CAP_REACHED after 5 iter(s), correct
+[E] bowling: FINAL after 1 iter(s), correct
+[E] straight: FINAL after 1 iter(s), correct
+[E] hangul_decompose: FINAL after 1 iter(s), correct
+[E] initials_search: FINAL after 2 iter(s), correct
+[E] round_money: FINAL after 1 iter(s), correct
+[E] split_bill: FINAL after 1 iter(s), correct
+[E] dedupe: FINAL after 1 iter(s), correct
+[E] leaderboard: FINAL after 1 iter(s), correct
+[E] palindrome: FINAL after 1 iter(s), correct
+[E] same_text: FINAL after 1 iter(s), correct
+[E] business_days: FINAL after 1 iter(s), correct
+[E] iso_week: FINAL after 1 iter(s), correct
+
+variant  tasks  first_try_correct  final_correct  said_final  false_final  false_final_rate  avg_iterations  model_calls  truncated_replies
+A        12     12                 12             12          0            0.0               1.0             12           0                
+B        12     12                 12             12          0            0.0               1.0             24           0                
+C        12     11                 11             11          0            0.0               1.33            32           0                
+D        12     12                 12             7           0            0.0               4.17            100          0                
+E        12     11                 12             12          0            0.0               1.08            13           0                

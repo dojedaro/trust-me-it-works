@@ -1,0 +1,43 @@
+{
+  "task_id": "initials_search",
+  "room": "korea",
+  "variant": "A",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `matches_initials` by mapping compatibility Jamo to initial consonants of Hangul syllables and comparing each character position.",
+      "code": "# solution.py\ndef matches_initials(query: str, word: str) -> bool:\n    \"\"\"\n    Return True if `query` matches the beginning of `word` using Korean initial consonant matching.\n    \"\"\"\n    # Mapping from Hangul Compatibility Jamo to the corresponding initial consonant character\n    jamo_to_initial = {\n        '\\u3131': '\\u3131',  # ㄱ\n        '\\u3132': '\\u3132',  # ㄲ\n        '\\u3134': '\\u3134',  # ㄴ\n        '\\u3137': '\\u3137',  # ㄷ\n        '\\u3138': '\\u3138',  # ㄸ\n        '\\u3139': '\\u3139',  # ㄹ\n        '\\u3141': '\\u3141',  # ㅁ\n        '\\u3142': '\\u3142',  # ㅂ\n        '\\u3143': '\\u3143',  # ㅃ\n        '\\u3145': '\\u3145',  # ㅅ\n        '\\u3146': '\\u3146',  # ㅆ\n        '\\u3147': '\\u3147',  # ㅇ\n        '\\u3148': '\\u3148',  # ㅈ\n        '\\u3149': '\\u3149',  # ㅉ\n        '\\u314A': '\\u314A',  # ㅊ\n        '\\u314B': '\\u314B',  # ㅋ\n        '\\u314C': '\\u314C',  # ㅌ\n        '\\u314D': '\\u314D',  # ㅍ\n        '\\u314E': '\\u314E',  # ㅎ\n    }\n\n    # Unicode range for precomposed Hangul syllables\n    HANGUL_START = 0xAC00\n    HANGUL_END = 0xD7A3\n    # Number of finals and medial vowels\n    NUM_MEDIAL = 21\n    NUM_FINAL = 28\n\n    if not query:\n        return True\n\n    # If query is longer than word, it cannot match\n    if len(query) > len(word):\n        return False\n\n    for q_char, w_char in zip(query, word):\n        if q_char == w_char:\n            continue\n\n        # Check if query char is a compatibility Jamo\n        if q_char in jamo_to_initial:\n            # Check if word char is a Hangul syllable\n            w_ord = ord(w_char)\n            if HANGUL_START <= w_ord <= HANGUL_END:\n                # Compute the initial consonant of the syllable\n                syllable_index = w_ord - HANGUL_START\n                initial_index = syllable_index // (NUM_MEDIAL * NUM_FINAL)\n                # Map index back to the corresponding Jamo\n                # The order of jamo_to_initial keys matches the standard initial order\n                jamo_list = [\n                    '\\u3131', '\\u3132', '\\u3134', '\\u3137', '\\u3138',\n                    '\\u3139', '\\u3141', '\\u3142', '\\u3143', '\\u3145',\n                    '\\u3146', '\\u3147', '\\u3148', '\\u3149', '\\u314A',\n                    '\\u314B', '\\u314C', '\\u314D', '\\u314E'\n                ]\n                if jamo_list[initial_index] == q_char:\n                    continue\n        # No match found for this position\n        return False\n\n    # All characters matched\n    return True\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 313,
+        "output_tokens": 1163,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

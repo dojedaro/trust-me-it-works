@@ -1,0 +1,50 @@
+{
+  "task_id": "initials_search",
+  "room": "korea",
+  "variant": "B",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "score",
+  "checker_model": "openai/gpt-oss-20b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `matches_initials` by mapping compatibility Jamo to the initial consonant of Hangul syllables and comparing each character pair.",
+      "code": "# solution.py\ndef matches_initials(query: str, word: str) -> bool:\n    \"\"\"\n    Return True if `query` matches the beginning of `word` using Korean\n    initial consonant matching rules.\n    \"\"\"\n    # Hangul compatibility Jamo for initial consonants (as typed on a keyboard)\n    INITIAL_JAMO = [\n        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',\n        'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n\n    # Unicode range for precomposed Hangul syllables\n    S_BASE = 0xAC00\n    N_COUNT = 21 * 28  # number of vowel * final consonant combinations\n\n    if not query:\n        return True\n\n    # If query is longer than word, it cannot match\n    if len(query) > len(word):\n        return False\n\n    for q_char, w_char in zip(query, word):\n        if q_char == w_char:\n            continue\n\n        # Check if q_char is a compatibility Jamo and w_char is a Hangul syllable\n        if q_char in INITIAL_JAMO and 0xAC00 <= ord(w_char) <= 0xD7A3:\n            # Compute the initial consonant index of the syllable\n            syllable_index = ord(w_char) - S_BASE\n            initial_index = syllable_index // N_COUNT\n            if INITIAL_JAMO[initial_index] == q_char:\n                continue\n\n        # No match for this position\n        return False\n\n    # All positions matched\n    return True\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 9, 'spec_compliance': 10}. Weakest criterion: edge_cases. Problem: edge_cases",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 9,
+          "spec_compliance": 10
+        },
+        "weakest": "edge_cases"
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 313,
+        "output_tokens": 616,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 768,
+        "output_tokens": 510,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

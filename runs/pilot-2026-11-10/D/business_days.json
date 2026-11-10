@@ -1,0 +1,271 @@
+{
+  "task_id": "business_days",
+  "room": "time",
+  "variant": "D",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "tests",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement business_days by parsing dates, iterating day by day, counting weekdays not in holidays, returning 0 if end <= start.",
+      "code": "from datetime import datetime, timedelta\n\ndef business_days(start: str, end: str, holidays: list[str]) -> int:\n    \"\"\"\n    Count business days from start (inclusive) to end (exclusive).\n    A business day is Monday to Friday and not in the holidays list.\n    If end is not after start, return 0.\n    \"\"\"\n    # Parse dates\n    start_dt = datetime.strptime(start, \"%Y-%m-%d\").date()\n    end_dt = datetime.strptime(end, \"%Y-%m-%d\").date()\n\n    if end_dt <= start_dt:\n        return 0\n\n    # Convert holidays to a set of date objects for fast lookup\n    holiday_set = {datetime.strptime(h, \"%Y-%m-%d\").date() for h in holidays}\n\n    count = 0\n    current = start_dt\n    while current < end_dt:\n        if current.weekday() < 5 and current not in holiday_set:\n            count += 1\n        current += timedelta(days=1)\n\n    return count\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n12/15 tests passed.\n- test_leap_year_feb_29: AssertionError\n- test_multiple_holidays_with_duplicates: AssertionError\n- test_range_spanning_multiple_weeks: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import business_days\n\n# Helper to generate date strings\ndef ds(y, m, d):\n    return f\"{y:04d}-{m:02d}-{d:02d}\"\n\ndef test_same_start_end_returns_zero():\n    assert business_days(\"2023-01-01\", \"2023-01-01\", []) == 0\n\ndef test_end_before_start_returns_zero():\n    assert business_days(\"2023-01-10\", \"2023-01-05\", []) == 0\n\ndef test_single_business_day():\n    # Monday to Tuesday exclusive -> only Monday counted\n    assert business_days(\"2023-01-02\", \"2023-01-03\", []) == 1\n\ndef test_single_weekend_day_counts_zero():\n    # Saturday to Sunday exclusive -> no business days\n    assert business_days(\"2023-01-07\", \"2023-01-08\", []) == 0\n\ndef test_holiday_on_weekday_excluded():\n    # Wednesday is a holiday, should be excluded\n    start = ds(2023, 1, 2)   # Monday\n    end   = ds(2023, 1, 6)   # Friday exclusive\n    holidays = [ds(2023, 1, 4)]  # Wednesday\n    # Monday, Tuesday, Thursday = 3 business days\n    assert business_days(start, end, holidays) == 3\n\ndef test_holiday_on_weekend_ignored():\n    # Holiday on Saturday should not affect count\n    start = ds(2023, 1, 2)   # Monday\n    end   = ds(2023, 1, 7)   # Friday exclusive\n    holidays = [ds(2023, 1, 7)]  # Saturday\n    # Monday-Friday = 5 business days\n    assert business_days(start, end, holidays) == 5\n\ndef test_multiple_holidays_with_duplicates():\n    start = ds(2023, 12, 25)  # Monday\n    end   = ds(2024, 1, 2)    # Tuesday exclusive\n    holidays = [\n        ds(2023, 12, 25),  # Monday\n        ds(2023, 12, 26),  # Tuesday\n        ds(2023, 12, 26),  # duplicate\n        ds(2023, 12, 30),  # Saturday (ignored)\n    ]\n    # Business days in range: Mon-Fri = 5, minus Mon & Tue holidays = 3\n    assert business_days(start, end, holidays) == 3\n\ndef test_leap_year_feb_29():\n    # 2024 is a leap year; Feb 29 is Thursday\n    start = ds(2024, 2, 28)  # Wednesday\n    end   = ds(2024, 3, 2)   # Saturday exclusive\n    # Days: 28(Wed), 29(Thu) -> both business days\n    assert business_days(start, end, []) == 2\n\ndef test_range_spanning_multiple_weeks():\n    # 14-day range starting on a Wednesday\n    start = ds(2023, 3, 1)   # Wednesday\n    end   = ds(2023, 3, 15)  # Wednesday exclusive\n    # Two full weeks = 10 business days, plus Wed (start) = 1, total 11\n    assert business_days(start, end, []) == 11\n\ndef test_holiday_outside_range_ignored():\n    start = ds(2023, 5, 1)   # Monday\n    end   = ds(2023, 5, 8)   # Monday exclusive\n    holidays = [ds(2023, 4, 30), ds(2023, 5, 15)]\n    # One full week = 5 business days\n    assert business_days(start, end, holidays) == 5\n\ndef test_invalid_date_format_raises():\n    with pytest.raises(ValueError):\n        business_days(\"2023/01/01\", \"2023-01-10\", [])\n\ndef test_invalid_holiday_date_raises():\n    with pytest.raises(ValueError):\n        business_days(\"2023-01-01\", \"2023-01-10\", [\"2023-13-01\"])\n\ndef test_empty_holidays_list_behaviour():\n    # Ensure empty list works same as None\n    assert business_days(\"2023-01-02\", \"2023-01-09\", []) == 5\n\ndef test_holiday_on_end_date_not_counted():\n    # End date is exclusive; even if it's a holiday it shouldn't affect count\n    start = ds(2023, 7, 3)   # Monday\n    end   = ds(2023, 7, 10)  # Monday exclusive\n    holidays = [ds(2023, 7, 10)]  # Monday (end)\n    # Business days Mon-Fri = 5\n    assert business_days(start, end, holidays) == 5\n\ndef test_start_date_is_holiday():\n    # Start date is a holiday, should be excluded\n    start = ds(2023, 8, 14)  # Monday (holiday)\n    end   = ds(2023, 8, 18)  # Friday exclusive\n    holidays = [ds(2023, 8, 14)]\n    # Tue, Wed, Thu = 3 business days\n    assert business_days(start, end, holidays) == 3\n",
+        "report": {
+          "passed": 12,
+          "total": 15,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_leap_year_feb_29",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_multiple_holidays_with_duplicates",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_range_spanning_multiple_weeks",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 283,
+        "output_tokens": 262,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 553,
+        "output_tokens": 1356,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Add robust parsing with stripping and ignore invalid holiday dates.",
+      "code": "from datetime import datetime, timedelta\n\ndef business_days(start: str, end: str, holidays: list[str]) -> int:\n    \"\"\"\n    Count business days from start (inclusive) to end (exclusive).\n    A business day is Monday to Friday and not in the holidays list.\n    If end is not after start, return 0.\n    \"\"\"\n    # Parse dates safely\n    try:\n        start_dt = datetime.strptime(start.strip(), \"%Y-%m-%d\").date()\n        end_dt = datetime.strptime(end.strip(), \"%Y-%m-%d\").date()\n    except Exception:\n        return 0\n\n    if end_dt <= start_dt:\n        return 0\n\n    # Convert holidays to a set of date objects, ignoring invalid entries\n    holiday_set = set()\n    for h in holidays:\n        try:\n            holiday_set.add(datetime.strptime(h.strip(), \"%Y-%m-%d\").date())\n        except Exception:\n            continue\n\n    count = 0\n    current = start_dt\n    while current < end_dt:\n        if current.weekday() < 5 and current not in holiday_set:\n            count += 1\n        current += timedelta(days=1)\n\n    return count\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n16/18 tests passed.\n- test_leap_day_holiday: AssertionError\n- test_weekend_holiday_ignored: AssertionError",
+      "checker_details": {
+        "tests": "# tests for business_days implementation\nfrom solution import business_days\n\n# 1. Basic weekday range, no holidays\ndef test_basic_weekdays():\n    assert business_days('2026-11-09', '2026-11-16', []) == 5  # Mon-Fri\n\n# 2. End date equal to start date -> 0\ndef test_same_start_end():\n    assert business_days('2026-11-09', '2026-11-09', []) == 0\n\n# 3. End before start -> 0\ndef test_end_before_start():\n    assert business_days('2026-11-10', '2026-11-09', []) == 0\n\n# 4. Include a holiday that falls on a weekend (should not affect count)\ndef test_weekend_holiday_ignored():\n    # 2026-11-07 is Saturday, 2026-11-08 is Sunday\n    assert business_days('2026-11-06', '2026-11-09', ['2026-11-07', '2026-11-08']) == 2  # Sun & Sat ignored anyway\n\n# 5. Holiday on a weekday reduces count\ndef test_weekday_holiday():\n    assert business_days('2026-11-09', '2026-11-16', ['2026-11-11']) == 4\n\n# 6. Multiple holidays, including duplicates and whitespace\ndef test_duplicate_and_whitespace_holidays():\n    holidays = ['2026-11-11', ' 2026-11-12 ', '2026-11-11']\n    # 2026-11-11 (Wed) and 2026-11-12 (Thu) are holidays, so only Mon, Tue, Fri count => 3\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 3\n\n# 7. Invalid date strings in start/end should return 0\ndef test_invalid_start_end():\n    assert business_days('invalid-date', '2026-11-16', []) == 0\n    assert business_days('2026-11-09', 'not-a-date', []) == 0\n\n# 8. Invalid holiday entries are ignored\ndef test_invalid_holidays():\n    holidays = ['2026-11-11', 'bad-holiday', '2026-02-30']  # second and third are invalid\n    # Only 2026-11-11 should be excluded\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 4\n\n# 9. Large range spanning multiple years, including leap day\ndef test_large_range_with_leap_year():\n    # Count business days from 2023-12-25 to 2024-01-08 (inclusive start, exclusive end)\n    # 2023-12-25 (Mon) to 2024-01-07 (Sun) = 14 days total\n    # Weekends: 2023-12-30,31 and 2024-01-06,07 => 4 days\n    # Business days = 14 - 4 = 10\n    assert business_days('2023-12-25', '2024-01-08', []) == 10\n\n# 10. Leap day as a holiday\ndef test_leap_day_holiday():\n    # 2024 is a leap year; include Feb 29 as holiday\n    assert business_days('2024-02-26', '2024-03-01', ['2024-02-29']) == 2  # Mon,Tue are business, Wed is holiday\n\n# 11. Start date on weekend, end after weekend\ndef test_start_on_weekend():\n    # 2026-11-07 is Saturday, 2026-11-08 Sunday, then Monday 2026-11-09\n    assert business_days('2026-11-07', '2026-11-10', []) == 1  # only Monday counted\n\n# 12. End date on weekend, should not count that weekend day\ndef test_end_on_weekend():\n    # Range Mon 2026-11-09 to Sat 2026-11-14 (exclusive) => counts Mon-Fri =5\n    assert business_days('2026-11-09', '2026-11-14', []) == 5\n\n# 13. Holidays list empty but contains None or non-string entries\ndef test_non_string_holidays():\n    holidays = [None, 123, '2026-11-11']\n    # Only valid string should be considered\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 4\n\n# 14. Very long range to test performance edge (but still small enough for test)\ndef test_very_long_range():\n    # 30 days from 2026-01-01 to 2026-01-31\n    # Count business days manually: Jan 2026 starts on Thursday\n    # Weekdays in Jan 2026: 22 (standard)\n    assert business_days('2026-01-01', '2026-01-31', []) == 22\n\n# 15. Holidays that fall outside the range should not affect count\ndef test_out_of_range_holidays():\n    holidays = ['2026-12-25', '2026-01-01']\n    # Range within November, holidays irrelevant\n    assert business_days('2026-11-01', '2026-11-08', holidays) == 5  # Mon-Fri\n\n# 16. Start and end with leading/trailing whitespace\ndef test_whitespace_in_dates():\n    assert business_days(' 2026-11-09', '2026-11-16 ', []) == 5\n\n# 17. End date exactly one day after start, which is a weekend -> 0\ndef test_one_day_weekend():\n    assert business_days('2026-11-07', '2026-11-08', []) == 0  # Saturday only\n\n# 18. End date exactly one day after start, which is a weekday -> 1\ndef test_one_day_weekday():\n    assert business_days('2026-11-09', '2026-11-10', []) == 1  # Monday only\n",
+        "report": {
+          "passed": 16,
+          "total": 18,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_leap_day_holiday",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_weekend_holiday_ignored",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 577,
+        "output_tokens": 891,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 586,
+        "output_tokens": 1409,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 2,
+      "plan": "Provide the same robust implementation, ensuring holidays are parsed safely and only counted when they fall on weekdays.",
+      "code": "from datetime import datetime, timedelta\n\ndef business_days(start: str, end: str, holidays: list[str]) -> int:\n    \"\"\"\n    Count business days from start (inclusive) to end (exclusive).\n    A business day is Monday to Friday and not in the holidays list.\n    If end is not after start, return 0.\n    \"\"\"\n    # Parse dates safely\n    try:\n        start_dt = datetime.strptime(start.strip(), \"%Y-%m-%d\").date()\n        end_dt = datetime.strptime(end.strip(), \"%Y-%m-%d\").date()\n    except Exception:\n        return 0\n\n    if end_dt <= start_dt:\n        return 0\n\n    # Convert holidays to a set of date objects, ignoring invalid entries\n    holiday_set = set()\n    for h in holidays:\n        try:\n            holiday_set.add(datetime.strptime(h.strip(), \"%Y-%m-%d\").date())\n        except Exception:\n            continue\n\n    count = 0\n    current = start_dt\n    while current < end_dt:\n        if current.weekday() < 5 and current not in holiday_set:\n            count += 1\n        current += timedelta(days=1)\n\n    return count\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n13/15 tests passed.\n- test_weekend_holiday_ignored: AssertionError\n- test_weekends_only: AssertionError",
+      "checker_details": {
+        "tests": "# tests for business_days implementation\nfrom solution import business_days\n\n# 1. Basic weekday range, no holidays\ndef test_basic_weekdays():\n    assert business_days('2026-11-09', '2026-11-16', []) == 5  # Mon-Fri\n\n# 2. End date equal to start date -> 0\ndef test_same_start_end():\n    assert business_days('2026-11-09', '2026-11-09', []) == 0\n\n# 3. End before start -> 0\ndef test_end_before_start():\n    assert business_days('2026-11-10', '2026-11-09', []) == 0\n\n# 4. Include a holiday that falls on a weekend (should not affect count)\ndef test_weekend_holiday_ignored():\n    # 2026-11-07 is Saturday, 2026-11-08 is Sunday\n    assert business_days('2026-11-06', '2026-11-09', ['2026-11-07', '2026-11-08']) == 2  # Sun & Sat ignored anyway\n\n# 5. Holiday on a weekday reduces count\ndef test_weekday_holiday():\n    assert business_days('2026-11-09', '2026-11-16', ['2026-11-11']) == 4\n\n# 6. Multiple holidays, including duplicates and whitespace\ndef test_duplicate_and_whitespace_holidays():\n    holidays = ['2026-11-11', ' 2026-11-12 ', '2026-11-11']\n    # 2026-11-11 (Wed) and 2026-11-12 (Thu) are holidays, so only Mon, Tue, Fri count => 3\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 3\n\n# 7. Invalid date strings in start/end should return 0\ndef test_invalid_start_end():\n    assert business_days('invalid-date', '2026-11-16', []) == 0\n    assert business_days('2026-11-09', 'not-a-date', []) == 0\n\n# 8. Invalid holiday entries are ignored\ndef test_invalid_holidays():\n    holidays = ['2026-11-11', 'bad-holiday', '2026-02-30']  # second and third are invalid\n    # Only 2026-11-11 should be excluded\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 4\n\n# 9. Large range spanning multiple years, including leap day\ndef test_large_range_with_leap_year():\n    # From 2023-12-29 (Fri) to 2024-01-08 (Mon) inclusive of start, exclusive of end\n    # Days: 2023-12-29 (Fri), 2023-12-30 (Sat), 2023-12-31 (Sun),\n    # 2024-01-01 (Mon, New Year's Day, assume not a holiday here), 2024-01-02 (Tue),\n    # 2024-01-03 (Wed), 2024-01-04 (Thu), 2024-01-05 (Fri), 2024-01-06 (Sat), 2024-01-07 (Sun)\n    # Business days = Fri, Mon, Tue, Wed, Thu, Fri = 6\n    assert business_days('2023-12-29', '2024-01-08', []) == 6\n\n# 10. Range that includes Feb 29 on a leap year\ndef test_feb_29_leap_year():\n    # 2024 is a leap year; count business days from Feb 28 (Wed) to Mar 2 (Sat)\n    # Days: Feb 28 (Wed), Feb 29 (Thu), Mar 1 (Fri) -> all business days = 3\n    assert business_days('2024-02-28', '2024-03-02', []) == 3\n\n# 11. Holidays list is empty but contains None values (should be ignored safely)\ndef test_none_in_holidays():\n    assert business_days('2026-11-09', '2026-11-16', [None, '2026-11-11']) == 4\n\n# 12. Start or end strings have surrounding whitespace\ndef test_whitespace_in_dates():\n    assert business_days(' 2026-11-09 ', '2026-11-16', []) == 5\n    assert business_days('2026-11-09', ' 2026-11-16 ', []) == 5\n\n# 13. Holidays list contains dates outside the range (should not affect count)\ndef test_out_of_range_holidays():\n    holidays = ['2026-10-01', '2026-12-31']\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 5\n\n# 14. Entire range consists of weekends only -> count 0\ndef test_weekends_only():\n    # Saturday to next Saturday exclusive\n    assert business_days('2026-11-07', '2026-11-14', []) == 0\n\n# 15. Range includes a holiday that falls on a weekend and a weekday holiday\ndef test_mixed_holiday_weekend_and_weekday():\n    holidays = ['2026-11-12', '2026-11-13']  # 12 Thu (weekday), 13 Fri (weekday)\n    # 2026-11-09 Mon to 2026-11-16 Mon exclusive => Mon-Fri = 5 days, minus two holidays = 3\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 3\n",
+        "report": {
+          "passed": 13,
+          "total": 15,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_weekend_holiday_ignored",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_weekends_only",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 597,
+        "output_tokens": 1790,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 586,
+        "output_tokens": 1311,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 3,
+      "plan": "Update date parsing to use `date.fromisoformat` for flexible handling of single‑digit months/days and keep the rest of the logic unchanged.",
+      "code": "from datetime import date, timedelta\nfrom typing import List\n\ndef business_days(start: str, end: str, holidays: List[str]) -> int:\n    \"\"\"\n    Count business days from start (inclusive) to end (exclusive).\n    A business day is Monday to Friday and not in the holidays list.\n    If end is not after start, return 0.\n    \"\"\"\n    # Parse dates safely using fromisoformat which accepts both zero‑padded\n    # and non‑zero‑padded month/day.\n    try:\n        start_dt = date.fromisoformat(start.strip())\n        end_dt = date.fromisoformat(end.strip())\n    except Exception:\n        return 0\n\n    if end_dt <= start_dt:\n        return 0\n\n    # Convert holidays to a set of date objects, ignoring invalid entries\n    holiday_set = set()\n    for h in holidays:\n        try:\n            holiday_set.add(date.fromisoformat(h.strip()))\n        except Exception:\n            continue\n\n    count = 0\n    current = start_dt\n    while current < end_dt:\n        if current.weekday() < 5 and current not in holiday_set:\n            count += 1\n        current += timedelta(days=1)\n\n    return count\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n6/10 tests passed.\n- test_holiday_on_weekend_is_ignored: AssertionError\n- test_leap_year_feb_29: AssertionError\n- test_multiple_holidays_and_duplicates: AssertionError\n- test_weekend_only_range: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import business_days\n\n# Helper to generate a range of dates as strings\ndef date_range(start, end):\n    from datetime import date, timedelta\n    s = date.fromisoformat(start)\n    e = date.fromisoformat(end)\n    cur = s\n    out = []\n    while cur < e:\n        out.append(cur.isoformat())\n        cur += timedelta(days=1)\n    return out\n\ndef test_end_not_after_start():\n    # end equal to start\n    assert business_days('2023-01-01', '2023-01-01', []) == 0\n    # end before start\n    assert business_days('2023-01-10', '2023-01-05', []) == 0\n\ndef test_weekend_only_range():\n    # Saturday to next Monday (exclusive) should count 0 business days\n    assert business_days('2023-04-08', '2023-04-10', []) == 0\n    # Sunday to Monday (exclusive) counts Monday only\n    assert business_days('2023-04-09', '2023-04-10', []) == 1\n\ndef test_holiday_on_weekend_is_ignored():\n    # Holiday falls on Saturday, should not affect count\n    assert business_days('2023-04-03', '2023-04-07', ['2023-04-08']) == 5\n    # Holiday on Sunday, also ignored\n    assert business_days('2023-04-03', '2023-04-07', ['2023-04-09']) == 5\n\ndef test_holiday_outside_range_is_ignored():\n    holidays = ['2023-01-01', '2023-12-31']\n    # Neither holiday falls within the range\n    assert business_days('2023-06-01', '2023-06-08', holidays) == 5\n\ndef test_multiple_holidays_and_duplicates():\n    # Duplicate holidays should not double‑subtract\n    holidays = ['2023-06-02', '2023-06-02', '2023-06-05']\n    # 2023-06-02 is Friday, 2023-06-05 is Monday\n    # Range Mon-Fri inclusive start, exclusive end -> 5 days, minus 2 holidays = 3\n    assert business_days('2023-06-01', '2023-06-06', holidays) == 3\n\ndef test_invalid_date_strings():\n    # Invalid start date -> function returns 0 per implementation, but spec says undefined;\n    # we assert the sensible fallback (0) to catch the bug of silent failure.\n    assert business_days('invalid-date', '2023-01-10', []) == 0\n    # Invalid end date\n    assert business_days('2023-01-01', 'not-a-date', []) == 0\n    # Invalid holiday entries are ignored\n    holidays = ['2023-01-03', 'bad-holiday', '2023-01-04']\n    # 2023-01-03 is Tuesday, 2023-01-04 is Wednesday\n    # Range Tue-Thu (exclusive Fri) => Tue, Wed, Thu = 3 days, minus 2 holidays = 1\n    assert business_days('2023-01-03', '2023-01-06', holidays) == 1\n\ndef test_whitespace_handling():\n    # Leading/trailing spaces should be stripped\n    assert business_days(' 2023-01-02', '2023-01-05 ', [' 2023-01-03 ']) == 2\n    # Multiple spaces inside string should cause parsing error -> 0\n    assert business_days('2023- 01-02', '2023-01-05', []) == 0\n\ndef test_leap_year_feb_29():\n    # 2024 is a leap year; Feb 29 is Thursday\n    assert business_days('2024-02-28', '2024-03-01', []) == 1\n    # Holiday on Feb 29 removes that business day\n    assert business_days('2024-02-28', '2024-03-01', ['2024-02-29']) == 0\n\ndef test_large_range_performance_boundary():\n    # 10,000 days range should still compute correctly (approx 7143 business days ignoring holidays)\n    start = '2000-01-01'\n    end = '2027-05-19'  # roughly 10,000 days later\n    # Compute expected using a simple formula: count weekdays in range\n    from datetime import date, timedelta\n    s = date.fromisoformat(start)\n    e = date.fromisoformat(end)\n    expected = 0\n    cur = s\n    while cur < e:\n        if cur.weekday() < 5:\n            expected += 1\n        cur += timedelta(days=1)\n    assert business_days(start, end, []) == expected\n\ndef test_holiday_on_start_and_end_boundaries():\n    # Holiday exactly on start date (inclusive) should be excluded\n    # Holiday exactly on end date (exclusive) should not affect count\n    holidays = ['2023-07-03', '2023-07-07']\n    # Range 2023-07-03 (Mon) to 2023-07-08 (Sat)\n    # Business days without holidays: Mon-Fri = 5\n    # Remove holiday on Mon => 4, holiday on Fri (2023-07-07) also removed => 3\n    assert business_days('2023-07-03', '2023-07-08', holidays) == 3\n",
+        "report": {
+          "passed": 6,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_holiday_on_weekend_is_ignored",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_leap_year_feb_29",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_multiple_holidays_and_duplicates",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_weekend_only_range",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 595,
+        "output_tokens": 968,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 593,
+        "output_tokens": 1333,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 4,
+      "plan": "Implement robust date parsing that accepts non‑zero‑padded month/day, handle invalid dates, and keep the rest of the logic unchanged.",
+      "code": "from datetime import date, timedelta\nfrom typing import List, Optional\n\ndef _parse_date(d: str) -> Optional[date]:\n    \"\"\"Parse a YYYY-MM-DD string, accepting non‑zero‑padded month/day.\"\"\"\n    if not isinstance(d, str):\n        return None\n    parts = d.strip().split('-')\n    if len(parts) != 3:\n        return None\n    try:\n        y, m, day = int(parts[0]), int(parts[1]), int(parts[2])\n        return date(y, m, day)\n    except Exception:\n        return None\n\ndef business_days(start: str, end: str, holidays: List[str]) -> int:\n    \"\"\"\n    Count business days from start (inclusive) to end (exclusive).\n    A business day is Monday to Friday and not in the holidays list.\n    If end is not after start, return 0.\n    \"\"\"\n    start_dt = _parse_date(start)\n    end_dt = _parse_date(end)\n    if not start_dt or not end_dt or end_dt <= start_dt:\n        return 0\n\n    holiday_set = set()\n    for h in holidays:\n        hd = _parse_date(h)\n        if hd:\n            holiday_set.add(hd)\n\n    count = 0\n    current = start_dt\n    while current < end_dt:\n        if current.weekday() < 5 and current not in holiday_set:\n            count += 1\n        current += timedelta(days=1)\n\n    return count\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n17/19 tests passed.\n- test_start_on_holiday: AssertionError\n- test_start_weekend_end_weekday: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import business_days\n\n# Basic functionality\ndef test_simple_week():\n    assert business_days('2026-11-09', '2026-11-16', []) == 5  # Mon-Fri\n\ndef test_with_one_holiday():\n    assert business_days('2026-11-09', '2026-11-16', ['2026-11-11']) == 4\n\n# Inclusive start, exclusive end edge cases\ndef test_single_business_day():\n    assert business_days('2026-11-09', '2026-11-10', []) == 1  # only Monday\n\ndef test_single_weekend_day():\n    # Saturday to Sunday: no business days\n    assert business_days('2026-11-14', '2026-11-15', []) == 0\n\ndef test_start_weekend_end_weekday():\n    # Start on Saturday, end on Monday -> only Monday counts\n    assert business_days('2026-11-14', '2026-11-16', []) == 1\n\ndef test_end_before_start():\n    assert business_days('2026-11-16', '2026-11-09', []) == 0\n\ndef test_start_equals_end():\n    assert business_days('2026-11-09', '2026-11-09', []) == 0\n\n# Leap year handling\ndef test_feb_29_leap_year():\n    # 2024 is a leap year; Feb 29 2024 is Thursday\n    assert business_days('2024-02-28', '2024-03-01', []) == 2\n\ndef test_feb_29_non_leap_year_invalid():\n    # Invalid date should cause function to return 0 per its defensive parsing\n    assert business_days('2023-02-28', '2023-03-01', ['2023-02-29']) == 1  # holiday ignored\n\n# Non‑zero‑padded month/day strings\ndef test_non_padded_dates():\n    assert business_days('2026-1-9', '2026-1-16', []) == 5  # same as padded version\n\n# Holidays on weekends should not affect count\ndef test_holiday_on_weekend():\n    # 2026-11-14 is Saturday, 2026-11-15 is Sunday\n    assert business_days('2026-11-09', '2026-11-16', ['2026-11-14', '2026-11-15']) == 5\n\n# Duplicate holidays should not double‑subtract\ndef test_duplicate_holidays():\n    assert business_days('2026-11-09', '2026-11-16', ['2026-11-11', '2026-11-11']) == 4\n\n# Holidays outside the range should be ignored\ndef test_holiday_outside_range():\n    assert business_days('2026-11-09', '2026-11-16', ['2026-11-01', '2026-11-30']) == 5\n\n# Mixed valid and invalid holiday strings\ndef test_mixed_holiday_inputs():\n    holidays = ['2026-11-11', 'invalid-date', '', None, '2026-13-01']\n    assert business_days('2026-11-09', '2026-11-16', holidays) == 4\n\n# Large range performance sanity (not a speed test, just correctness)\ndef test_large_range():\n    # From Jan 1 2020 to Jan 1 2021, count business days ignoring weekends\n    # Known number of weekdays in 2020 (leap year) = 262\n    assert business_days('2020-01-01', '2021-01-01', []) == 262\n\n# End date exactly on a holiday (should not be counted because end is exclusive)\ndef test_end_on_holiday():\n    # 2026-11-11 is a holiday, but end is exclusive, so it doesn't matter\n    assert business_days('2026-11-09', '2026-11-11', []) == 2  # Mon & Tue\n\n# Start date is a holiday (should be excluded)\ndef test_start_on_holiday():\n    assert business_days('2026-11-11', '2026-11-16', ['2026-11-11']) == 4  # Tue excluded\n\n# All days are holidays\ndef test_all_holidays():\n    holidays = ['2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13']\n    assert business_days('2026-11-09', '2026-11-14', holidays) == 0\n\n# Invalid start or end strings should yield 0\ndef test_invalid_start_or_end():\n    assert business_days('not-a-date', '2026-11-16', []) == 0\n    assert business_days('2026-11-09', 'bad-date', []) == 0\n    assert business_days('', '', []) == 0\n",
+        "report": {
+          "passed": 17,
+          "total": 19,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_start_on_holiday",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_start_weekend_end_weekday",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 629,
+        "output_tokens": 768,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 649,
+        "output_tokens": 1426,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": true,
+  "error": null
+}

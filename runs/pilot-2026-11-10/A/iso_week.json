@@ -1,0 +1,43 @@
+{
+  "task_id": "iso_week",
+  "room": "time",
+  "variant": "A",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement iso_week using datetime.date.isocalendar() to format the ISO week label.",
+      "code": "import datetime\n\ndef iso_week(day: str) -> str:\n    \"\"\"\n    Return the ISO 8601 week label for a given date string in the format \"YYYY-MM-DD\".\n    The label is \"YYYY-Www\" where ww is the two-digit week number.\n    \"\"\"\n    # Parse the input date string\n    year, month, day_of_month = map(int, day.split('-'))\n    date_obj = datetime.date(year, month, day_of_month)\n\n    # Get ISO calendar components: (ISO year, ISO week number, ISO weekday)\n    iso_year, iso_week_num, _ = date_obj.isocalendar()\n\n    # Format the week number with leading zero if necessary\n    return f\"{iso_year}-W{iso_week_num:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 235,
+        "output_tokens": 210,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

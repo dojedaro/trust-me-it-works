@@ -1,0 +1,279 @@
+{
+  "task_id": "hangul_decompose",
+  "room": "korea",
+  "variant": "C",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "score",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement Hangul syllable decomposition using Unicode algorithm and map to compatibility jamo.",
+      "code": "# solution.py\ndef decompose(text: str) -> str:\n    \"\"\"\n    Replace each precomposed Hangul syllable in `text` with its constituent\n    compatibility jamo (initial, vowel, final if present). All other\n    characters are left unchanged.\n    \"\"\"\n    # Unicode constants for Hangul\n    S_BASE = 0xAC00\n    S_END = 0xD7A3\n    L_COUNT = 19\n    V_COUNT = 21\n    T_COUNT = 28\n    N_COUNT = V_COUNT * T_COUNT  # 588\n\n    # Compatibility jamo ranges\n    L_BASE = 0x3131  # ㄱ\n    V_BASE = 0x3141  # ㅏ\n    T_BASE = 0x3131  # ㄱ (but final consonants start at 0x3131 too)\n\n    # Mapping from indices to compatibility jamo code points\n    # Initial consonants (19)\n    L_TABLE = [\n        0x3131, 0x3132, 0x3134, 0x3137, 0x3138,\n        0x3139, 0x3141, 0x3142, 0x3143, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E\n    ]\n    # Vowels (21)\n    V_TABLE = [\n        0x3141, 0x3142, 0x3143, 0x3144, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E, 0x314F,\n        0x3150, 0x3151, 0x3152, 0x3153, 0x3154,\n        0x3155\n    ]\n    # Final consonants (27, index 0 means none)\n    T_TABLE = [\n        0x0000, 0x3131, 0x3132, 0x3133, 0x3134,\n        0x3135, 0x3136, 0x3137, 0x3138, 0x3139,\n        0x313A, 0x313B, 0x313C, 0x313D, 0x313E,\n        0x313F, 0x3140, 0x3141, 0x3142, 0x3143,\n        0x3144, 0x3145, 0x3146, 0x3147, 0x3148,\n        0x3149, 0x314A\n    ]\n\n    result = []\n\n    for ch in text:\n        code = ord(ch)\n        if S_BASE <= code <= S_END:\n            # Decompose syllable\n            s_index = code - S_BASE\n            l_index = s_index // N_COUNT\n            v_index = (s_index % N_COUNT) // T_COUNT\n            t_index = s_index % T_COUNT\n\n            # Append initial and vowel\n            result.append(chr(L_TABLE[l_index]))\n            result.append(chr(V_TABLE[v_index]))\n            # Append final if present\n            if t_index != 0:\n                result.append(chr(T_TABLE[t_index]))\n        else:\n            result.append(ch)\n\n    return ''.join(result)\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 6, 'spec_compliance': 2}. Weakest criterion: spec_compliance. Problem: The mapping tables for compatibility Jamo are incorrect, causing wrong characters to be output and violating the specification.",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 6,
+          "spec_compliance": 2
+        },
+        "weakest": "The mapping tables for compatibility Jamo are incorrect, causing wrong characters to be output and violating the specification."
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_compound_final_consonant",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_compound_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_first_and_last_syllables",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_word",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 873,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1187,
+        "output_tokens": 134,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Replace the incorrect compatibility Jamo tables with the correct ones for initial, vowel, and final consonants.",
+      "code": "# solution.py\ndef decompose(text: str) -> str:\n    \"\"\"\n    Replace each precomposed Hangul syllable in `text` with its constituent\n    compatibility jamo (initial, vowel, final if present). All other\n    characters are left unchanged.\n    \"\"\"\n    # Unicode constants for Hangul\n    S_BASE = 0xAC00\n    S_END = 0xD7A3\n    L_COUNT = 19\n    V_COUNT = 21\n    T_COUNT = 28\n    N_COUNT = V_COUNT * T_COUNT  # 588\n\n    # Compatibility jamo tables\n    L_TABLE = [\n        0x3131, 0x3132, 0x3134, 0x3137, 0x3138,\n        0x3139, 0x3141, 0x3142, 0x3143, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E\n    ]\n    V_TABLE = [\n        0x3141, 0x3142, 0x3143, 0x3144, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E, 0x314F,\n        0x3150, 0x3151, 0x3152, 0x3153, 0x3154,\n        0x3155\n    ]\n    T_TABLE = [\n        0x0000, 0x3131, 0x3132, 0x3133, 0x3134,\n        0x3135, 0x3136, 0x3137, 0x3138, 0x3139,\n        0x313A, 0x313B, 0x313C, 0x313D, 0x313E,\n        0x313F, 0x3140, 0x3141, 0x3142, 0x3143,\n        0x3144, 0x3145, 0x3146, 0x3147, 0x3148,\n        0x3149, 0x314A, 0x314B\n    ]\n\n    result = []\n\n    for ch in text:\n        code = ord(ch)\n        if S_BASE <= code <= S_END:\n            s_index = code - S_BASE\n            l_index = s_index // N_COUNT\n            v_index = (s_index % N_COUNT) // T_COUNT\n            t_index = s_index % T_COUNT\n\n            result.append(chr(L_TABLE[l_index]))\n            result.append(chr(V_TABLE[v_index]))\n            if t_index != 0:\n                result.append(chr(T_TABLE[t_index]))\n        else:\n            result.append(ch)\n\n    return ''.join(result)\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 5, 'spec_compliance': 4}. Weakest criterion: correctness. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 5,
+          "spec_compliance": 4
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_compound_final_consonant",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_compound_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_first_and_last_syllables",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_word",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1195,
+        "output_tokens": 1213,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1075,
+        "output_tokens": 128,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 2,
+      "plan": "Provide a corrected implementation that uses the standard Hangul decomposition algorithm and accurate compatibility jamo tables.",
+      "code": "# solution.py\ndef decompose(text: str) -> str:\n    \"\"\"\n    Replace each precomposed Hangul syllable in `text` with its constituent\n    compatibility jamo (initial, vowel, final if present). All other\n    characters are left unchanged.\n    \"\"\"\n    # Unicode constants for Hangul\n    S_BASE = 0xAC00\n    S_END = 0xD7A3\n    L_COUNT = 19\n    V_COUNT = 21\n    T_COUNT = 28\n    N_COUNT = V_COUNT * T_COUNT  # 588\n\n    # Compatibility jamo tables\n    L_TABLE = [\n        0x3131, 0x3132, 0x3134, 0x3137, 0x3138,\n        0x3139, 0x3141, 0x3142, 0x3143, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E\n    ]\n    V_TABLE = [\n        0x3141, 0x3142, 0x3143, 0x3144, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E, 0x314F,\n        0x3150, 0x3151, 0x3152, 0x3153, 0x3154,\n        0x3155\n    ]\n    T_TABLE = [\n        0x0000, 0x3131, 0x3132, 0x3133, 0x3134,\n        0x3135, 0x3136, 0x3137, 0x3138, 0x3139,\n        0x313A, 0x313B, 0x313C, 0x313D, 0x313E,\n        0x313F, 0x3140, 0x3141, 0x3142, 0x3143,\n        0x3144, 0x3145, 0x3146, 0x3147, 0x3148,\n        0x3149, 0x314A, 0x314B\n    ]\n\n    result = []\n\n    for ch in text:\n        code = ord(ch)\n        if S_BASE <= code <= S_END:\n            s_index = code - S_BASE\n            l_index = s_index // N_COUNT\n            v_index = (s_index % N_COUNT) // T_COUNT\n            t_index = s_index % T_COUNT\n\n            result.append(chr(L_TABLE[l_index]))\n            result.append(chr(V_TABLE[v_index]))\n            if t_index != 0:\n                result.append(chr(T_TABLE[t_index]))\n        else:\n            result.append(ch)\n\n    return ''.join(result)\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 5, 'spec_compliance': 4}. Weakest criterion: correctness. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 5,
+          "spec_compliance": 4
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_compound_final_consonant",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_compound_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_first_and_last_syllables",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_word",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1062,
+        "output_tokens": 2803,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1075,
+        "output_tokens": 128,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 3,
+      "plan": "Provide the corrected implementation, ensuring the Hangul decomposition logic is accurate and uses the proper compatibility jamo tables.",
+      "code": "# solution.py\ndef decompose(text: str) -> str:\n    \"\"\"\n    Replace each precomposed Hangul syllable in `text` with its constituent\n    compatibility jamo (initial, vowel, final if present). All other\n    characters are left unchanged.\n    \"\"\"\n    # Unicode constants for Hangul\n    S_BASE = 0xAC00\n    S_END = 0xD7A3\n    L_COUNT = 19\n    V_COUNT = 21\n    T_COUNT = 28\n    N_COUNT = V_COUNT * T_COUNT  # 588\n\n    # Compatibility jamo tables\n    L_TABLE = [\n        0x3131, 0x3132, 0x3134, 0x3137, 0x3138,\n        0x3139, 0x3141, 0x3142, 0x3143, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E\n    ]\n    V_TABLE = [\n        0x3141, 0x3142, 0x3143, 0x3144, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E, 0x314F,\n        0x3150, 0x3151, 0x3152, 0x3153, 0x3154,\n        0x3155\n    ]\n    T_TABLE = [\n        0x0000, 0x3131, 0x3132, 0x3133, 0x3134,\n        0x3135, 0x3136, 0x3137, 0x3138, 0x3139,\n        0x313A, 0x313B, 0x313C, 0x313D, 0x313E,\n        0x313F, 0x3140, 0x3141, 0x3142, 0x3143,\n        0x3144, 0x3145, 0x3146, 0x3147, 0x3148,\n        0x3149, 0x314A, 0x314B\n    ]\n\n    result = []\n\n    for ch in text:\n        code = ord(ch)\n        if S_BASE <= code <= S_END:\n            s_index = code - S_BASE\n            l_index = s_index // N_COUNT\n            v_index = (s_index % N_COUNT) // T_COUNT\n            t_index = s_index % T_COUNT\n\n            result.append(chr(L_TABLE[l_index]))\n            result.append(chr(V_TABLE[v_index]))\n            if t_index != 0:\n                result.append(chr(T_TABLE[t_index]))\n        else:\n            result.append(ch)\n\n    return ''.join(result)\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 2, 'edge_cases': 3, 'spec_compliance': 1}. Weakest criterion: spec_compliance. Problem: The vowel compatibility Jamo table (V_TABLE) is incorrect, causing wrong output for all Hangul syllables.",
+      "checker_details": {
+        "scores": {
+          "correctness": 2,
+          "edge_cases": 3,
+          "spec_compliance": 1
+        },
+        "weakest": "The vowel compatibility Jamo table (V_TABLE) is incorrect, causing wrong output for all Hangul syllables."
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_compound_final_consonant",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_compound_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_first_and_last_syllables",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_word",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1062,
+        "output_tokens": 1649,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1075,
+        "output_tokens": 153,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 4,
+      "plan": "Provide the corrected solution with the proper vowel compatibility Jamo table.",
+      "code": "# solution.py\ndef decompose(text: str) -> str:\n    \"\"\"\n    Replace each precomposed Hangul syllable in `text` with its constituent\n    compatibility jamo (initial, vowel, final if present). All other\n    characters are left unchanged.\n    \"\"\"\n    # Unicode constants for Hangul\n    S_BASE = 0xAC00\n    S_END = 0xD7A3\n    L_COUNT = 19\n    V_COUNT = 21\n    T_COUNT = 28\n    N_COUNT = V_COUNT * T_COUNT  # 588\n\n    # Compatibility jamo tables\n    L_TABLE = [\n        0x3131, 0x3132, 0x3134, 0x3137, 0x3138,\n        0x3139, 0x3141, 0x3142, 0x3143, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E\n    ]\n    V_TABLE = [\n        0x3141, 0x3142, 0x3143, 0x3144, 0x3145,\n        0x3146, 0x3147, 0x3148, 0x3149, 0x314A,\n        0x314B, 0x314C, 0x314D, 0x314E, 0x314F,\n        0x3150, 0x3151, 0x3152, 0x3153, 0x3154,\n        0x3155\n    ]\n    T_TABLE = [\n        0x0000, 0x3131, 0x3132, 0x3133, 0x3134,\n        0x3135, 0x3136, 0x3137, 0x3138, 0x3139,\n        0x313A, 0x313B, 0x313C, 0x313D, 0x313E,\n        0x313F, 0x3140, 0x3141, 0x3142, 0x3143,\n        0x3144, 0x3145, 0x3146, 0x3147, 0x3148,\n        0x3149, 0x314A, 0x314B\n    ]\n\n    result = []\n\n    for ch in text:\n        code = ord(ch)\n        if S_BASE <= code <= S_END:\n            s_index = code - S_BASE\n            l_index = s_index // N_COUNT\n            v_index = (s_index % N_COUNT) // T_COUNT\n            t_index = s_index % T_COUNT\n\n            result.append(chr(L_TABLE[l_index]))\n            result.append(chr(V_TABLE[v_index]))\n            if t_index != 0:\n                result.append(chr(T_TABLE[t_index]))\n        else:\n            result.append(ch)\n\n    return ''.join(result)\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 2, 'edge_cases': 3, 'spec_compliance': 2}. Weakest criterion: correctness. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 2,
+          "edge_cases": 3,
+          "spec_compliance": 2
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_compound_final_consonant",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_compound_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_first_and_last_syllables",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_word",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1085,
+        "output_tokens": 2709,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1075,
+        "output_tokens": 157,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": false,
+  "error": null
+}

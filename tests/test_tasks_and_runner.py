@@ -37,3 +37,23 @@ def test_fake_experiment_resumes_and_summarizes(tmp_path: Path):
     rows = {r["variant"]: r for r in summarize(load_traces(tmp_path))}
     assert rows["A"]["false_final"] == 2 and rows["A"]["false_final_rate"] == 1.0
     assert rows["E"]["final_correct"] == 2 and rows["E"]["false_final"] == 0
+
+
+def _it(verdict: str, correct: bool) -> dict:
+    usage = {"calls": 1, "truncated": 0}
+    return {"verdict": verdict, "ground_truth": {"all_passed": correct}, "maker_usage": usage, "checker_usage": usage}
+
+
+def test_false_alarm_and_broke_working_metrics():
+    trace = {
+        "variant": "D",
+        "final_decision": "FINAL",
+        "final_correct": False,
+        # correct first try, checker rejects it anyway (false alarm), maker "fixes" it into a bug,
+        # then the checker approves the broken code (false FINAL)
+        "iterations": [_it("ITERATING", True), _it("FINAL", False)],
+    }
+    (row,) = summarize([trace])
+    assert row["false_alarms"] == 1
+    assert row["broke_working"] == 1
+    assert row["false_final"] == 1

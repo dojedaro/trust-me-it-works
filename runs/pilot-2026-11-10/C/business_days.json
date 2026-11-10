@@ -1,0 +1,50 @@
+{
+  "task_id": "business_days",
+  "room": "time",
+  "variant": "C",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "score",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement business_days by parsing dates, iterating day by day, counting weekdays not in holidays, returning 0 if end <= start.",
+      "code": "from datetime import datetime, timedelta\n\ndef business_days(start: str, end: str, holidays: list[str]) -> int:\n    \"\"\"\n    Count business days from start (inclusive) to end (exclusive).\n    A business day is Monday to Friday and not in the holidays list.\n    If end is not after start, return 0.\n    \"\"\"\n    # Parse dates\n    start_dt = datetime.strptime(start, \"%Y-%m-%d\").date()\n    end_dt = datetime.strptime(end, \"%Y-%m-%d\").date()\n\n    if end_dt <= start_dt:\n        return 0\n\n    # Convert holidays to a set of date objects for fast lookup\n    holiday_set = {datetime.strptime(h, \"%Y-%m-%d\").date() for h in holidays}\n\n    count = 0\n    current = start_dt\n    while current < end_dt:\n        if current.weekday() < 5 and current not in holiday_set:\n            count += 1\n        current += timedelta(days=1)\n\n    return count\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 10, 'spec_compliance': 10}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 283,
+        "output_tokens": 262,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 574,
+        "output_tokens": 76,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

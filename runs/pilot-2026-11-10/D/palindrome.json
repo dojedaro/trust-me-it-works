@@ -1,0 +1,259 @@
+{
+  "task_id": "palindrome",
+  "room": "text",
+  "variant": "D",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "tests",
+  "checker_model": "openai/gpt-oss-120b",
+  "max_iters": 5,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Normalize the string by removing accents, converting to lowercase, keeping only alphanumeric characters, then check if it equals its reverse.",
+      "code": "import unicodedata\n\ndef is_palindrome(text: str) -> bool:\n    # Normalize to NFKD form to separate accents\n    normalized = unicodedata.normalize('NFKD', text)\n    # Keep only alphanumeric characters, ignore case, and strip accents\n    cleaned = ''.join(\n        ch.lower()\n        for ch in normalized\n        if ch.isalnum() and unicodedata.category(ch)[0] != 'M'\n    )\n    # Empty string is a palindrome\n    return cleaned == cleaned[::-1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n12/16 tests passed.\n- test_digits_and_letters: AssertionError\n- test_invalid_type_raises: TypeError: normalize() argument 2 must be str, not None\n- test_long_non_palindrome: AssertionError\n- test_superscript_and_subscript_digits: AssertionError",
+      "checker_details": {
+        "tests": "import unicodedata\nimport pytest\nfrom solution import is_palindrome\n\ndef test_empty_string():\n    assert is_palindrome(\"\") is True\n\ndef test_only_non_alnum_characters():\n    # Should be considered empty after cleaning -> palindrome\n    assert is_palindrome(\"!@#$%^&*()\") is True\n\ndef test_simple_palindrome():\n    assert is_palindrome(\"madam\") is True\n    assert is_palindrome(\"Madam\") is True  # case insensitivity\n\ndef test_simple_non_palindrome():\n    assert is_palindrome(\"hello\") is False\n\ndef test_palindrome_with_spaces_and_punctuation():\n    assert is_palindrome(\"Never odd or even\") is True\n    assert is_palindrome(\"A man, a plan, a canal: Panama!\") is True\n\ndef test_accented_characters():\n    # é should be treated as e\n    assert is_palindrome(\"Été\") is True\n    # Mixed accented and plain letters\n    assert is_palindrome(\"Àbçbà\") is True\n\ndef test_unicode_normalization_edge_cases():\n    # LATIN SMALL LETTER SHARP S should be treated as itself\n    assert is_palindrome(\"ß\") is True\n    # German ß vs ss – not considered equal, so \"ßs\" is not a palindrome\n    assert is_palindrome(\"ßs\") is False\n\ndef test_combining_marks_only():\n    # String of only combining marks becomes empty -> palindrome\n    assert is_palindrome(\"\\u0301\\u0300\\u0327\") is True\n\ndef test_mixed_combining_and_base():\n    # 'e' + combining acute should be treated as 'e'\n    s = \"e\\u0301e\"\n    assert is_palindrome(s) is True\n    # Different order should fail\n    assert is_palindrome(\"e\\u0301a\") is False\n\ndef test_digits_and_letters():\n    assert is_palindrome(\"1a2a1\") is True\n    assert is_palindrome(\"12321\") is True\n    assert is_palindrome(\"12a21\") is False\n\ndef test_superscript_and_subscript_digits():\n    # SUPERSCRIPT FOUR (⁴) normalizes to '4'\n    assert is_palindrome(\"⁴4⁴\") is True\n    # MIXED normal and superscript digits\n    assert is_palindrome(\"4⁴\") is False\n\ndef test_non_latin_scripts():\n    # Arabic palindrome ignoring diacritics\n    arabic = \"مَرْحَبًابَحْرَم\"\n    # After removing diacritics it reads the same forwards/backwards\n    assert is_palindrome(arabic) is True\n\ndef test_case_folding_with_turkish_i():\n    # Capital I with dot above should normalize to 'i'\n    s = \"İi\"\n    assert is_palindrome(s) is True\n\ndef test_long_non_palindrome():\n    long_str = \"a\" * 1000 + \"b\" + \"a\" * 1000\n    assert is_palindrome(long_str) is False\n\ndef test_long_palindrome():\n    long_pal = \"a\" * 5000 + \"b\" * 5000 + \"b\" * 5000 + \"a\" * 5000\n    assert is_palindrome(long_pal) is True\n\ndef test_invalid_type_raises():\n    with pytest.raises(AttributeError):\n        is_palindrome(None)  # None has no isalnum method\n",
+        "report": {
+          "passed": 12,
+          "total": 16,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_digits_and_letters",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_invalid_type_raises",
+              "message": "TypeError: normalize() argument 2 must be str, not None"
+            },
+            {
+              "name": "test_long_non_palindrome",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_superscript_and_subscript_digits",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 225,
+        "output_tokens": 179,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 393,
+        "output_tokens": 1876,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Implement a robust palindrome checker that normalizes accents, maps superscript/subscript digits to normal digits, handles None input, and ignores non‑alphanumeric characters.",
+      "code": "import unicodedata\n\ndef is_palindrome(text: str) -> bool:\n    \"\"\"\n    Return True if `text` reads the same forwards and backwards,\n    considering only letters and digits, ignoring case and accents.\n    The empty string is a palindrome.\n    \"\"\"\n    if text is None:\n        raise TypeError(\"text must be a string, not None\")\n\n    cleaned_chars = []\n\n    for ch in text:\n        # Handle letters: normalize accents and lower case\n        if ch.isalpha():\n            # Decompose accents (NFKD) and keep only base characters\n            for base in unicodedata.normalize('NFKD', ch):\n                if unicodedata.category(base)[0] != 'M':  # skip marks\n                    cleaned_chars.append(base.lower())\n        # Handle digits, including superscript/subscript digits\n        elif ch.isdigit() or unicodedata.digit(ch, None) is not None:\n            # Convert any digit representation to its numeric value\n            digit_value = unicodedata.digit(ch, None)\n            if digit_value is None:\n                # Fallback: use the character itself if it is a standard digit\n                digit_value = int(ch)\n            cleaned_chars.append(str(digit_value))\n        # Ignore all other characters\n\n    cleaned = ''.join(cleaned_chars)\n    return cleaned == cleaned[::-1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n12/13 tests passed.\n- test_non_string_input: TypeError: 'int' object is not iterable",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import is_palindrome\n\n# Basic specifications\ndef test_empty_string_is_palindrome():\n    assert is_palindrome(\"\") is True\n\ndef test_whitespace_only_is_palindrome():\n    assert is_palindrome(\"   \\t\\n  \") is True\n\ndef test_simple_true_palindrome():\n    assert is_palindrome(\"Never odd or even\") is True\n\ndef test_simple_false_palindrome():\n    assert is_palindrome(\"abc\") is False\n\n# Case‑insensitivity\ndef test_mixed_case_palindrome():\n    assert is_palindrome(\"MadAm\") is True\n    assert is_palindrome(\"Madam, I'm Adam\") is True\n\n# Accent handling\ndef test_accented_characters():\n    # é → e, à → a, Ö → o\n    assert is_palindrome(\"ÉàÖ\") is False  # cleaned \"eao\" not a palindrome\n    assert is_palindrome(\"Éa aé\") is True   # cleaned \"eaae\"\n\n# Digits, including superscript / subscript and other numeric forms\ndef test_various_digit_forms():\n    # Normal digits\n    assert is_palindrome(\"12321\") is True\n    # Superscript digits (U+2070 etc.)\n    superscript = \"\\u2070\\u00B9\\u00B2\\u00B2\\u00B9\\u2070\"  # 0 1 2 2 1 0\n    assert is_palindrome(superscript) is True\n    # Arabic‑Indic digits\n    arabic = \"\\u0661\\u0662\\u0663\\u0662\\u0661\"  # 12321\n    assert is_palindrome(arabic) is True\n    # Mixed digit representations should still match\n    mixed = \"1\\u00B23\\u00B21\"  # 1 2 3 2 1\n    assert is_palindrome(mixed) is True\n\n# Characters that decompose into multiple base letters (ligatures)\ndef test_ligature_decomposition():\n    # LATIN SMALL LIGATURE OE (œ) → \"oe\"\n    assert is_palindrome(\"œ\") is True   # cleaned \"oe\" vs reversed \"eo\" → not palindrome, expect False\n    # The correct behaviour per spec is to treat \"œ\" as \"oe\"\n    assert is_palindrome(\"œœ\") is True   # cleaned \"oeoe\" → palindrome\n    # A palindrome that relies on correct decomposition\n    assert is_palindrome(\"œaœ\") is True   # cleaned \"oeaoe\" → palindrome\n\n# Combining characters that are not marks (should be ignored)\ndef test_combining_characters():\n    # The character U+20DD COMBINING ENCLOSING CIRCLE is a mark and should be ignored\n    base = \"a\"\n    combining = \"\\u20DD\"\n    assert is_palindrome(base + combining + base) is True\n    # A non‑mark combining character (e.g., U+20E5 COMBINING REVERSE SOLIDUS OVERLAY) should be ignored as well\n    assert is_palindrome(\"b\\u20E5b\") is True\n\n# Non‑alphanumeric Unicode symbols should be ignored\ndef test_ignored_symbols():\n    assert is_palindrome(\"😊a😊\") is True   # emojis ignored, leaves \"a\"\n    assert is_palindrome(\"✈️b✈️\") is True   # airplane symbols ignored, leaves \"b\"\n    # Mixed ignored symbols with palindrome core\n    assert is_palindrome(\"✈️a😊b😊a✈️\") is True   # core \"ab a\" → \"aba\" palindrome\n\n# Non‑string input should raise TypeError\ndef test_non_string_input():\n    with pytest.raises(TypeError):\n        is_palindrome(None)\n    with pytest.raises(AttributeError):\n        # Passing an integer will cause an AttributeError when .isalpha() is called\n        is_palindrome(123)\n\n# Edge case: characters that are letters but decompose to a mark and a base that is a digit\ndef test_letter_decomposes_to_digit():\n    # The character U+00B2 (SUPERSCRIPT TWO) is a digit, not a letter, but ensure it is handled as digit\n    assert is_palindrome(\"\\u00B2\\u00B2\") is True\n    # A letter that decomposes to a digit-like base (e.g., LATIN SMALL LETTER TURNED K) – should be treated as a letter\n    assert is_palindrome(\"\\u029E\") is True   # cleaned \"ʞ\" → palindrome\n\n# Very long palindrome with mixed Unicode\ndef test_long_mixed_unicode_palindrome():\n    text = (\n        \"ÀéÍóÚ\"          # accented letters\n        \"𝟙𝟚𝟛𝟚𝟙\"          # mathematical double‑struck digits\n        \"😊🚀😊\"          # emojis (ignored)\n        \"𝟙𝟚𝟛𝟚𝟙\"\n        \"ÚóÍéÀ\"\n    )\n    # After cleaning: \"aeiou12321uoiea\" → palindrome\n    assert is_palindrome(text) is True\n",
+        "report": {
+          "passed": 12,
+          "total": 13,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_non_string_input",
+              "message": "TypeError: 'int' object is not iterable"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 435,
+        "output_tokens": 533,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 560,
+        "output_tokens": 2019,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 2,
+      "plan": "Add a type check to raise TypeError for non-string inputs and simplify the normalization logic.",
+      "code": "import unicodedata\n\ndef is_palindrome(text: str) -> bool:\n    \"\"\"\n    Return True if `text` reads the same forwards and backwards,\n    considering only letters and digits, ignoring case and accents.\n    The empty string is a palindrome.\n    \"\"\"\n    if not isinstance(text, str):\n        raise TypeError(\"text must be a string\")\n\n    cleaned = []\n\n    for ch in text:\n        # Normalize to decompose accents (NFKD) and keep base characters\n        for base in unicodedata.normalize('NFKD', ch):\n            cat = unicodedata.category(base)\n            if cat[0] == 'M':  # skip combining marks\n                continue\n            if base.isalpha() or base.isdigit():\n                cleaned.append(base.lower())\n\n    s = ''.join(cleaned)\n    return s == s[::-1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n12/13 tests passed.\n- test_unicode_decomposition_to_multiple_letters: AssertionError",
+      "checker_details": {
+        "tests": "import unicodedata\nimport pytest\nfrom solution import is_palindrome\n\ndef _reference_is_palindrome(text: str) -> bool:\n    \"\"\"Reference implementation based on the task description.\"\"\"\n    if not isinstance(text, str):\n        raise TypeError\n    # Decompose, strip combining marks, keep alphanumerics, lower‑case\n    normalized = unicodedata.normalize('NFKD', text)\n    filtered = [\n        ch.lower()\n        for ch in normalized\n        if not unicodedata.category(ch).startswith('M') and (ch.isalpha() or ch.isdigit())\n    ]\n    s = ''.join(filtered)\n    return s == s[::-1]\n\ndef test_empty_string():\n    assert is_palindrome(\"\") is True\n    assert _reference_is_palindrome(\"\") is True\n\ndef test_non_string_input():\n    with pytest.raises(TypeError):\n        is_palindrome(123)\n    with pytest.raises(TypeError):\n        _reference_is_palindrome(123)\n\ndef test_simple_palindrome_ignoring_case_and_spaces():\n    s = \"Never odd or even\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_simple_non_palindrome():\n    s = \"abc\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == False\n\ndef test_accented_characters():\n    s = \"Ésope reste ici et se repose\"\n    # The phrase is a palindrome when accents are ignored\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_combining_marks_only():\n    # String of only combining marks should be treated as empty -> palindrome\n    s = \"\\u0301\\u0300\\u0327\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_mixed_scripts_and_digits():\n    s = \"A1ß 1a\"\n    # ß lower‑cases to 'ß' (still a letter) and is symmetric here\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_unicode_decomposition_to_multiple_letters():\n    # LATIN CAPITAL LETTER L WITH SMALL LETTER J (ǈ) decomposes to 'L' + 'j'\n    s = \"ǈǈ\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_non_alphanumeric_ignored():\n    s = \"Madam, I'm Adam!\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_long_non_palindrome_with_accents_and_symbols():\n    s = \"This is definitely NOT a palindrome!!! 12345\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == False\n\ndef test_palindrome_with_emoji_and_symbols():\n    s = \"😊A man, a plan, a canal: Panama😊\"\n    # Emojis are ignored, the rest is a palindrome\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_surrogate_pair_handling():\n    # Musical symbol G clef (U+1D11E) is a surrogate pair; should be ignored\n    s = \"\\U0001D11EabcCBA\\U0001D11E\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n\ndef test_digits_and_letters_mixed():\n    s = \"12321\"\n    assert is_palindrome(s) == _reference_is_palindrome(s) == True\n    s2 = \"12a21\"\n    assert is_palindrome(s2) == _reference_is_palindrome(s2) == True\n    s3 = \"12ab21\"\n    assert is_palindrome(s3) == _reference_is_palindrome(s3) == False\n",
+        "report": {
+          "passed": 12,
+          "total": 13,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_unicode_decomposition_to_multiple_letters",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 565,
+        "output_tokens": 260,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 458,
+        "output_tokens": 1486,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 3,
+      "plan": "Simplify normalization by applying NFKD to the whole string and filtering out non‑alphanumeric and combining characters.",
+      "code": "import unicodedata\n\ndef is_palindrome(text: str) -> bool:\n    \"\"\"\n    Return True if `text` reads the same forwards and backwards,\n    considering only letters and digits, ignoring case and accents.\n    The empty string is a palindrome.\n    \"\"\"\n    if not isinstance(text, str):\n        raise TypeError(\"text must be a string\")\n\n    # Decompose characters (e.g., é → e + ´, ß → ss)\n    decomposed = unicodedata.normalize('NFKD', text)\n\n    # Keep only alphanumeric base characters, ignore case\n    cleaned = [\n        ch.lower()\n        for ch in decomposed\n        if ch.isalnum() and unicodedata.combining(ch) == 0\n    ]\n\n    s = ''.join(cleaned)\n    return s == s[::-1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n7/9 tests passed.\n- test_mixed_case_and_accents: AssertionError\n- test_non_ascii_alphanumeric: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import is_palindrome\n\ndef test_empty_string():\n    assert is_palindrome(\"\") is True\n\ndef test_only_punctuation_is_palindrome():\n    # No alphanumeric characters -> cleaned string is empty -> should be palindrome\n    assert is_palindrome(\"!@#$%^&*()_+-=[]{}|;':\\\",.<>/?`~\") is True\n\ndef test_numeric_palindrome():\n    assert is_palindrome(\"12321\") is True\n    assert is_palindrome(\"12 3 21\") is True\n    assert is_palindrome(\"12345\") is False\n\ndef test_mixed_case_and_accents():\n    # é should be treated as e, Ü as u, etc.\n    assert is_palindrome(\"ÉuUé\") is True\n    assert is_palindrome(\"ÉuUè\") is False\n\ndef test_combining_characters():\n    # The character \"a\" followed by a combining ring should be treated as \"a\"\n    s = \"a\\u030A\"  # å\n    assert is_palindrome(s) is True\n    # Two different combining sequences that normalize to the same base should still match\n    s1 = \"a\\u030A\"          # å\n    s2 = \"\\u00E5\"           # å (precomposed)\n    assert is_palindrome(s1 + s2) is True\n\ndef test_non_ascii_alphanumeric():\n    # Cyrillic letters are alphanumeric and should be considered\n    assert is_palindrome(\"А роза упала на лапу Азора\") is True\n    # Greek letters\n    assert is_palindrome(\"ΑΒΓΓΒΑ\") is True\n    assert is_palindrome(\"ΑΒΓΔΓΒΑ\") is False\n\ndef test_sharp_s_german():\n    # In German, ß is often treated as \"ss\". Our spec does NOT require this,\n    # but a correct implementation that normalizes ß to \"ss\" would consider\n    # \"ss\" a palindrome while \"ß\" alone is trivially a palindrome.\n    # Here we assert the expected behavior according to the problem statement:\n    # \"ß\" alone is a palindrome, but \"ßs\" should not be.\n    assert is_palindrome(\"ß\") is True\n    assert is_palindrome(\"ßs\") is False\n\ndef test_surrogate_pair_characters():\n    # Emoji are not alphanumeric and should be ignored\n    assert is_palindrome(\"😊a😊\") is True\n    # Mixed with alphanumerics\n    assert is_palindrome(\"😊ab😊\") is False\n\ndef test_type_error_on_non_string():\n    with pytest.raises(TypeError):\n        is_palindrome(12345)\n    with pytest.raises(TypeError):\n        is_palindrome(None)\n    with pytest.raises(TypeError):\n        is_palindrome(b'bytes')\n",
+        "report": {
+          "passed": 7,
+          "total": 9,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_mixed_case_and_accents",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_non_ascii_alphanumeric",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 458,
+        "output_tokens": 841,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 455,
+        "output_tokens": 1244,
+        "truncated": 0
+      }
+    },
+    {
+      "index": 4,
+      "plan": "Normalize the text with NFKD, filter out combining marks, keep only letters and digits, convert to lowercase, and compare with its reverse.",
+      "code": "import unicodedata\n\ndef is_palindrome(text: str) -> bool:\n    \"\"\"\n    Return True if `text` reads the same forwards and backwards,\n    considering only letters and digits, ignoring case and accents.\n    The empty string is a palindrome.\n    \"\"\"\n    if not isinstance(text, str):\n        raise TypeError(\"text must be a string\")\n\n    # Decompose characters (e.g., é → e + ´)\n    decomposed = unicodedata.normalize('NFKD', text)\n\n    # Keep only base letters/digits, ignore case\n    cleaned = [\n        ch.lower()\n        for ch in decomposed\n        if unicodedata.combining(ch) == 0\n        and unicodedata.category(ch)[0] in ('L', 'N')\n    ]\n\n    s = ''.join(cleaned)\n    return s == s[::-1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n11/13 tests passed.\n- test_ligature_and_digraph: AssertionError\n- test_long_non_palindrome: AssertionError",
+      "checker_details": {
+        "tests": "import pytest\nfrom solution import is_palindrome\n\n# Basic correctness\ndef test_empty_string_is_palindrome():\n    assert is_palindrome(\"\") is True\n\ndef test_simple_palindrome_ignores_spaces_and_case():\n    assert is_palindrome(\"Never odd or even\") is True\n    assert is_palindrome(\"Never   ODD   Or   EVEN\") is True\n\ndef test_non_palindrome():\n    assert is_palindrome(\"abc\") is False\n    assert is_palindrome(\"abca\") is False\n\n# Accents handling\ndef test_accented_characters_are_normalized():\n    # é should be treated as e, Ü as u, ñ as n\n    assert is_palindrome(\"ÉuñUe\") is True\n    # Mixed with non‑letters\n    assert is_palindrome(\"É!u?ñ;U:e\") is True\n\ndef test_combining_marks_only_are_ignored():\n    # String consisting solely of combining marks should be considered empty -> palindrome\n    combining = \"\\u0301\\u0300\\u0327\"  # acute, grave, cedilla combining marks\n    assert is_palindrome(combining) is True\n\ndef test_non_alphanumeric_characters_are_ignored():\n    # punctuation and symbols should not affect palindrome result\n    assert is_palindrome(\"A man, a plan, a canal: Panama!\") is True\n    assert is_palindrome(\"@#$$#@\") is True  # all ignored -> empty -> palindrome\n\ndef test_digits_are_considered():\n    assert is_palindrome(\"12321\") is True\n    assert is_palindrome(\"12 3 21\") is True\n    assert is_palindrome(\"1a2b2a1\") is True\n    assert is_palindrome(\"1a2b3a1\") is False\n\n# Unicode edge cases\ndef test_german_sharp_s():\n    # According to spec, ß is a letter and should be compared as itself (not expanded to ss)\n    assert is_palindrome(\"ß\") is True\n    assert is_palindrome(\"aßa\") is True\n    assert is_palindrome(\"aßb\") is False\n\ndef test_ligature_and_digraph():\n    # ſ (long s) and ǅ (Latin capital letter D with small letter Z) should be treated as letters\n    assert is_palindrome(\"ǅǅ\") is True\n    assert is_palindrome(\"ǅaǅ\") is True\n    assert is_palindrome(\"ǅabǅ\") is False\n\ndef test_surrogate_pair_characters_are_ignored():\n    # Emoji are not letters/digits, should be ignored -> empty -> palindrome\n    assert is_palindrome(\"😀😃😄😁\") is True\n    # Mixed with letters\n    assert is_palindrome(\"A😀A\") is True\n    assert is_palindrome(\"A😀B\") is False\n\n# Type checking\ndef test_non_string_input_raises_type_error():\n    with pytest.raises(TypeError):\n        is_palindrome(123)\n    with pytest.raises(TypeError):\n        is_palindrome(b\"bytes\")\n    with pytest.raises(TypeError):\n        is_palindrome(None)\n\n# Large input performance / correctness\ndef test_long_palindrome():\n    half = \"Able was I ere I saw Elba\" * 1000\n    text = half + half[::-1]\n    assert is_palindrome(text) is True\n\ndef test_long_non_palindrome():\n    half = \"Able was I ere I saw Elba\" * 1000\n    text = half + \"X\" + half[::-1]\n    assert is_palindrome(text) is False\n",
+        "report": {
+          "passed": 11,
+          "total": 13,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_ligature_and_digraph",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_long_non_palindrome",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 465,
+        "output_tokens": 940,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 461,
+        "output_tokens": 1109,
+        "truncated": 0
+      }
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": true,
+  "error": null
+}
