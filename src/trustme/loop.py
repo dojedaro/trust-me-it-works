@@ -22,11 +22,13 @@ class Usage:
     calls: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
+    truncated: int = 0  # replies cut off at the max_tokens cap
 
     def add(self, c: Completion) -> None:
         self.calls += 1
         self.input_tokens += c.input_tokens
         self.output_tokens += c.output_tokens
+        self.truncated += c.truncated
 
 
 @dataclass

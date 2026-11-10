@@ -1,4 +1,6 @@
 # Free-tier configuration: open-weight models hosted by Groq (no cost, rate-limited).
+# Groq dropped its Llama chat models; as of 2026-11-10 the chat models offered are
+# openai/gpt-oss-20b, openai/gpt-oss-120b and qwen/qwen3.8-27b.
 # Model IDs change over time. Before a real run, check what exists with:
 #     python -m trustme models --provider groq
 # and update the two `model` values below.
@@ -6,17 +8,21 @@
 [providers.groq]
 base_url = "https://api.groq.com/openai/v1"
 api_key_env = "GROQ_API_KEY"
-min_interval_s = 2.5   # seconds between calls, to stay under free-tier requests-per-minute limits
+min_interval_s = 10.0  # seconds between calls, to stay under the free tier's tokens-per-minute limit
 
-[roles.maker]          # writes the code: a small, fast model (makes more mistakes, which is the point)
+[roles.maker]          # writes the code: the smaller model (makes more mistakes, which is the point)
 provider = "groq"
-model = "llama-3.1-8b-instant"
+model = "openai/gpt-oss-20b"
+reasoning_effort = "low"   # keeps hidden reasoning short enough to fit the free tier's token limits
 
-[roles.checker]        # checks the code: a different, larger model (maker != checker)
+[roles.checker]        # checks the code: a different, 6x larger model (maker != checker)
 provider = "groq"
-model = "llama-3.3-70b-versatile"
+model = "openai/gpt-oss-120b"
+reasoning_effort = "low"
 
 [run]
 max_iters = 5
 max_calls = 1500       # hard cap on model calls per command, across all variants
 temperature = 0.0
+max_tokens = 4096      # reasoning models spend part of this on hidden reasoning; Groq free tier counts
+                       # this cap against its 8,000 tokens-per-minute limit, so keep input + cap < 8,000

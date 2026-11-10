@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -12,6 +13,12 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 USER_AGENT = "trust-me-it-works/0.1"
+MAX_RETRY_WAIT_S = 120.0  # a longer wait means a daily quota is used up: stop and resume later
+_THINK = re.compile(r"<think>.*?</think>", re.DOTALL)
+
+
+class RateLimited(RuntimeError):
+    """The provider's quota is exhausted for longer than we are willing to wait. Re-run later to resume."""
 
 
 @dataclass
@@ -19,6 +26,7 @@ class Completion:
     text: str
     input_tokens: int = 0
     output_tokens: int = 0
+    truncated: bool = False  # the reply hit the max_tokens cap (often: all spent on hidden reasoning)
 
 
 class Model(Protocol):
@@ -75,9 +83,10 @@ class OpenAICompatModel:
     base_url: str
     api_key_env: str
     temperature: float = 0.0
-    max_tokens: int = 2048
-    min_interval_s: float = 2.0  # stay under free-tier requests-per-minute limits
+    max_tokens: int = 4096
+    min_interval_s: float = 2.0  # stay under free-tier rate limits
     max_retries: int = 6
+    reasoning_effort: str | None = None  # "low" / "medium" / "high" for reasoning models that support it
     budget: CallBudget | None = None
     _last_call: float = 0.0
 
@@ -91,14 +100,15 @@ class OpenAICompatModel:
         key = os.environ.get(self.api_key_env)
         if not key:
             raise RuntimeError(f"environment variable {self.api_key_env} is not set (see .env.example)")
-        body = json.dumps(
-            {
-                "model": self.model,
-                "temperature": self.temperature,
-                "max_tokens": self.max_tokens,
-                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-            }
-        ).encode()
+        payload = {
+            "model": self.model,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+        }
+        if self.reasoning_effort:
+            payload["reasoning_effort"] = self.reasoning_effort
+        body = json.dumps(payload).encode()
         for attempt in range(self.max_retries):
             wait = self.min_interval_s - (time.monotonic() - self._last_call)
             if wait > 0:
@@ -119,14 +129,19 @@ class OpenAICompatModel:
             except urllib.error.HTTPError as e:
                 if e.code == 429 or e.code >= 500:
                     retry_after = e.headers.get("retry-after")
-                    time.sleep(float(retry_after) if retry_after else 2.0 * 2**attempt)
+                    wait_s = float(retry_after) if retry_after else 2.0 * 2**attempt
+                    if wait_s > MAX_RETRY_WAIT_S:
+                        raise RateLimited(f"{self.model}: rate limited for {wait_s:.0f}s; re-run later") from e
+                    time.sleep(wait_s)
                     continue
                 raise RuntimeError(f"{self.model}: HTTP {e.code}: {e.read()[:500]!r}") from e
             usage = data.get("usage") or {}
+            choice = data["choices"][0]
             return Completion(
-                text=data["choices"][0]["message"]["content"] or "",
+                text=_THINK.sub("", choice["message"]["content"] or "").strip(),
                 input_tokens=usage.get("prompt_tokens", 0),
                 output_tokens=usage.get("completion_tokens", 0),
+                truncated=choice.get("finish_reason") == "length",
             )
         raise RuntimeError(f"{self.model}: gave up after {self.max_retries} retries")
 

@@ -41,6 +41,8 @@ def models_from_config(path: Path) -> tuple[Models, dict]:
             api_key_env=p["api_key_env"],
             min_interval_s=p.get("min_interval_s", 2.0),
             temperature=cfg["run"].get("temperature", 0.0),
+            max_tokens=cfg["run"].get("max_tokens", 4096),
+            reasoning_effort=r.get("reasoning_effort"),
             budget=budget,
         )
 
@@ -135,6 +137,11 @@ def summarize(traces: list[dict]) -> list[dict]:
                 "avg_iterations": round(sum(len(t["iterations"]) for t in ts) / len(ts), 2),
                 "model_calls": sum(
                     it["maker_usage"]["calls"] + it["checker_usage"]["calls"] for t in ts for it in t["iterations"]
+                ),
+                "truncated_replies": sum(
+                    it["maker_usage"].get("truncated", 0) + it["checker_usage"].get("truncated", 0)
+                    for t in ts
+                    for it in t["iterations"]
                 ),
             }
         )

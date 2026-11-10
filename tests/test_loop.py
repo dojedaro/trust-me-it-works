@@ -104,3 +104,7 @@ def test_parsing_helpers():
     assert s == {"correctness": 8, "edge_cases": 7, "spec_compliance": 9} and weakest == ""
     with pytest.raises(ValueError):
         prompts.parse_scores('{"scores": {"correctness": 11, "edge_cases": 7, "spec_compliance": 9}}')
+    assert (
+        prompts.parse_scores('{"scores": {"correctness": 0, "edge_cases": 0, "spec_compliance": 0}}')[0]["correctness"]
+        == 0
+    )

@@ -79,6 +79,6 @@ def parse_scores(text: str) -> tuple[dict[str, int], str]:
     data = json.loads(match.group(0))
     raw = data["scores"]
     scores = {c: int(raw[c]) for c in CRITERIA}
-    if not all(1 <= s <= 10 for s in scores.values()):
+    if not all(0 <= s <= 10 for s in scores.values()):  # models sometimes give 0 for empty code
         raise ValueError(f"scores out of range: {scores}")
     return scores, str(data.get("weakest", "")).strip()
