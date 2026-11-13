@@ -57,3 +57,29 @@ def test_other_bad_requests_fail_fast(monkeypatch):
 def test_server_errors_are_retried(monkeypatch):
     stub(monkeypatch, [http_error(503, b""), http_error(429, b""), OK])
     assert model().complete("s", "u").text == "hello"
+
+
+def test_anthropic_errors_map_to_the_runner_contract():
+    """The runner skips a run on RuntimeError and stops on RateLimited; SDK errors must become one of them."""
+    anthropic = pytest.importorskip("anthropic")
+    httpx = pytest.importorskip("httpx2")  # the HTTP library this SDK version uses
+
+    from trustme.models import AnthropicModel, RateLimited
+
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+
+    def failing(exc):
+        class Messages:
+            def create(self, **kw):
+                raise exc
+
+        m = AnthropicModel(model="claude-haiku-4-5")
+        m._client = type("Client", (), {"messages": Messages()})()
+        return m
+
+    limited = anthropic.RateLimitError("slow down", response=httpx.Response(429, request=request), body=None)
+    with pytest.raises(RateLimited):
+        failing(limited).complete("s", "u")
+    overloaded = anthropic.InternalServerError("overloaded", response=httpx.Response(529, request=request), body=None)
+    with pytest.raises(RuntimeError, match="InternalServerError"):
+        failing(overloaded).complete("s", "u")

@@ -205,13 +205,22 @@ class AnthropicModel:
         }
         if self.effort:
             params["output_config"] = {"effort": self.effort}
-        if self.model in _FALLBACK_MODELS:
-            # On a safety-classifier decline, the API re-runs the request on a fallback model in the same call.
-            resp = self._client.beta.messages.create(
-                betas=["server-side-fallback-2026-07-01"], fallbacks="default", **params
-            )
-        else:
-            resp = self._client.messages.create(**params)
+        import anthropic
+
+        try:
+            if self.model in _FALLBACK_MODELS:
+                # On a safety-classifier decline, the API re-runs the request on a fallback model in the same call.
+                resp = self._client.beta.messages.create(
+                    betas=["server-side-fallback-2026-07-01"], fallbacks="default", **params
+                )
+            else:
+                resp = self._client.messages.create(**params)
+        except anthropic.RateLimitError as e:
+            # The SDK already retried with backoff; stop the run so it can resume later.
+            raise RateLimited(f"{self.model}: rate limited after retries; re-run later") from e
+        except anthropic.APIError as e:
+            # The runner skips a (variant, task, sample) on RuntimeError and retries it on the next run.
+            raise RuntimeError(f"{self.model}: {type(e).__name__}: {e}") from e
         if resp.stop_reason == "refusal":
             self.refusals += 1
         text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")

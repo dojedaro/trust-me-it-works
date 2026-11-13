@@ -37,6 +37,17 @@ class CheckResult:
     feedback: str
     details: dict = field(default_factory=dict)
     usage: Usage = field(default_factory=Usage)
+    tests: str | None = None  # set by checkers that write tests, so the loop can score the tests themselves
+
+
+def write_and_run_tests(model: Model, task: Task, code: str, usage: Usage) -> tuple[str, TestReport]:
+    """Ask a model for tests designed to break `code`, then run them in the sandbox."""
+    reply = model.complete(
+        prompts.TESTWRITER_SYSTEM, prompts.TESTWRITER_USER.format(task=task.render_prompt(), code=code)
+    )
+    usage.add(reply)
+    tests = prompts.extract_code(reply.text)
+    return tests, run_tests(code, tests)
 
 
 class Checker(Protocol):
@@ -95,14 +106,10 @@ class TestWriterChecker:
 
     def check(self, task: Task, code: str) -> CheckResult:
         usage = Usage()
-        user = prompts.TESTWRITER_USER.format(task=task.render_prompt(), code=code)
-        c = self.model.complete(prompts.TESTWRITER_SYSTEM, user)
-        usage.add(c)
-        tests = prompts.extract_code(c.text)
-        report = run_tests(code, tests)
+        tests, report = write_and_run_tests(self.model, task, code, usage)
         verdict: Verdict = "FINAL" if report.all_passed else "ITERATING"
         feedback = "The reviewer wrote tests against your code.\n" + report.summary()
-        return CheckResult(verdict, feedback, {"tests": tests, "report": report.to_dict()}, usage)
+        return CheckResult(verdict, feedback, {"tests": tests, "report": report.to_dict()}, usage, tests=tests)
 
 
 @dataclass
@@ -124,19 +131,14 @@ class DisputeChecker:
 
     def check(self, task: Task, code: str) -> CheckResult:
         usage = Usage()
-        c = self.model.complete(
-            prompts.TESTWRITER_SYSTEM, prompts.TESTWRITER_USER.format(task=task.render_prompt(), code=code)
-        )
-        usage.add(c)
-        tests = prompts.extract_code(c.text)
-        report = run_tests(code, tests)
+        tests, report = write_and_run_tests(self.model, task, code, usage)
         details: dict = {"tests": tests, "report": report.to_dict(), "disputes": {}, "rulings": {}, "withdrawn": []}
         failing = [r for r in report.results if not r.passed]
         if report.all_passed or not failing:
             # Nothing to dispute: a crash or import error is not a single test the maker can argue with.
             verdict: Verdict = "FINAL" if report.all_passed else "ITERATING"
             return CheckResult(
-                verdict, "The reviewer wrote tests against your code.\n" + report.summary(), details, usage
+                verdict, "The reviewer wrote tests against your code.\n" + report.summary(), details, usage, tests=tests
             )
 
         failures = "\n".join(f"- {r.name}: {r.message}" for r in failing)
@@ -164,14 +166,16 @@ class DisputeChecker:
 
         upheld = [r for r in failing if r.name not in withdrawn]
         if not upheld:
-            return CheckResult("FINAL", "Every failing test was withdrawn after your disputes.", details, usage)
+            return CheckResult(
+                "FINAL", "Every failing test was withdrawn after your disputes.", details, usage, tests=tests
+            )
         lines = [f"The reviewer's tests: {report.passed}/{report.total} passed, {len(withdrawn)} withdrawn on review."]
         lines += [f"- {r.name}: {r.message}" for r in upheld][:5]
         for r in upheld:
             if r.name in disputed:
                 reason = details["rulings"].get(r.name, {}).get("reason", "")
                 lines.append(f"The reviewer upheld {r.name} after your dispute: {reason}")
-        return CheckResult("ITERATING", "\n".join(lines), details, usage)
+        return CheckResult("ITERATING", "\n".join(lines), details, usage, tests=tests)
 
 
 @dataclass
@@ -298,8 +302,8 @@ class Loop:
             # A checker that writes tests: run its tests against our correct reference solution.
             # A test that fails the reference is itself wrong. Recorded for analysis, never shown to anyone.
             tests_truth = None
-            if "tests" in result.details:
-                tests_truth = run_tests(task.reference, result.details["tests"]).to_dict()
+            if result.tests is not None:
+                tests_truth = run_tests(task.reference, result.tests).to_dict()
             trace.iterations.append(
                 Iteration(
                     index=i,
