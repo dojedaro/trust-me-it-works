@@ -1,0 +1,69 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "F",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests+disputes",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target month/year, determine the target day using the billing rule (last day of month handling), and return the formatted result.",
+      "code": "def add_months(day: str, n: int) -> str:\n    from datetime import date, timedelta\n    \n    # Parse the input date\n    year, month, day_of_month = map(int, day.split('-'))\n    \n    # Calculate the target month and year\n    target_month = month + n\n    target_year = year\n    \n    # Normalize month and year (handle overflow/underflow)\n    while target_month > 12:\n        target_month -= 12\n        target_year += 1\n    while target_month < 1:\n        target_month += 12\n        target_year -= 1\n    \n    # Determine the last day of the target month\n    if target_month == 12:\n        last_day_of_target_month = 31\n    else:\n        # Find last day by getting the first day of next month and subtracting 1 day\n        first_of_next = date(target_year, target_month + 1, 1)\n        last_day_of_target_month = (first_of_next - timedelta(days=1)).day\n    \n    # Determine the last day of the original month\n    if month == 12:\n        last_day_of_original_month = 31\n    else:\n        first_of_next_original = date(year, month + 1, 1)\n        last_day_of_original_month = (first_of_next_original - timedelta(days=1)).day\n    \n    # Apply billing rule\n    if day_of_month == last_day_of_original_month:\n        # Original day is last day of month -> use last day of target month\n        target_day = last_day_of_target_month\n    else:\n        # Keep the same day, or use last day if target month is too short\n        target_day = min(day_of_month, last_day_of_target_month)\n    \n    # Format and return the result\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n15/15 tests passed.",
+      "checker_details": {
+        "tests": "from solution import add_months\n\n\ndef test_basic():\n    assert add_months('2026-01-15', 1) == '2026-02-15'\n\n\ndef test_end_of_month_clamp():\n    assert add_months('2026-01-31', 1) == '2026-02-28'\n\n\ndef test_last_day_feb_to_march():\n    # Feb 28 is the last day of February, so the result is the last day of March\n    assert add_months('2026-02-28', 1) == '2026-03-31'\n\n\ndef test_last_day_30_to_31():\n    assert add_months('2026-04-30', 1) == '2026-05-31'\n\n\ndef test_leap_last_day():\n    assert add_months('2024-02-29', 12) == '2025-02-28'\n\n\ndef test_leap_feb_nonlast():\n    assert add_months('2023-01-29', 1) == '2023-02-28'\n    assert add_months('2024-01-29', 1) == '2024-02-29'\n\n\ndef test_negative():\n    assert add_months('2026-03-31', -1) == '2026-02-28'\n    assert add_months('2026-01-15', -1) == '2025-12-15'\n\n\ndef test_zero():\n    assert add_months('2026-02-28', 0) == '2026-02-28'\n    assert add_months('2026-01-10', 0) == '2026-01-10'\n\n\ndef test_large_n():\n    assert add_months('2026-01-15', 25) == '2028-02-15'\n    assert add_months('2026-01-15', -25) == '2023-12-15'\n\n\ndef test_december_source():\n    assert add_months('2025-12-31', 2) == '2026-02-28'\n    assert add_months('2025-12-15', 1) == '2026-01-15'\n\n\ndef test_december_target():\n    assert add_months('2026-11-30', 1) == '2026-12-31'\n    assert add_months('2026-10-31', 2) == '2026-12-31'\n\n\ndef test_to_december_negative():\n    assert add_months('2026-01-31', -1) == '2025-12-31'\n\n\ndef test_year_boundary_multiple():\n    assert add_months('2026-12-31', 12) == '2027-12-31'\n    assert add_months('2026-12-31', -12) == '2025-12-31'\n\n\ndef test_leap_to_leap_last_day():\n    assert add_months('2023-02-28', 12) == '2024-02-29'\n\n\ndef test_small_year_format():\n    assert add_months('0999-12-15', 1) == '1000-01-15'\n",
+        "report": {
+          "passed": 15,
+          "total": 15,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        },
+        "disputes": {},
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 545,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 939,
+        "output_tokens": 798,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 15,
+        "total": 15,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

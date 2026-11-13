@@ -1,0 +1,47 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the amount with Decimal, quantize with ROUND_HALF_UP (which rounds halves away from zero), then build the grouped string while handling the sign and zero cases.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP, InvalidOperation\n\n_CURRENCY_DECIMALS = {\n    'KRW': 0,\n    'JPY': 0,\n    'USD': 2,\n    'EUR': 2,\n    'BHD': 3,\n    'KWD': 3,\n}\n\n\ndef format_amount(amount: str, currency: str) -> str:\n    if currency not in _CURRENCY_DECIMALS:\n        raise ValueError(f\"Unknown currency: {currency}\")\n    places = _CURRENCY_DECIMALS[currency]\n\n    try:\n        value = Decimal(amount.strip())\n    except (InvalidOperation, AttributeError):\n        raise ValueError(f\"Invalid amount: {amount!r}\")\n    if not value.is_finite():\n        raise ValueError(f\"Invalid amount: {amount!r}\")\n\n    quantum = Decimal(1).scaleb(-places)\n    rounded = value.quantize(quantum, rounding=ROUND_HALF_UP)\n\n    negative = rounded < 0\n    rounded = abs(rounded)\n\n    text = format(rounded, f'.{places}f')\n    if places:\n        int_part, frac_part = text.split('.')\n    else:\n        int_part, frac_part = text, ''\n\n    grouped = f\"{int(int_part):,}\"\n    number = f\"{grouped}.{frac_part}\" if places else grouped\n\n    if negative:\n        number = '-' + number\n\n    return f\"{currency} {number}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 371,
+        "output_tokens": 571,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

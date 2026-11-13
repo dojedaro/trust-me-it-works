@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the date, compute the target year and month from a total-month index, then clamp the day to the target month's length, with the last-day-of-month rule handled by mapping to the target's last day.",
+      "code": "import calendar\n\n\ndef add_months(day: str, n: int) -> str:\n    year, month, dom = (int(p) for p in day.split(\"-\"))\n    last_src = calendar.monthrange(year, month)[1]\n    is_last = dom == last_src\n\n    total = year * 12 + (month - 1) + n\n    ty, tm_idx = divmod(total, 12)\n    ty_month = tm_idx + 1\n    last_tgt = calendar.monthrange(ty, ty_month)[1]\n\n    if is_last:\n        td = last_tgt\n    else:\n        td = min(dom, last_tgt)\n\n    return f\"{ty:04d}-{ty_month:02d}-{td:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 308,
+        "output_tokens": 296,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,374 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "F",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests+disputes",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll implement the allocate function by first handling edge cases, then distributing the total proportionally with fractional remainders determining how to allocate leftover cents.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if all(w == 0 for w in weights):\n        raise ValueError(\"Every weight is 0\")\n    \n    # Handle negative total by working with absolute value and negating at the end\n    sign = 1 if total >= 0 else -1\n    total = abs(total)\n    \n    # Calculate sum of weights\n    weight_sum = sum(weights)\n    \n    if weight_sum == 0:\n        raise ValueError(\"Every weight is 0\")\n    \n    # Calculate base allocation and fractional remainders\n    allocations = []\n    remainders = []\n    leftover = total\n    \n    for i, w in enumerate(weights):\n        if w == 0:\n            allocations.append(0)\n            remainders.append((0.0, i))\n        else:\n            exact_share = (total * w) / weight_sum\n            base = int(exact_share)  # floor\n            allocations.append(base)\n            leftover -= base\n            \n            # Store fractional part with index for tie-breaking\n            fractional = exact_share - base\n            remainders.append((fractional, i))\n    \n    # Distribute leftover cents to parts with largest fractional remainders\n    # Sort by fractional part (descending), then by index (ascending) for tie-breaking\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n    \n    for i in range(leftover):\n        idx = remainders[i][1]\n        allocations[idx] += 1\n    \n    # Apply sign\n    allocations = [x * sign for x in allocations]\n    \n    return allocations\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 8/10 passed, 0 withdrawn on review.\n- test_large_precision: IndexError: list index out of range\n- test_large_weights_exact: AssertionError",
+      "checker_details": {
+        "tests": "from solution import allocate\n\n\ndef test_examples():\n    assert allocate(100, [1, 1, 1]) == [34, 33, 33]\n    assert allocate(5, [1, 0, 1]) == [3, 0, 2]\n\n\ndef test_negative():\n    assert allocate(-100, [1, 1, 1]) == [-34, -33, -33]\n\n\ndef test_zero_total():\n    assert allocate(0, [1, 2]) == [0, 0]\n\n\ndef test_all_zero_raises():\n    try:\n        allocate(10, [0, 0])\n    except ValueError:\n        return\n    assert False\n\n\ndef test_large_precision():\n    total = 10**18 + 1\n    w = [1, 1, 1]\n    r = allocate(total, w)\n    assert sum(r) == total\n    # exact: 333333333333333333 each with remainder 1 -> first gets extra\n    assert r == [333333333333333334, 333333333333333333, 333333333333333333]\n\n\ndef test_large_weights_exact():\n    total = 10**17\n    weights = [10**17 + 1, 10**17 + 3, 7]\n    s = sum(weights)\n    exp = []\n    rem = []\n    for i, w in enumerate(weights):\n        q, r = divmod(total * w, s)\n        exp.append(q)\n        rem.append((-r, i))\n    left = total - sum(exp)\n    rem.sort()\n    for k in range(left):\n        exp[rem[k][1]] += 1\n    assert allocate(total, weights) == exp\n\n\ndef test_tie_float_issue():\n    # exact ties 1/3-ish fractions computed in floats may differ\n    total = 10**15 + 1\n    weights = [3, 3, 3, 3, 3, 3, 3]\n    r = allocate(total, weights)\n    assert sum(r) == total\n    assert r == sorted(r, reverse=True)\n\n\ndef test_tie_earlier():\n    assert allocate(1, [1, 1]) == [1, 0]\n    assert allocate(2, [1, 1, 1]) == [1, 1, 0]\n\n\ndef test_zero_weight_gets_zero():\n    assert allocate(7, [0, 3, 0, 4]) == [0, 3, 0, 4]\n\n\ndef test_negative_sum():\n    r = allocate(-7, [1, 1, 1, 1, 1, 1, 1, 1])\n    assert sum(r) == -7\n    assert r == [-1] * 7 + [0]\n",
+        "report": {
+          "passed": 8,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_large_precision",
+              "message": "IndexError: list index out of range"
+            },
+            {
+              "name": "test_large_weights_exact",
+              "message": "AssertionError"
+            }
+          ]
+        },
+        "disputes": {
+          "test_large_precision": {
+            "action": "accept",
+            "reason": "Floating-point precision errors cause incorrect fractional remainder calculation for large numbers, leading to incorrect distribution of leftover cents"
+          },
+          "test_large_weights_exact": {
+            "action": "accept",
+            "reason": "Same root cause: floating-point arithmetic loses precision with large numbers. The code should use integer division with divmod() to compute exact remainders, as the test expects"
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 457,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 2481,
+        "output_tokens": 1517,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 9,
+        "total": 10,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_large_precision",
+            "message": "AssertionError"
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "plan": "The issue is that when weight is 0, we store a remainder tuple but we should only distribute leftover to indices that have non-zero weight (since zero-weight items shouldn't get any allocation). I need to filter the remainders to only include indices with non-zero weights before distributing leftovers.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if all(w == 0 for w in weights):\n        raise ValueError(\"Every weight is 0\")\n    \n    # Handle negative total by working with absolute value and negating at the end\n    sign = 1 if total >= 0 else -1\n    total = abs(total)\n    \n    # Calculate sum of weights\n    weight_sum = sum(weights)\n    \n    if weight_sum == 0:\n        raise ValueError(\"Every weight is 0\")\n    \n    # Calculate base allocation and fractional remainders\n    allocations = []\n    remainders = []\n    leftover = total\n    \n    for i, w in enumerate(weights):\n        if w == 0:\n            allocations.append(0)\n        else:\n            exact_share = (total * w) / weight_sum\n            base = int(exact_share)  # floor\n            allocations.append(base)\n            leftover -= base\n            \n            # Store fractional part with index for tie-breaking\n            fractional = exact_share - base\n            remainders.append((fractional, i))\n    \n    # Distribute leftover cents to parts with largest fractional remainders\n    # Sort by fractional part (descending), then by index (ascending) for tie-breaking\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n    \n    for i in range(leftover):\n        idx = remainders[i][1]\n        allocations[idx] += 1\n    \n    # Apply sign\n    allocations = [x * sign for x in allocations]\n    \n    return allocations\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 10/11 passed, 0 withdrawn on review.\n- test_huge_total_exact: IndexError: list index out of range",
+      "checker_details": {
+        "tests": "from solution import allocate\n\n\ndef test_examples():\n    assert allocate(100, [1, 1, 1]) == [34, 33, 33]\n    assert allocate(5, [1, 0, 1]) == [3, 0, 2]\n\n\ndef test_negative():\n    assert allocate(-100, [1, 1, 1]) == [-34, -33, -33]\n\n\ndef test_all_zero():\n    try:\n        allocate(10, [0, 0])\n    except ValueError:\n        return\n    assert False\n\n\ndef test_huge_total_exact():\n    t = 10**30 + 1\n    r = allocate(t, [1, 1, 1])\n    assert sum(r) == t\n    assert r == [333333333333333333333333333334, 333333333333333333333333333333, 333333333333333333333333333334][0:0] or sum(r) == t\n    assert r[0] >= r[1] >= r[2]\n\n\ndef test_huge_exact_values():\n    t = 10**20\n    r = allocate(t, [1, 3])\n    assert r == [25 * 10**18, 75 * 10**18]\n\n\ndef test_tie_earlier_wins_unequal_weights():\n    # shares: 1*7/6, 2*7/6, 3*7/6 -> 1.1667, 2.333, 3.5 ; leftover 0.. check sum\n    r = allocate(7, [1, 2, 3])\n    # floors 1,2,3 =6, leftover 1 -> largest remainder .5 (third)\n    assert r == [1, 2, 4]\n\n\ndef test_tie_float_sensitive():\n    # total 1, weights 10 parts of 1 and others: exact ties\n    r = allocate(1, [3, 3, 3, 1])\n    # shares .3,.3,.3,.1 -> leftover 1 to first\n    assert r == [1, 0, 0, 0]\n\n\ndef test_tie_float_sensitive2():\n    # shares 0.1*... use weights [1,2] total 1 -> .333,.667\n    assert allocate(1, [1, 2]) == [0, 1]\n    # exact ties with differing float representations\n    r = allocate(3, [1, 1, 1, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])\n    assert sum(r) == 3\n\n\ndef test_zero_total():\n    assert allocate(0, [1, 2]) == [0, 0]\n\n\ndef test_single():\n    assert allocate(-7, [5]) == [-7]\n\n\ndef test_large_tie_precision():\n    t = 10**18 + 1\n    r = allocate(t, [1, 1])\n    assert r == [5 * 10**17 + 1, 5 * 10**17]\n",
+        "report": {
+          "passed": 10,
+          "total": 11,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_huge_total_exact",
+              "message": "IndexError: list index out of range"
+            }
+          ]
+        },
+        "disputes": {
+          "test_huge_total_exact": {
+            "action": "accept",
+            "reason": "The code fails with IndexError when processing huge totals due to floating-point precision issues in calculating remainders. With total=10**30+1 and weights=[1,1,1], the accumulated floating-point errors cause leftover to be calculated incorrectly, leading to an attempt to access more items in the remainders list than exist."
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 777,
+        "output_tokens": 475,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 2567,
+        "output_tokens": 1894,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 11,
+        "total": 11,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 2,
+      "plan": "The issue is that when a weight is 0, we skip adding to the remainders list, but then we try to access remainders[i] for i in range(leftover), which causes an IndexError when there aren't enough entries in remainders. We need to include all indices in the remainders list, using a fractional part of 0 for zero-weight items.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if all(w == 0 for w in weights):\n        raise ValueError(\"Every weight is 0\")\n    \n    # Handle negative total by working with absolute value and negating at the end\n    sign = 1 if total >= 0 else -1\n    total = abs(total)\n    \n    # Calculate sum of weights\n    weight_sum = sum(weights)\n    \n    if weight_sum == 0:\n        raise ValueError(\"Every weight is 0\")\n    \n    # Calculate base allocation and fractional remainders\n    allocations = []\n    remainders = []\n    leftover = total\n    \n    for i, w in enumerate(weights):\n        if w == 0:\n            allocations.append(0)\n            # Still track this in remainders with fractional part 0\n            remainders.append((0, i))\n        else:\n            exact_share = (total * w) / weight_sum\n            base = int(exact_share)  # floor\n            allocations.append(base)\n            leftover -= base\n            \n            # Store fractional part with index for tie-breaking\n            fractional = exact_share - base\n            remainders.append((fractional, i))\n    \n    # Distribute leftover cents to parts with largest fractional remainders\n    # Sort by fractional part (descending), then by index (ascending) for tie-breaking\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n    \n    for i in range(leftover):\n        idx = remainders[i][1]\n        allocations[idx] += 1\n    \n    # Apply sign\n    allocations = [x * sign for x in allocations]\n    \n    return allocations\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 7/10 passed, 0 withdrawn on review.\n- test_large_precision: IndexError: list index out of range\n- test_large_ties: IndexError: list index out of range\n- test_sum_preserved_random: AssertionError",
+      "checker_details": {
+        "tests": "from solution import allocate\n\n\ndef ref(total, weights):\n    s = sum(weights)\n    if s == 0:\n        raise ValueError\n    sign = -1 if total < 0 else 1\n    t = abs(total)\n    base = [t * w // s for w in weights]\n    rem = [(t * w) % s for w in weights]\n    left = t - sum(base)\n    order = sorted(range(len(weights)), key=lambda i: (-rem[i], i))\n    for i in order[:left]:\n        base[i] += 1\n    return [sign * b for b in base]\n\n\ndef test_examples():\n    assert allocate(100, [1, 1, 1]) == [34, 33, 33]\n    assert allocate(5, [1, 0, 1]) == [3, 0, 2]\n\n\ndef test_large_precision():\n    w = [1, 3, 7, 11]\n    t = 10**18 + 7\n    assert allocate(t, w) == ref(t, w)\n\n\ndef test_large_ties():\n    t = 10**17 + 1\n    w = [1, 1, 1]\n    assert allocate(t, w) == ref(t, w)\n\n\ndef test_near_ties_big():\n    t = 9007199254740993\n    w = [3, 3, 3, 1]\n    assert allocate(t, w) == ref(t, w)\n\n\ndef test_negative():\n    assert allocate(-100, [1, 1, 1]) == [-34, -33, -33]\n\n\ndef test_zero_total():\n    r = allocate(0, [1, 2])\n    assert r == [0, 0]\n\n\ndef test_all_zero_raises():\n    try:\n        allocate(10, [0, 0])\n        assert False\n    except ValueError:\n        pass\n\n\ndef test_empty_raises():\n    try:\n        allocate(10, [])\n        assert False\n    except ValueError:\n        pass\n\n\ndef test_sum_preserved_random():\n    import random\n    random.seed(1)\n    for _ in range(300):\n        n = random.randint(1, 6)\n        w = [random.randint(0, 10**random.randint(0, 12)) for _ in range(n)]\n        if sum(w) == 0:\n            continue\n        t = random.randint(-10**15, 10**15)\n        r = allocate(t, w)\n        assert r == ref(t, w)\n        assert sum(r) == t\n\n\ndef test_zero_weight_gets_zero():\n    assert allocate(7, [0, 1, 0, 1]) == [0, 4, 0, 3]\n",
+        "report": {
+          "passed": 7,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_large_precision",
+              "message": "IndexError: list index out of range"
+            },
+            {
+              "name": "test_large_ties",
+              "message": "IndexError: list index out of range"
+            },
+            {
+              "name": "test_sum_preserved_random",
+              "message": "AssertionError"
+            }
+          ]
+        },
+        "disputes": {
+          "test_large_precision": {
+            "action": "accept",
+            "reason": "My code uses floating point arithmetic which causes precision loss with very large numbers. The loop tries to access indices beyond the remainders list length due to precision errors in calculating leftover. The reference implementation correctly uses integer arithmetic with modulo operations."
+          },
+          "test_sum_preserved_random": {
+            "action": "accept",
+            "reason": "The random test fails because of accumulated floating point precision errors in the fractional remainder calculations, which causes incorrect distribution of leftover cents."
+          },
+          "test_large_ties": {
+            "action": "accept",
+            "reason": "Same root cause as test_large_precision - floating point precision issues with large numbers cause incorrect leftover calculation."
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 752,
+        "output_tokens": 517,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 2524,
+        "output_tokens": 1788,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 10,
+        "total": 10,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 3,
+      "plan": "The issue is that when weight_sum is 0 (all weights are 0), we try to divide by weight_sum, causing incorrect behavior. Also, the leftover distribution logic tries to access remainders by index when leftover might exceed the number of non-zero weights. I need to fix the logic to only distribute leftover to indices that actually have fractional parts (non-zero weights).",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if all(w == 0 for w in weights):\n        raise ValueError(\"Every weight is 0\")\n    \n    # Handle negative total by working with absolute value and negating at the end\n    sign = 1 if total >= 0 else -1\n    total = abs(total)\n    \n    # Calculate sum of weights\n    weight_sum = sum(weights)\n    \n    if weight_sum == 0:\n        raise ValueError(\"Every weight is 0\")\n    \n    # Calculate base allocation and fractional remainders\n    allocations = []\n    remainders = []\n    leftover = total\n    \n    for i, w in enumerate(weights):\n        if w == 0:\n            allocations.append(0)\n        else:\n            exact_share = (total * w) / weight_sum\n            base = int(exact_share)  # floor\n            allocations.append(base)\n            leftover -= base\n            \n            # Store fractional part with index for tie-breaking\n            fractional = exact_share - base\n            remainders.append((fractional, i))\n    \n    # Distribute leftover cents to parts with largest fractional remainders\n    # Sort by fractional part (descending), then by index (ascending) for tie-breaking\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n    \n    # Only distribute to parts that have non-zero weights\n    for i in range(leftover):\n        if i < len(remainders):\n            idx = remainders[i][1]\n            allocations[idx] += 1\n    \n    # Apply sign\n    allocations = [x * sign for x in allocations]\n    \n    return allocations\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 10/12 passed, 0 withdrawn on review.\n- test_large_exact_division: AssertionError\n- test_large_precision: AssertionError",
+      "checker_details": {
+        "tests": "from solution import allocate\nimport pytest\n\n\ndef test_examples():\n    assert allocate(100, [1, 1, 1]) == [34, 33, 33]\n    assert allocate(5, [1, 0, 1]) == [3, 0, 2]\n\n\ndef test_negative():\n    assert allocate(-100, [1, 1, 1]) == [-34, -33, -33]\n\n\ndef test_all_zero():\n    with pytest.raises(ValueError):\n        allocate(10, [0, 0])\n\n\ndef test_zero_total():\n    assert allocate(0, [1, 2]) == [0, 0]\n\n\ndef test_large_precision():\n    total = 10**18 + 1\n    w = [1, 1, 1]\n    r = allocate(total, w)\n    assert sum(r) == total\n    # exact: floor shares 333333333333333333 each, leftover 2 -> first two\n    assert r == [333333333333333334, 333333333333333334, 333333333333333333]\n\n\ndef test_large_exact_division():\n    total = 10**17 + 3\n    r = allocate(total, [1, 1, 1])\n    assert sum(r) == total\n    assert r == [33333333333333335, 33333333333333334, 33333333333333334]\n\n\ndef test_float_tie_error():\n    # shares 0.1*... fractions that are ties exactly in rational arithmetic\n    r = allocate(1, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1])\n    assert r == [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]\n\n\ndef test_ties_earlier():\n    assert allocate(2, [1, 1, 1]) == [1, 1, 0]\n\n\ndef test_remainder_order():\n    # shares: 10*1/6=1.667, 10*2/6=3.333, 10*3/6=5\n    assert allocate(10, [1, 2, 3]) == [2, 3, 5]\n\n\ndef test_tie_with_thirds():\n    # total 10, weights [1,1,1,1,1,1,1]? shares 1.428.. all tie\n    assert allocate(10, [1] * 7) == [2, 2, 2, 1, 1, 1, 1]\n\n\ndef test_large_weights():\n    r = allocate(10**15, [10**15 + 1, 10**15 + 2, 10**15 + 3])\n    assert sum(r) == 10**15\n\n\ndef test_negative_tie():\n    assert allocate(-5, [1, 0, 1]) == [-3, 0, -2]\n",
+        "report": {
+          "passed": 10,
+          "total": 12,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_large_exact_division",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_large_precision",
+              "message": "AssertionError"
+            }
+          ]
+        },
+        "disputes": {
+          "test_large_precision": {
+            "action": "accept",
+            "reason": "Same floating-point precision issue with total=10^18+1 and weights=[1,1,1]. The fractional parts lose precision in float division, causing incorrect sorting of remainders when distributing the 2 leftover cents."
+          },
+          "test_large_exact_division": {
+            "action": "accept",
+            "reason": "Floating-point precision loss in large number calculations causes incorrect fractional remainder comparisons. With total=10^17+3 and weights=[1,1,1], the fractional parts should all be 1/3, but float arithmetic loses precision, leading to incorrect tie-breaking when distributing the 2 leftover cents."
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 806,
+        "output_tokens": 517,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 2533,
+        "output_tokens": 1467,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 12,
+        "total": 12,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 4,
+      "plan": "I need to identify the precision issues with large numbers - the problem is likely floating-point precision errors when calculating fractional remainders with large totals. I'll use integer arithmetic with modulo instead of floating-point division to avoid precision loss.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if all(w == 0 for w in weights):\n        raise ValueError(\"Every weight is 0\")\n    \n    # Handle negative total by working with absolute value and negating at the end\n    sign = 1 if total >= 0 else -1\n    total = abs(total)\n    \n    # Calculate sum of weights\n    weight_sum = sum(weights)\n    \n    if weight_sum == 0:\n        raise ValueError(\"Every weight is 0\")\n    \n    # Calculate base allocation and fractional remainders using integer arithmetic\n    allocations = []\n    remainders = []\n    \n    for i, w in enumerate(weights):\n        # Use integer division and modulo to avoid floating point precision issues\n        base = (total * w) // weight_sum\n        allocations.append(base)\n        \n        # Calculate fractional remainder using integer arithmetic\n        # remainder = (total * w) % weight_sum gives us the numerator of the fractional part\n        # when dividing by weight_sum\n        fractional_numerator = (total * w) % weight_sum\n        remainders.append((fractional_numerator, i))\n    \n    # Calculate how many cents are left over\n    leftover = total - sum(allocations)\n    \n    # Distribute leftover cents to parts with largest fractional remainders\n    # Sort by fractional numerator (descending), then by index (ascending) for tie-breaking\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n    \n    # Distribute leftover cents\n    for i in range(leftover):\n        idx = remainders[i][1]\n        allocations[idx] += 1\n    \n    # Apply sign\n    allocations = [x * sign for x in allocations]\n    \n    return allocations\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n11/11 tests passed.",
+      "checker_details": {
+        "tests": "from solution import allocate\nimport pytest\n\n\ndef test_examples():\n    assert allocate(100, [1, 1, 1]) == [34, 33, 33]\n    assert allocate(5, [1, 0, 1]) == [3, 0, 2]\n\n\ndef test_negative():\n    assert allocate(-100, [1, 1, 1]) == [-34, -33, -33]\n    assert allocate(-5, [1, 0, 1]) == [-3, 0, -2]\n\n\ndef test_all_zero_raises():\n    with pytest.raises(ValueError):\n        allocate(10, [0, 0])\n    with pytest.raises(ValueError):\n        allocate(0, [0])\n\n\ndef test_empty_weights():\n    # all() of empty is True -> ValueError\n    with pytest.raises(ValueError):\n        allocate(5, [])\n\n\ndef test_zero_total():\n    assert allocate(0, [1, 2, 3]) == [0, 0, 0]\n\n\ndef test_negative_zero_no_neg():\n    r = allocate(0, [1, 1])\n    assert r == [0, 0]\n\n\ndef test_remainder_ordering():\n    # shares: 10*1/6=1.67, 10*2/6=3.33, 10*3/6=5 -> floors 1,3,5 leftover 1 -> to first\n    assert allocate(10, [1, 2, 3]) == [2, 3, 5]\n\n\ndef test_ties_earlier():\n    assert allocate(2, [1, 1, 1]) == [1, 1, 0]\n\n\ndef test_large_exact():\n    t = 10**30 + 7\n    r = allocate(t, [1, 1, 1])\n    assert sum(r) == t\n    assert max(r) - min(r) <= 1\n\n\ndef test_single_weight():\n    assert allocate(7, [5]) == [7]\n    assert allocate(-7, [0, 5]) == [0, -7]\n\n\ndef test_sum_property():\n    for total in range(-30, 31):\n        for ws in ([1, 2, 3], [0, 3, 0, 4], [7, 1, 1]):\n            assert sum(allocate(total, ws)) == total\n",
+        "report": {
+          "passed": 11,
+          "total": 11,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        },
+        "disputes": {},
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 783,
+        "output_tokens": 504,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1024,
+        "output_tokens": 753,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 11,
+        "total": 11,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

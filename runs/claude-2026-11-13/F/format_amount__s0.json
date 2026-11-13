@@ -1,0 +1,69 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "F",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests+disputes",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I need to implement `format_amount` that parses a decimal string, rounds to currency-specific decimal places using \"round half away from zero\", formats with comma grouping, and returns the formatted string with currency code.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef format_amount(amount: str, currency: str) -> str:\n    # Define decimal places for each currency\n    currency_decimals = {\n        'KRW': 0,\n        'JPY': 0,\n        'USD': 2,\n        'EUR': 2,\n        'BHD': 3,\n        'KWD': 3,\n    }\n    \n    # Validate currency\n    if currency not in currency_decimals:\n        raise ValueError(f\"Unknown currency: {currency}\")\n    \n    decimal_places = currency_decimals[currency]\n    \n    # Parse amount as Decimal for precise arithmetic\n    amount_decimal = Decimal(amount)\n    \n    # Round using ROUND_HALF_UP (rounds halves away from zero)\n    if decimal_places == 0:\n        rounded = amount_decimal.quantize(Decimal('1'), rounding=ROUND_HALF_UP)\n    else:\n        quantizer = Decimal(10) ** -decimal_places\n        rounded = amount_decimal.quantize(quantizer, rounding=ROUND_HALF_UP)\n    \n    # Check if result rounds to zero - make it positive\n    if rounded == 0:\n        rounded = abs(rounded)\n    \n    # Determine if negative\n    is_negative = rounded < 0\n    \n    # Work with absolute value for formatting\n    abs_rounded = abs(rounded)\n    \n    # Format the number\n    if decimal_places == 0:\n        # No decimal places\n        integer_part = str(int(abs_rounded))\n        formatted_number = integer_part\n    else:\n        # Convert to string with exact decimal places\n        formatted_str = format(abs_rounded, f'.{decimal_places}f')\n        integer_part, decimal_part = formatted_str.split('.')\n        \n        # Add commas to integer part\n        integer_with_commas = '{:,}'.format(int(integer_part))\n        formatted_number = f\"{integer_with_commas}.{decimal_part}\"\n    \n    # Add commas to integer part if no decimals\n    if decimal_places == 0:\n        formatted_number = '{:,}'.format(int(formatted_number))\n    \n    # Add negative sign if needed\n    if is_negative:\n        formatted_number = f\"-{formatted_number}\"\n    \n    # Return formatted result\n    return f\"{currency} {formatted_number}\"\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n11/11 tests passed.",
+      "checker_details": {
+        "tests": "from solution import format_amount\nimport pytest\n\n\ndef test_basic_usd():\n    assert format_amount('1234.5', 'USD') == 'USD 1,234.50'\n\n\ndef test_krw_round():\n    assert format_amount('1234.5', 'KRW') == 'KRW 1,235'\n\n\ndef test_negative_half_away():\n    assert format_amount('-2.5', 'JPY') == 'JPY -3'\n    assert format_amount('-1.005', 'USD') == 'USD -1.01'\n\n\ndef test_negative_zero():\n    assert format_amount('-0.004', 'USD') == 'USD 0.00'\n    assert format_amount('-0.4', 'KRW') == 'KRW 0'\n    assert format_amount('-0.0004', 'BHD') == 'BHD 0.000'\n\n\ndef test_bhd():\n    assert format_amount('1234567.8905', 'BHD') == 'BHD 1,234,567.891'\n\n\ndef test_grouping_large():\n    assert format_amount('1000000', 'EUR') == 'EUR 1,000,000.00'\n    assert format_amount('-999999.995', 'USD') == 'USD -1,000,000.00'\n\n\ndef test_unknown():\n    with pytest.raises(ValueError):\n        format_amount('1', 'XXX')\n\n\ndef test_lowercase_unknown():\n    with pytest.raises(ValueError):\n        format_amount('1', 'usd')\n\n\ndef test_small_values():\n    assert format_amount('0.5', 'KRW') == 'KRW 1'\n    assert format_amount('0', 'KWD') == 'KWD 0.000'\n\n\ndef test_exponent_input():\n    assert format_amount('1E+3', 'USD') == 'USD 1,000.00'\n\n\ndef test_huge_precision():\n    assert format_amount('12345678901234567890.125', 'USD') == 'USD 12,345,678,901,234,567,890.13'\n",
+        "report": {
+          "passed": 11,
+          "total": 11,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        },
+        "disputes": {},
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 292,
+        "output_tokens": 652,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1259,
+        "output_tokens": 634,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 11,
+        "total": 11,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

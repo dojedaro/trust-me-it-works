@@ -1,0 +1,47 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Match the weeks form and the day/time form with two anchored regexes, then check that at least one component exists, that any \"T\" has a time component, and that only the last component has a decimal fraction.",
+      "code": "import re\n\n_NUM = r'[0-9]+(?:[.,][0-9]+)?'\n_WEEK_RE = re.compile(r'P(' + _NUM + r')W')\n_BODY_RE = re.compile(\n    r'P(?:(' + _NUM + r')D)?'\n    r'(T(?:(' + _NUM + r')H)?(?:(' + _NUM + r')M)?(?:(' + _NUM + r')S)?)?'\n)\n\n\ndef _to_float(s):\n    return float(s.replace(',', '.'))\n\n\ndef parse_duration(text: str) -> float:\n    if not isinstance(text, str):\n        raise ValueError(\"duration must be a string\")\n\n    m = _WEEK_RE.fullmatch(text)\n    if m:\n        return float(_to_float(m.group(1)) * 7 * 86400)\n\n    m = _BODY_RE.fullmatch(text)\n    if not m:\n        raise ValueError(f\"invalid ISO 8601 duration: {text!r}\")\n\n    day, t_part, hours, minutes, seconds = m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)\n\n    parts = [(day, 86400), (hours, 3600), (minutes, 60), (seconds, 1)]\n    present = [(v, f) for v, f in parts if v is not None]\n\n    if not present:\n        raise ValueError(f\"invalid ISO 8601 duration: {text!r}\")\n    if t_part is not None and hours is None and minutes is None and seconds is None:\n        raise ValueError(f\"'T' must be followed by a time component: {text!r}\")\n\n    for v, _ in present[:-1]:\n        if '.' in v or ',' in v:\n            raise ValueError(f\"only the last component may have a fraction: {text!r}\")\n\n    total = 0.0\n    for v, factor in present:\n        total += _to_float(v) * factor\n    return float(total)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 380,
+        "output_tokens": 2636,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

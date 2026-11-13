@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Walk the text once, tracking the column width of each prefix, and cut at the last character boundary (a position where the next character has nonzero width) whose prefix still fits in `width - 1` columns.",
+      "code": "import unicodedata\n\n\ndef _char_width(c: str) -> int:\n    cat = unicodedata.category(c)\n    if cat in (\"Mn\", \"Me\", \"Cf\"):\n        return 0\n    if unicodedata.east_asian_width(c) in (\"W\", \"F\"):\n        return 2\n    return 1\n\n\ndef fit(text: str, width: int) -> str:\n    total = sum(_char_width(c) for c in text)\n    if total <= width:\n        return text\n\n    budget = width - 1  # reserve one column for the ellipsis\n    acc = 0             # column width of text[:i]\n    cut = 0             # best cut index found so far\n    for i, c in enumerate(text):\n        wc = _char_width(c)\n        if wc > 0:\n            # Cutting before a nonzero-width char is a valid boundary.\n            if acc <= budget:\n                cut = i\n            else:\n                break\n        acc += wc\n\n    return text[:cut] + \"…\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 425,
+        "output_tokens": 1964,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

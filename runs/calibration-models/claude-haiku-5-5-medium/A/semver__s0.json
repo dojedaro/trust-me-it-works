@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version into numeric core, pre-release identifiers (ignoring build metadata), then compare core numerically and pre-release per SemVer rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse(v):\n        v = v.strip()\n        # Strip build metadata (ignored for precedence)\n        if '+' in v:\n            v = v.split('+', 1)[0]\n        pre = None\n        if '-' in v:\n            core, pre = v.split('-', 1)\n        else:\n            core = v\n        parts = core.split('.')\n        nums = tuple(int(p) for p in parts[:3])\n        while len(nums) < 3:\n            nums = nums + (0,)\n        pre_ids = pre.split('.') if pre is not None else None\n        return nums, pre_ids\n\n    def cmp(x, y):\n        return (x > y) - (x < y)\n\n    def compare_ident(x, y):\n        xd = x.isdigit()\n        yd = y.isdigit()\n        if xd and yd:\n            return cmp(int(x), int(y))\n        if xd:\n            return -1\n        if yd:\n            return 1\n        return cmp(x, y)\n\n    core_a, pre_a = parse(a)\n    core_b, pre_b = parse(b)\n\n    c = cmp(core_a, core_b)\n    if c != 0:\n        return c\n\n    # No pre-release has higher precedence than any pre-release\n    if pre_a is None and pre_b is None:\n        return 0\n    if pre_a is None:\n        return 1\n    if pre_b is None:\n        return -1\n\n    for x, y in zip(pre_a, pre_b):\n        c = compare_ident(x, y)\n        if c != 0:\n            return c\n\n    return cmp(len(pre_a), len(pre_b))\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 447,
+        "output_tokens": 591,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

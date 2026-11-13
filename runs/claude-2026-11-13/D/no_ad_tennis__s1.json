@@ -1,0 +1,66 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "D",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I need to track points for players A and B, convert them to tennis scoring (0, 15, 30, 40), handle the special case of 40-40 (deuce), and return the appropriate score string or game winner.",
+      "code": "def game_score(points: str) -> str:\n    a_points = 0\n    b_points = 0\n    \n    for point in points:\n        # Check if someone has already won\n        if a_points >= 4 and a_points > b_points:\n            return \"Game A\"\n        if b_points >= 4 and b_points > a_points:\n            return \"Game B\"\n        \n        # Award the point\n        if point == 'A':\n            a_points += 1\n        elif point == 'B':\n            b_points += 1\n    \n    # Check for winner after all points\n    if a_points >= 4 and a_points > b_points:\n        return \"Game A\"\n    if b_points >= 4 and b_points > a_points:\n        return \"Game B\"\n    \n    # Convert points to tennis score\n    score_map = {0: '0', 1: '15', 2: '30', 3: '40'}\n    \n    # Handle 40-40 and beyond (deuce situation)\n    if a_points >= 3 and b_points >= 3:\n        if a_points == b_points:\n            return \"40-40\"\n        # One player is ahead at deuce\n        if a_points > b_points:\n            return \"40-40\"  # This shouldn't happen given the win conditions above\n        else:\n            return \"40-40\"  # This shouldn't happen given the win conditions above\n    \n    # Normal scoring\n    a_score = score_map.get(a_points, '40')\n    b_score = score_map.get(b_points, '40')\n    \n    return f\"{a_score}-{b_score}\"\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n11/11 tests passed.",
+      "checker_details": {
+        "tests": "from solution import game_score\n\ndef test_empty():\n    assert game_score('') == '0-0'\n\ndef test_example():\n    assert game_score('AAB') == '30-15'\n\ndef test_deuce():\n    assert game_score('AAABBB') == '40-40'\n    assert game_score('ABABAB') == '40-40'\n\ndef test_deuce_next_a():\n    assert game_score('AAABBBA') == 'Game A'\n\ndef test_deuce_next_b():\n    assert game_score('AAABBBB') == 'Game B'\n\ndef test_ignore_after_win():\n    assert game_score('AAAAB') == 'Game A'\n    assert game_score('BBBBAAAA') == 'Game B'\n\ndef test_ignore_after_deuce_win():\n    assert game_score('AAABBBAB') == 'Game A'\n\ndef test_40_love():\n    assert game_score('AAA') == '40-0'\n    assert game_score('BBB') == '0-40'\n\ndef test_40_30():\n    assert game_score('AAABB') == '40-30'\n    assert game_score('BBBAA') == '30-40'\n\ndef test_win_to_love():\n    assert game_score('AAAA') == 'Game A'\n    assert game_score('BBBB') == 'Game B'\n\ndef test_win_from_30():\n    assert game_score('AABBAA') == 'Game A'\n",
+        "report": {
+          "passed": 11,
+          "total": 11,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 251,
+        "output_tokens": 486,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 860,
+        "output_tokens": 785,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 11,
+        "total": 11,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

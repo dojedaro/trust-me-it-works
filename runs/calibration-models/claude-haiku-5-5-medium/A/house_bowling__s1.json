@@ -1,0 +1,47 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Walk frames 1 through 9 by index, adding each strike's or spare's bonus from the rolls that exist, then add the 10th frame's rolls with no bonus.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    def at(idx: int) -> int:\n        return rolls[idx] if idx < len(rolls) else 0\n\n    total = 0\n    i = 0\n    for _ in range(9):\n        if rolls[i] == 10:\n            total += 10 + at(i + 1) + at(i + 2)\n            i += 1\n        else:\n            frame = rolls[i] + at(i + 1)\n            if frame == 10:\n                total += 10 + at(i + 2)\n            else:\n                total += frame\n            i += 2\n    total += sum(rolls[i:])\n    return total\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 429,
+        "output_tokens": 1042,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

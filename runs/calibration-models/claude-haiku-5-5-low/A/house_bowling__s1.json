@@ -1,0 +1,60 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Walk the rolls frame by frame for frames 1-9 adding strike and spare bonuses, then add frame 10's pins with no bonus rolls.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    total = 0\n    idx = 0\n    for _ in range(9):\n        if rolls[idx] == 10:\n            total += 10 + rolls[idx + 1] + rolls[idx + 2]\n            idx += 1\n        else:\n            frame = rolls[idx] + rolls[idx + 1]\n            if frame == 10:\n                total += 10 + rolls[idx + 2]\n            else:\n                total += frame\n            idx += 2\n    # Tenth frame: no bonus rolls under the house rule.\n    if rolls[idx] == 10:\n        total += rolls[idx]\n    else:\n        total += rolls[idx] + rolls[idx + 1]\n    return total\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 3,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_all_strikes",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_bonus_into_frame_ten",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_mixed_game",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 429,
+        "output_tokens": 973,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

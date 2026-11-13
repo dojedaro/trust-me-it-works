@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Measure each character's column width, then keep whole base-character groups (a base plus its following zero-width marks) until the next group would exceed `width - 1`, and append \"…\".",
+      "code": "import unicodedata\n\n\ndef _char_width(ch: str) -> int:\n    cat = unicodedata.category(ch)\n    if cat in (\"Mn\", \"Me\", \"Cf\"):\n        return 0\n    if unicodedata.east_asian_width(ch) in (\"W\", \"F\"):\n        return 2\n    return 1\n\n\ndef fit(text: str, width: int) -> str:\n    total = 0\n    for ch in text:\n        total += _char_width(ch)\n    if total <= width:\n        return text\n\n    budget = width - 1  # reserve one column for the ellipsis\n    used = 0\n    end = 0\n    for i, ch in enumerate(text):\n        w = _char_width(ch)\n        if w == 0:\n            # Zero-width characters stay with the preceding base character\n            # (or at the start of the text); include them only if their\n            # base was included, which is guaranteed since we stop at bases.\n            end = i + 1\n            continue\n        if used + w > budget:\n            break\n        used += w\n        end = i + 1\n    return text[:end] + \"…\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 425,
+        "output_tokens": 939,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

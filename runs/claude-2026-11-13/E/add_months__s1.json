@@ -1,0 +1,57 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target year and month, handle the billing rule for day-of-month, and return the formatted result.",
+      "code": "from datetime import date\n\ndef add_months(day: str, n: int) -> str:\n    year, month, day_of_month = map(int, day.split('-'))\n    \n    # Calculate target month and year\n    total_months = year * 12 + month + n\n    target_year = (total_months - 1) // 12\n    target_month = ((total_months - 1) % 12) + 1\n    \n    # Determine the last day of the target month\n    if target_month == 12:\n        next_month_first = date(target_year + 1, 1, 1)\n    else:\n        next_month_first = date(target_year, target_month + 1, 1)\n    \n    from datetime import timedelta\n    last_day_of_target_month = (next_month_first - timedelta(days=1)).day\n    \n    # Check if original day was the last day of its month\n    if month == 12:\n        next_month_first_original = date(year + 1, 1, 1)\n    else:\n        next_month_first_original = date(year, month + 1, 1)\n    \n    from datetime import timedelta\n    last_day_of_original_month = (next_month_first_original - timedelta(days=1)).day\n    \n    is_last_day = (day_of_month == last_day_of_original_month)\n    \n    # Apply billing rule\n    if is_last_day:\n        target_day = last_day_of_target_month\n    else:\n        target_day = min(day_of_month, last_day_of_target_month)\n    \n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "5/5 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 5,
+          "total": 5,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 485,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

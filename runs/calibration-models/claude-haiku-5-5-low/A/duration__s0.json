@@ -1,0 +1,47 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Validate the whole string with one anchored regex that enforces the component order, then check that at least one component is present and that only the last one may have a fraction, and sum the values in seconds.",
+      "code": "import re\n\n_NUM = r'\\d+(?:[.,]\\d+)?'\n_PATTERN = re.compile(\n    r'P(?:'\n    rf'({_NUM})W'                      # group 0: weeks alone\n    r'|'\n    rf'(?:({_NUM})D)?'                 # group 1: days\n    rf'(?:T(?=\\d)(?:({_NUM})H)?(?:({_NUM})M)?(?:({_NUM})S)?)?'  # groups 2-4: H, M, S\n    r')'\n)\n_MULTIPLIERS = [604800, 86400, 3600, 60, 3600, 60, 1]\n\n\ndef parse_duration(text: str) -> float:\n    if not isinstance(text, str):\n        raise ValueError(\"duration must be a string\")\n    m = _PATTERN.fullmatch(text)\n    if m is None:\n        raise ValueError(f\"invalid ISO 8601 duration: {text!r}\")\n    groups = m.groups()\n    # Map group positions to multipliers: W=0, D=1, H=2, M=3, S=4\n    if groups[0] is not None:\n        present = [(0, groups[0])]\n    else:\n        present = [(i, groups[i]) for i in range(1, 5) if groups[i] is not None]\n    if not present:\n        raise ValueError(f\"duration has no components: {text!r}\")\n    mults = [604800, 86400, 3600, 60, 1]\n    total = 0.0\n    last = len(present) - 1\n    for k, (idx, val) in enumerate(present):\n        if k != last and not val.isdigit():\n            raise ValueError(f\"only the last component may have a fraction: {text!r}\")\n        total += float(val.replace(',', '.')) * mults[idx]\n    return float(total)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 380,
+        "output_tokens": 1924,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

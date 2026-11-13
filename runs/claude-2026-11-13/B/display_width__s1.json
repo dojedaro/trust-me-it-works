@@ -1,0 +1,54 @@
+{
+  "task_id": "display_width",
+  "room": "text",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll use the `unicodedata` module to check each character's East Asian Width property and general category, then sum up the column widths according to the specified rules.",
+      "code": "import unicodedata\n\ndef display_width(text: str) -> int:\n    \"\"\"\n    Returns how many columns text takes in a monospaced terminal.\n    \n    - Wide or Fullwidth characters (EA property W or F): 2 columns\n    - Combining marks (category Mn or Me) and format characters (category Cf): 0 columns\n    - Everything else: 1 column\n    \"\"\"\n    width = 0\n    for char in text:\n        # Get East Asian Width property\n        ea_width = unicodedata.east_asian_width(char)\n        \n        # Get general category\n        category = unicodedata.category(char)\n        \n        # Wide or Fullwidth characters take 2 columns\n        if ea_width in ('W', 'F'):\n            width += 2\n        # Combining marks and format characters take 0 columns\n        elif category in ('Mn', 'Me', 'Cf'):\n            width += 0\n        # Everything else takes 1 column\n        else:\n            width += 1\n    \n    return width\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 8, 'spec_compliance': 9}. Weakest criterion: edge_cases. Problem: edge_cases",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 8,
+          "spec_compliance": 9
+        },
+        "weakest": "edge_cases"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 238,
+        "output_tokens": 302,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 581,
+        "output_tokens": 489,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

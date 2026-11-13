@@ -1,0 +1,57 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the rolls into frames (handling the special 10th frame rule), calculate the score for each frame considering strikes and spares with their bonuses, being careful not to look beyond available rolls.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame_num in range(10):\n        if frame_num < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                score += 10\n                # Add next two rolls as bonus\n                if roll_idx + 1 < len(rolls):\n                    score += rolls[roll_idx + 1]\n                if roll_idx + 2 < len(rolls):\n                    score += rolls[roll_idx + 2]\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                score += 10\n                # Add next roll as bonus\n                if roll_idx + 2 < len(rolls):\n                    score += rolls[roll_idx + 2]\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10 (special rule: no extra rolls)\n            # In frame 10, just add all remaining rolls with no bonuses\n            if roll_idx < len(rolls):\n                score += rolls[roll_idx]\n                roll_idx += 1\n            if roll_idx < len(rolls):\n                score += rolls[roll_idx]\n                roll_idx += 1\n    \n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "6/6 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 6,
+          "total": 6,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 321,
+        "output_tokens": 421,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

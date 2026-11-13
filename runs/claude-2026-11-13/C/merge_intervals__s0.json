@@ -1,0 +1,54 @@
+{
+  "task_id": "merge_intervals",
+  "room": "spec",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Sort intervals by start position, filter out empty ones, then iterate through merging overlapping/touching intervals.",
+      "code": "def merge_intervals(intervals: list) -> list[tuple[int, int]]:\n    # Filter out empty intervals and convert to tuples\n    valid_intervals = [tuple(interval) for interval in intervals if interval[1] > interval[0]]\n    \n    # Handle empty input\n    if not valid_intervals:\n        return []\n    \n    # Sort by start position, then by end position\n    sorted_intervals = sorted(valid_intervals)\n    \n    # Merge overlapping or touching intervals\n    merged = [sorted_intervals[0]]\n    \n    for current_start, current_end in sorted_intervals[1:]:\n        last_start, last_end = merged[-1]\n        \n        # If current interval overlaps or touches the last merged interval\n        if current_start <= last_end:\n            # Merge by extending the end if needed\n            merged[-1] = (last_start, max(last_end, current_end))\n        else:\n            # No overlap, add as new interval\n            merged.append((current_start, current_end))\n    \n    return merged\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 8, 'spec_compliance': 9}. Weakest criterion: edge_cases. Problem: Minor: it assumes every interval has exactly two elements and does not copy values to ints. It passes for empty input, empty intervals, touching intervals, list inputs and non-mutation, but it would not handle malformed intervals.",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 8,
+          "spec_compliance": 9
+        },
+        "weakest": "Minor: it assumes every interval has exactly two elements and does not copy values to ints. It passes for empty input, empty intervals, touching intervals, list inputs and non-mutation, but it would not handle malformed intervals."
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 278,
+        "output_tokens": 287,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 827,
+        "output_tokens": 117,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

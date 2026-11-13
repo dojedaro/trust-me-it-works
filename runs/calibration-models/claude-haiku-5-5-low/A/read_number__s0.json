@@ -1,0 +1,47 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Split the number into 억, 만 and remainder groups of four digits, convert each group with a helper that drops a leading 1 before 천/백/십, and special-case a 만 group of exactly 1 and the zero input.",
+      "code": "def read_number(n: int) -> str:\n    DIGITS = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    UNITS = ['천', '백', '십', '']\n\n    def convert_group(g: int) -> str:\n        # g is in 1..9999\n        ds = [g // 1000, (g // 100) % 10, (g // 10) % 10, g % 10]\n        out = []\n        for d, u in zip(ds, UNITS):\n            if d == 0:\n                continue\n            if d == 1 and u:\n                out.append(u)\n            else:\n                out.append(DIGITS[d] + u)\n        return ''.join(out)\n\n    if n == 0:\n        return '영'\n\n    eok = n // 100000000\n    man = (n // 10000) % 10000\n    low = n % 10000\n\n    parts = []\n    if eok:\n        parts.append(convert_group(eok) + '억')\n    if man:\n        if man == 1:\n            parts.append('만')\n        else:\n            parts.append(convert_group(man) + '만')\n    if low:\n        parts.append(convert_group(low))\n    return ''.join(parts)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 374,
+        "output_tokens": 1237,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

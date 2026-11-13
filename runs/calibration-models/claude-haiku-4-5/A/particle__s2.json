@@ -1,0 +1,60 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I need to determine if a Korean word ends with a consonant (batchim) or vowel to choose the correct particle form. For Hangul syllables, I'll check the Unicode composition; for digits, I'll determine pronunciation based on the Sino-Korean number system.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    def has_batchim(char):\n        \"\"\"Check if a Hangul character has a final consonant (batchim).\"\"\"\n        if not ('가' <= char <= '힣'):\n            return False\n        # Hangul syllables are composed as: (initial * 21 + medial) * 28 + final\n        # 0xAC00 is the code point for '가'\n        code = ord(char) - 0xAC00\n        # If code % 28 != 0, there's a final consonant\n        return (code % 28) != 0\n    \n    def digit_has_batchim(digit_str):\n        \"\"\"Determine if a digit string (Sino-Korean number) ends with a consonant.\"\"\"\n        # Sino-Korean numbers: 0=영, 1=일, 2=이, 3=삼, 4=사, 5=오, 6=육, 7=칠, 8=팔, 9=구\n        # Numbers ending in consonants: 1(일), 3(삼), 4(사), 6(육), 7(칠), 8(팔), 9(구)\n        # Numbers ending in vowels: 0(영), 2(이), 5(오)\n        last_digit = digit_str[-1]\n        return last_digit in '13467890'[:-1]  # '1346789'\n    \n    # Get the last character\n    last_char = word[-1]\n    \n    # Determine if the word ends with a batchim\n    if last_char.isdigit():\n        ends_with_batchim = digit_has_batchim(word)\n    else:\n        ends_with_batchim = has_batchim(last_char)\n    \n    # Split the particle and choose the appropriate form\n    forms = particle.split('/')\n    before_slash = forms[0]  # Used when there's a batchim\n    after_slash = forms[1]   # Used when there's no batchim\n    \n    # Special case for \"으로/로\": if word ends in ㄹ, treat as vowel\n    if particle == \"으로/로\":\n        if last_char == '을' or (not last_char.isdigit() and has_batchim(last_char)):\n            # Check if the final consonant is ㄹ\n            code = ord(last_char) - 0xAC00\n            final_consonant_index = code % 28\n            # ㄹ is at index 8 in the final consonant table\n            if final_consonant_index == 8:\n                ends_with_batchim = False\n    \n    if ends_with_batchim:\n        return word + before_slash\n    else:\n        return word + after_slash\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 4,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_round_numbers_are_read_as_a_whole",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 299,
+        "output_tokens": 1265,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

@@ -1,0 +1,52 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Build a solution that processes the number into groups of 4 digits from right to left, reads each group with proper place value handling, and joins them with appropriate units.",
+      "code": "def read_number(n: int) -> str:\n    if n == 0:\n        return '영'\n    \n    digits = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    place_names = ['', '십', '백', '천']\n    \n    def read_four_digit_group(num):\n        \"\"\"Read a 4-digit group (0-9999)\"\"\"\n        if num == 0:\n            return ''\n        \n        result = ''\n        positions = [0, 0, 0, 0]  # ones, tens, hundreds, thousands\n        \n        positions[0] = num % 10\n        positions[1] = (num // 10) % 10\n        positions[2] = (num // 100) % 10\n        positions[3] = (num // 1000) % 10\n        \n        # Process from thousands down to ones\n        for pos in range(3, -1, -1):  # 3, 2, 1, 0\n            digit = positions[pos]\n            if digit > 0:\n                # Only add digit name if it's not 1 before a place value, or if it's in ones place\n                if digit == 1 and pos > 0:\n                    result += place_names[pos]\n                else:\n                    result += digits[digit] + place_names[pos]\n        \n        return result\n    \n    # Split into groups of 4 digits from right to left\n    ones_group = n % 10000\n    man_group = (n // 10000) % 10000\n    eok_group = (n // 100000000) % 10000\n    \n    result = ''\n    \n    # Process 억 group (hundred millions)\n    if eok_group > 0:\n        result += digits[eok_group] + '억'\n    \n    # Process 만 group (ten thousands)\n    if man_group > 0:\n        if man_group == 1:\n            result += '만'\n        else:\n            result += read_four_digit_group(man_group) + '만'\n    \n    # Process ones group (units)\n    if ones_group > 0:\n        result += read_four_digit_group(ones_group)\n    \n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_largest",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 315,
+        "output_tokens": 1457,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

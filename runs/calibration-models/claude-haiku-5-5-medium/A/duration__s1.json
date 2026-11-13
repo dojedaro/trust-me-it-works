@@ -1,0 +1,47 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Match the whole string against one anchored regex that allows a fraction on any component, then reject fractions on any component except the last one written, and reject empty or time-less forms.",
+      "code": "import re\n\n_NUM = r'[0-9]+(?:[.,][0-9]+)?'\n_PATTERN = re.compile(\n    rf'P(?:(?P<W>{_NUM})W'\n    rf'|(?:(?P<D>{_NUM})D)?'\n    rf'(?P<T>T(?=[0-9])(?:(?P<H>{_NUM})H)?(?:(?P<M>{_NUM})M)?(?:(?P<S>{_NUM})S)?)?)'\n)\n\n\ndef _to_float(s: str) -> float:\n    return float(s.replace(',', '.'))\n\n\ndef parse_duration(text: str) -> float:\n    if not isinstance(text, str):\n        raise ValueError(\"duration must be a string\")\n    m = _PATTERN.fullmatch(text)\n    if m is None:\n        raise ValueError(f\"invalid ISO 8601 duration: {text!r}\")\n\n    if m.group('W') is not None:\n        return _to_float(m.group('W')) * 7 * 86400\n\n    components = [\n        (m.group('D'), 86400),\n        (m.group('H'), 3600),\n        (m.group('M'), 60),\n        (m.group('S'), 1),\n    ]\n    present = [(v, mult) for v, mult in components if v is not None]\n    if not present:\n        raise ValueError(f\"invalid ISO 8601 duration: {text!r}\")\n\n    # Only the last component written may have a decimal fraction.\n    for v, _ in present[:-1]:\n        if '.' in v or ',' in v:\n            raise ValueError(f\"fraction allowed only on last component: {text!r}\")\n\n    total = 0.0\n    for v, mult in present:\n        total += _to_float(v) * mult\n    return float(total)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 380,
+        "output_tokens": 2665,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,56 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    def has_batchim(char: str) -> bool:\n        \"\"\"Check if a Hangul character has a final consonant (batchim)\"\"\"\n        if not char:\n            return False\n        code = ord(char)\n        # Check if it's a Hangul syllable\n        if 0xAC00 <= code <= 0xD7A3:\n            # Extract jongseong (final consonant)\n            jongseong = (code - 0xAC00) % 28\n            return jongseong > 0\n        return False\n    \n    def get_batchim_char(char: str) -> int:\n        \"\"\"Get the jongseong value (0 if no batchim)\"\"\"\n        if not char:\n            return 0\n        code = ord(char)\n        if 0xAC00 <= code <= 0xD7A3:\n            return (code - 0xAC00) % 28\n        return 0\n    \n    # Determine the last meaningful character\n    last_char = word[-1]\n    \n    # Handle digits\n    if last_char.isdigit():\n        digit = int(last_char)\n        # Sino-Korean digit pronunciations\n        # For \"으로/로\": 1(일), 7(칠), 8(팔) have ㄹ batchim, others follow normal rules\n        sino_korean = {\n            '0': (False, False),  # 영 - vowel, no special ㄹ\n            '1': (True, True),    # 일 - has ㄹ, special for 으로/로\n            '2': (False, False),  # 이 - vowel\n            '3': (True, False),   # 삼 - consonant ㅁ\n            '4': (False, False),  # 사 - vowel\n            '5': (False, False),  # 오 - vowel\n            '6': (True, False),   # 육 - consonant ㄱ\n            '7': (True, True),    # 칠 - has ㄹ, special for 으로/로\n            '8': (True, True),    # 팔 - has ㄹ, special for 으로/로\n            '9': (False, False),  # 구 - vowel\n        }\n        has_batchim_val, is_special_rieul = sino_korean[last_char]\n    else:\n        # Hangul syllable\n        has_batchim_val = has_batchim(last_char)\n        jongseong = get_batchim_char(last_char)\n        # ㄹ is the 8th jongseong (index 8 in the jongseong list)\n        is_special_rieul = (jongseong == 8)  # ㄹ batchim\n    \n    # Apply particle rules\n    if particle == \"은/는\":\n        return word + (\"은\" if has_batchim_val else \"는\")\n    elif particle == \"이/가\":\n        return word + (\"이\" if has_batchim_val else \"가\")\n    elif particle == \"을/를\":\n        return word + (\"을\" if has_batchim_val else \"를\")\n    elif particle == \"과/와\":\n        return word + (\"과\" if has_batchim_val else \"와\")\n    elif particle == \"으로/로\":\n        # Special case: ㄹ batchim becomes \"로\"\n        if is_special_rieul:\n            return word + \"로\"\n        return word + (\"으로\" if has_batchim_val else \"로\")\n    \n    return word\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_round_numbers_are_read_as_a_whole",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 299,
+        "output_tokens": 1389,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

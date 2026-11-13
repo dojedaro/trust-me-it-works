@@ -1,0 +1,207 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll parse the ISO 8601 duration string by first validating the format, then extracting numeric values for weeks, days, hours, minutes, and seconds, with support for decimal fractions in the last component.",
+      "code": "import re\n\ndef parse_duration(text: str) -> float:\n    # Must start with P\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Check for invalid components (Y and M at year/month level, or any other invalid characters)\n    # Y and M are invalid, but M is valid in time part (minutes)\n    # We need to be careful about the format\n    \n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    # Check if this is a week-only format (P<n>W)\n    if 'W' in remaining:\n        # Should be only weeks, no other components\n        match = re.fullmatch(r'(\\d+(?:[.,]\\d+)?)W', remaining)\n        if not match:\n            raise ValueError(\"Invalid week format\")\n        weeks = match.group(1).replace(',', '.')\n        return float(weeks) * 7 * 86400\n    \n    # Check for year or month (which are invalid)\n    if 'Y' in remaining or re.search(r'[,.]?\\d+M(?:[^S]|$)', remaining):\n        # Need to check if M is in time part or date part\n        if 'T' in remaining:\n            date_part, time_part = remaining.split('T', 1)\n            if 'Y' in date_part or 'M' in date_part:\n                raise ValueError(\"Years and months are not supported\")\n        else:\n            if 'Y' in remaining or 'M' in remaining:\n                raise ValueError(\"Years and months are not supported\")\n    \n    total = 0.0\n    \n    # Parse date part (before T)\n    time_part_str = \"\"\n    if 'T' in remaining:\n        date_part, time_part_str = remaining.split('T', 1)\n        if not time_part_str:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = remaining\n    \n    # Parse date part: P<n>D or empty\n    if date_part:\n        if 'Y' in date_part:\n            raise ValueError(\"Years are not supported\")\n        if 'M' in date_part:\n            raise ValueError(\"Months are not supported\")\n        \n        # Match days: <n>D\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)D', date_part)\n        if match:\n            days = match.group(1).replace(',', '.')\n            total += float(days) * 86400\n            date_part = date_part[len(match.group(0)):]\n        \n        if date_part:\n            raise ValueError(\"Invalid date component\")\n    \n    # Parse time part: <n>H<n>M<n>S\n    if time_part_str:\n        # H component\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)H', time_part_str)\n        if match:\n            hours = match.group(1).replace(',', '.')\n            total += float(hours) * 3600\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # M component (minutes)\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)M', time_part_str)\n        if match:\n            minutes = match.group(1).replace(',', '.')\n            total += float(minutes) * 60\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # S component\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)S', time_part_str)\n        if match:\n            seconds = match.group(1).replace(',', '.')\n            total += float(seconds)\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        if time_part_str:\n            raise ValueError(\"Invalid time component\")\n    \n    if total == 0:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    return total\n",
+      "verdict": "ITERATING",
+      "feedback": "4/5 tests passed.\n- test_fractions: AssertionError",
+      "checker_details": {
+        "report": {
+          "passed": 4,
+          "total": 5,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_fractions",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 1090,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Analyze the fraction handling - the issue is likely that we're not properly validating that only the last component can have a decimal fraction, and we need to ensure the regex correctly handles decimal numbers.",
+      "code": "import re\n\ndef parse_duration(text: str) -> float:\n    # Must start with P\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    # Check if this is a week-only format (P<n>W)\n    if 'W' in remaining:\n        # Should be only weeks, no other components\n        match = re.fullmatch(r'(\\d+(?:[.,]\\d+)?)W', remaining)\n        if not match:\n            raise ValueError(\"Invalid week format\")\n        weeks = match.group(1).replace(',', '.')\n        return float(weeks) * 7 * 86400\n    \n    total = 0.0\n    \n    # Parse date part (before T)\n    time_part_str = \"\"\n    if 'T' in remaining:\n        date_part, time_part_str = remaining.split('T', 1)\n        if not time_part_str:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = remaining\n    \n    # Parse date part: P<n>D or empty\n    if date_part:\n        if 'Y' in date_part:\n            raise ValueError(\"Years are not supported\")\n        if 'M' in date_part:\n            raise ValueError(\"Months are not supported\")\n        \n        # Match days: <n>D (with optional fraction)\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)D', date_part)\n        if match:\n            days = match.group(1).replace(',', '.')\n            total += float(days) * 86400\n            date_part = date_part[len(match.group(0)):]\n        \n        if date_part:\n            raise ValueError(\"Invalid date component\")\n    \n    # Parse time part: <n>H<n>M<n>S\n    if time_part_str:\n        # H component\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)H', time_part_str)\n        if match:\n            hours = match.group(1).replace(',', '.')\n            total += float(hours) * 3600\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # M component (minutes)\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)M', time_part_str)\n        if match:\n            minutes = match.group(1).replace(',', '.')\n            total += float(minutes) * 60\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # S component (seconds) - can have fraction\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)S', time_part_str)\n        if match:\n            seconds = match.group(1).replace(',', '.')\n            total += float(seconds)\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        if time_part_str:\n            raise ValueError(\"Invalid time component\")\n    \n    if total == 0:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    return total\n",
+      "verdict": "ITERATING",
+      "feedback": "4/5 tests passed.\n- test_fractions: AssertionError",
+      "checker_details": {
+        "report": {
+          "passed": 4,
+          "total": 5,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_fractions",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1384,
+        "output_tokens": 883,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 2,
+      "plan": "Analyze the fraction test failure - the issue is likely that we're not properly handling fractions in all components, particularly when a fraction appears in non-final components or when multiple numeric patterns need to match. Let me trace through: the regex `\\d+(?:[.,]\\d+)?` should match fractions, but we need to ensure that only the LAST component can have a fraction, and we need to validate that intermediate components don't have fractions.",
+      "code": "import re\n\ndef parse_duration(text: str) -> float:\n    # Must start with P\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    # Check if this is a week-only format (P<n>W)\n    if 'W' in remaining:\n        # Should be only weeks, no other components\n        match = re.fullmatch(r'(\\d+(?:[.,]\\d+)?)W', remaining)\n        if not match:\n            raise ValueError(\"Invalid week format\")\n        weeks = match.group(1).replace(',', '.')\n        return float(weeks) * 7 * 86400\n    \n    total = 0.0\n    \n    # Parse date part (before T)\n    time_part_str = \"\"\n    if 'T' in remaining:\n        date_part, time_part_str = remaining.split('T', 1)\n        if not time_part_str:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = remaining\n    \n    # Parse date part: P<n>D or empty\n    if date_part:\n        if 'Y' in date_part:\n            raise ValueError(\"Years are not supported\")\n        if 'M' in date_part:\n            raise ValueError(\"Months are not supported\")\n        \n        # Match days: <n>D (with optional fraction, but only if no time part follows)\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)D', date_part)\n        if match:\n            days = match.group(1).replace(',', '.')\n            total += float(days) * 86400\n            date_part = date_part[len(match.group(0)):]\n        \n        if date_part:\n            raise ValueError(\"Invalid date component\")\n    \n    # Parse time part: <n>H<n>M<n>S\n    if time_part_str:\n        # H component (no fraction allowed here unless it's the last component)\n        match = re.match(r'(\\d+)H', time_part_str)\n        if match:\n            hours = match.group(1)\n            total += float(hours) * 3600\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # M component (minutes, no fraction unless it's the last component)\n        match = re.match(r'(\\d+)M', time_part_str)\n        if match:\n            minutes = match.group(1)\n            total += float(minutes) * 60\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # S component (seconds) - can have fraction, and it's the last possible component\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)S', time_part_str)\n        if match:\n            seconds = match.group(1).replace(',', '.')\n            total += float(seconds)\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        if time_part_str:\n            raise ValueError(\"Invalid time component\")\n    \n    if total == 0:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    return total\n",
+      "verdict": "ITERATING",
+      "feedback": "4/5 tests passed.\n- test_fractions: ValueError: Invalid time component",
+      "checker_details": {
+        "report": {
+          "passed": 4,
+          "total": 5,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_fractions",
+              "message": "ValueError: Invalid time component"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "ValueError: Invalid time component"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1183,
+        "output_tokens": 952,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 3,
+      "plan": "The issue is that the time component parsing doesn't allow fractions on H and M components - only on S. However, the ISO 8601 spec allows the last component (whichever one it is) to have a decimal fraction. I need to refactor to check which component is the last one and allow fractions only on that one.",
+      "code": "import re\n\ndef parse_duration(text: str) -> float:\n    # Must start with P\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    # Check if this is a week-only format (P<n>W)\n    if 'W' in remaining:\n        # Should be only weeks, no other components\n        match = re.fullmatch(r'(\\d+(?:[.,]\\d+)?)W', remaining)\n        if not match:\n            raise ValueError(\"Invalid week format\")\n        weeks = match.group(1).replace(',', '.')\n        return float(weeks) * 7 * 86400\n    \n    total = 0.0\n    \n    # Parse date part (before T)\n    time_part_str = \"\"\n    if 'T' in remaining:\n        date_part, time_part_str = remaining.split('T', 1)\n        if not time_part_str:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = remaining\n    \n    # Parse date part: P<n>D or empty\n    if date_part:\n        if 'Y' in date_part:\n            raise ValueError(\"Years are not supported\")\n        if 'M' in date_part:\n            raise ValueError(\"Months are not supported\")\n        \n        # Match days: <n>D (with optional fraction, but only if no time part follows)\n        # If there's a time part, days cannot have a fraction\n        if time_part_str:\n            match = re.match(r'(\\d+)D', date_part)\n            if match:\n                days = match.group(1)\n                total += float(days) * 86400\n                date_part = date_part[len(match.group(0)):]\n        else:\n            # No time part, so days can have fraction\n            match = re.match(r'(\\d+(?:[.,]\\d+)?)D', date_part)\n            if match:\n                days = match.group(1).replace(',', '.')\n                total += float(days) * 86400\n                date_part = date_part[len(match.group(0)):]\n        \n        if date_part:\n            raise ValueError(\"Invalid date component\")\n    \n    # Parse time part: <n>H<n>M<n>S\n    if time_part_str:\n        # Find what components are present to determine which is last\n        has_h = 'H' in time_part_str\n        has_m = 'M' in time_part_str\n        has_s = 'S' in time_part_str\n        \n        # H component (can have fraction only if it's the last component)\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)H', time_part_str) if (has_h and not has_m and not has_s) else re.match(r'(\\d+)H', time_part_str)\n        if match:\n            hours = match.group(1).replace(',', '.')\n            total += float(hours) * 3600\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # M component (can have fraction only if it's the last component)\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)M', time_part_str) if (has_m and not has_s) else re.match(r'(\\d+)M', time_part_str)\n        if match:\n            minutes = match.group(1).replace(',', '.')\n            total += float(minutes) * 60\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        # S component (seconds) - always can have fraction\n        match = re.match(r'(\\d+(?:[.,]\\d+)?)S', time_part_str)\n        if match:\n            seconds = match.group(1).replace(',', '.')\n            total += float(seconds)\n            time_part_str = time_part_str[len(match.group(0)):]\n        \n        if time_part_str:\n            raise ValueError(\"Invalid time component\")\n    \n    if total == 0:\n        raise ValueError(\"Duration must have at least one component\")\n    \n    return total\n",
+      "verdict": "FINAL",
+      "feedback": "5/5 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 5,
+          "total": 5,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1197,
+        "output_tokens": 1179,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

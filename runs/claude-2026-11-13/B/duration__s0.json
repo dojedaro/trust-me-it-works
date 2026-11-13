@@ -1,0 +1,94 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll parse the ISO 8601 duration string by first validating the format, then extracting numeric values for weeks, days, hours, minutes, and seconds components, handling optional decimal fractions in the last component.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Remove the leading 'P'\n    rest = text[1:]\n    \n    # Split into date and time parts\n    if 'T' in rest:\n        date_part, time_part = rest.split('T', 1)\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = rest\n        time_part = \"\"\n    \n    # Parse date part (weeks and/or days)\n    weeks = 0.0\n    days = 0.0\n    \n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both weeks and days\")\n            # Extract weeks\n            w_index = date_part.index('W')\n            w_str = date_part[:w_index]\n            if not w_str or not w_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid weeks format\")\n            w_str = w_str.replace(',', '.')\n            weeks = float(w_str)\n            if date_part[w_index+1:]:\n                raise ValueError(\"Invalid text after weeks\")\n        elif 'D' in date_part:\n            # Extract days\n            d_index = date_part.index('D')\n            d_str = date_part[:d_index]\n            if not d_str or not d_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid days format\")\n            d_str = d_str.replace(',', '.')\n            days = float(d_str)\n            if date_part[d_index+1:]:\n                raise ValueError(\"Invalid text after days\")\n        else:\n            raise ValueError(\"Date part must contain 'W' or 'D'\")\n    \n    # Parse time part (hours, minutes, seconds)\n    hours = 0.0\n    minutes = 0.0\n    seconds = 0.0\n    \n    if time_part:\n        remaining = time_part\n        \n        # Parse hours\n        if 'H' in remaining:\n            h_index = remaining.index('H')\n            h_str = remaining[:h_index]\n            if not h_str or not h_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid hours format\")\n            h_str = h_str.replace(',', '.')\n            hours = float(h_str)\n            remaining = remaining[h_index+1:]\n        \n        # Parse minutes\n        if 'M' in remaining:\n            m_index = remaining.index('M')\n            m_str = remaining[:m_index]\n            if not m_str or not m_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid minutes format\")\n            m_str = m_str.replace(',', '.')\n            minutes = float(m_str)\n            remaining = remaining[m_index+1:]\n        \n        # Parse seconds\n        if 'S' in remaining:\n            s_index = remaining.index('S')\n            s_str = remaining[:s_index]\n            if not s_str or not s_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid seconds format\")\n            s_str = s_str.replace(',', '.')\n            seconds = float(s_str)\n            remaining = remaining[s_index+1:]\n        \n        if remaining:\n            raise ValueError(\"Invalid time part\")\n    \n    # Check that at least one component is present\n    if weeks == 0 and days == 0 and hours == 0 and minutes == 0 and seconds == 0:\n        raise ValueError(\"At least one component must be present\")\n    \n    # Calculate total seconds\n    total_seconds = weeks * 7 * 86400 + days * 86400 + hours * 3600 + minutes * 60 + seconds\n    \n    return total_seconds\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 6, 'edge_cases': 5, 'spec_compliance': 6}. Weakest criterion: edge_cases. Problem: spec_compliance",
+      "checker_details": {
+        "scores": {
+          "correctness": 6,
+          "edge_cases": 5,
+          "spec_compliance": 6
+        },
+        "weakest": "spec_compliance"
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 1075,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1403,
+        "output_tokens": 523,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Review the spec compliance issue - the spec says \"weeks alone\" or \"days followed by optional time\", meaning weeks and days cannot both be present (which I handle), but more importantly, I need to verify that when there's a 'T', at least one time component must follow, and that date_part is optional only if time_part exists. The main spec issue is likely that an empty date_part with time_part should be valid (e.g., \"PT1H\"), but currently I'm checking if date_part exists when it's optional.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Remove the leading 'P'\n    rest = text[1:]\n    \n    # Split into date and time parts\n    if 'T' in rest:\n        date_part, time_part = rest.split('T', 1)\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = rest\n        time_part = \"\"\n    \n    # Parse date part (weeks and/or days)\n    weeks = 0.0\n    days = 0.0\n    \n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both weeks and days\")\n            # Extract weeks\n            w_index = date_part.index('W')\n            w_str = date_part[:w_index]\n            if not w_str or not w_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid weeks format\")\n            w_str = w_str.replace(',', '.')\n            weeks = float(w_str)\n            if date_part[w_index+1:]:\n                raise ValueError(\"Invalid text after weeks\")\n        elif 'D' in date_part:\n            # Extract days\n            d_index = date_part.index('D')\n            d_str = date_part[:d_index]\n            if not d_str or not d_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid days format\")\n            d_str = d_str.replace(',', '.')\n            days = float(d_str)\n            if date_part[d_index+1:]:\n                raise ValueError(\"Invalid text after days\")\n        else:\n            raise ValueError(\"Date part must contain 'W' or 'D'\")\n    \n    # Parse time part (hours, minutes, seconds)\n    hours = 0.0\n    minutes = 0.0\n    seconds = 0.0\n    \n    if time_part:\n        remaining = time_part\n        \n        # Parse hours\n        if 'H' in remaining:\n            h_index = remaining.index('H')\n            h_str = remaining[:h_index]\n            if not h_str or not h_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid hours format\")\n            h_str = h_str.replace(',', '.')\n            hours = float(h_str)\n            remaining = remaining[h_index+1:]\n        \n        # Parse minutes\n        if 'M' in remaining:\n            m_index = remaining.index('M')\n            m_str = remaining[:m_index]\n            if not m_str or not m_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid minutes format\")\n            m_str = m_str.replace(',', '.')\n            minutes = float(m_str)\n            remaining = remaining[m_index+1:]\n        \n        # Parse seconds\n        if 'S' in remaining:\n            s_index = remaining.index('S')\n            s_str = remaining[:s_index]\n            if not s_str or not s_str.replace('.', '').replace(',', '').isdigit():\n                raise ValueError(\"Invalid seconds format\")\n            s_str = s_str.replace(',', '.')\n            seconds = float(s_str)\n            remaining = remaining[s_index+1:]\n        \n        if remaining:\n            raise ValueError(\"Invalid time part\")\n    \n    # Check that at least one component is present\n    if weeks == 0 and days == 0 and hours == 0 and minutes == 0 and seconds == 0:\n        raise ValueError(\"At least one component must be present\")\n    \n    # Calculate total seconds\n    total_seconds = weeks * 7 * 86400 + days * 86400 + hours * 3600 + minutes * 60 + seconds\n    \n    return total_seconds\n",
+      "verdict": "UNCHANGED",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1394,
+        "output_tokens": 1146,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "UNCHANGED",
+  "final_correct": false,
+  "error": null
+}

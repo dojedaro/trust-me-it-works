@@ -1,0 +1,104 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the rolls frame-by-frame, scoring frames 1-9 with bonuses and frame 10 without bonuses, accumulating the total score.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    # Process frames 1-9\n    for frame in range(9):\n        if rolls[roll_idx] == 10:  # Strike\n            score += 10 + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n            roll_idx += 1\n        elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n            score += 10 + rolls[roll_idx + 2]\n            roll_idx += 2\n        else:  # Open frame\n            score += rolls[roll_idx] + rolls[roll_idx + 1]\n            roll_idx += 2\n    \n    # Process frame 10 (no bonus rolls)\n    if rolls[roll_idx] == 10:  # Strike in frame 10\n        score += 10\n    else:  # One or two rolls in frame 10\n        score += rolls[roll_idx] + rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 6, 'edge_cases': 2, 'spec_compliance': 4}. Weakest criterion: edge_cases. Problem: Raises IndexError when frame 9 is a strike and frame 10 is a strike, because rolls[roll_idx + 2] does not exist; the spec explicitly says this should score 10 + 10.",
+      "checker_details": {
+        "scores": {
+          "correctness": 6,
+          "edge_cases": 2,
+          "spec_compliance": 4
+        },
+        "weakest": "Raises IndexError when frame 9 is a strike and frame 10 is a strike, because rolls[roll_idx + 2] does not exist; the spec explicitly says this should score 10 + 10."
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_all_strikes",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_bonus_into_frame_ten",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_mixed_game",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 321,
+        "output_tokens": 314,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 900,
+        "output_tokens": 571,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Fix the IndexError by checking bounds when accessing bonus rolls in frames 1-9, since frame 10 may have fewer rolls than expected due to the house rule.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    # Process frames 1-9\n    for frame in range(9):\n        if rolls[roll_idx] == 10:  # Strike\n            score += 10\n            # Add next two rolls if they exist\n            if roll_idx + 1 < len(rolls):\n                score += rolls[roll_idx + 1]\n            if roll_idx + 2 < len(rolls):\n                score += rolls[roll_idx + 2]\n            roll_idx += 1\n        elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n            score += 10\n            # Add next roll if it exists\n            if roll_idx + 2 < len(rolls):\n                score += rolls[roll_idx + 2]\n            roll_idx += 2\n        else:  # Open frame\n            score += rolls[roll_idx] + rolls[roll_idx + 1]\n            roll_idx += 2\n    \n    # Process frame 10 (no bonus rolls)\n    if rolls[roll_idx] == 10:  # Strike in frame 10\n        score += 10\n    else:  # One or two rolls in frame 10\n        score += rolls[roll_idx] + rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 9, 'spec_compliance': 9}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 9,
+          "spec_compliance": 9
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 715,
+        "output_tokens": 386,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 990,
+        "output_tokens": 597,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

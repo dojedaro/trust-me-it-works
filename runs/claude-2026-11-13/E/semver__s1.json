@@ -1,0 +1,57 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version into its components (major, minor, patch, pre-release), then compare numerically for core version numbers and with special rules for pre-release identifiers (numeric vs non-numeric comparison).",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse_version(v: str):\n        # Remove build metadata (everything after +)\n        v = v.split('+')[0]\n        \n        # Split into core version and pre-release\n        if '-' in v:\n            core, prerelease = v.split('-', 1)\n            prerelease_parts = prerelease.split('.')\n        else:\n            core = v\n            prerelease_parts = None\n        \n        # Parse core version\n        parts = core.split('.')\n        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])\n        \n        return major, minor, patch, prerelease_parts\n    \n    def is_numeric(s: str) -> bool:\n        return s.isdigit()\n    \n    def compare_prerelease(pre_a, pre_b):\n        # If both are None, versions are equal\n        if pre_a is None and pre_b is None:\n            return 0\n        # Version without pre-release has higher precedence\n        if pre_a is None:\n            return 1\n        if pre_b is None:\n            return -1\n        \n        # Compare pre-release identifiers one by one\n        for i in range(max(len(pre_a), len(pre_b))):\n            # More identifiers is higher precedence\n            if i >= len(pre_a):\n                return -1\n            if i >= len(pre_b):\n                return 1\n            \n            id_a = pre_a[i]\n            id_b = pre_b[i]\n            \n            num_a = is_numeric(id_a)\n            num_b = is_numeric(id_b)\n            \n            # Both numeric: compare numerically\n            if num_a and num_b:\n                if int(id_a) < int(id_b):\n                    return -1\n                elif int(id_a) > int(id_b):\n                    return 1\n            # One numeric, one not: numeric has lower precedence\n            elif num_a and not num_b:\n                return -1\n            elif not num_a and num_b:\n                return 1\n            # Both non-numeric: ASCII order\n            else:\n                if id_a < id_b:\n                    return -1\n                elif id_a > id_b:\n                    return 1\n        \n        return 0\n    \n    major_a, minor_a, patch_a, pre_a = parse_version(a)\n    major_b, minor_b, patch_b, pre_b = parse_version(b)\n    \n    # Compare core version\n    if major_a != major_b:\n        return -1 if major_a < major_b else 1\n    if minor_a != minor_b:\n        return -1 if minor_a < minor_b else 1\n    if patch_a != patch_b:\n        return -1 if patch_a < patch_b else 1\n    \n    # Compare pre-release\n    return compare_prerelease(pre_a, pre_b)\n",
+      "verdict": "FINAL",
+      "feedback": "5/5 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 5,
+          "total": 5,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 334,
+        "output_tokens": 820,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

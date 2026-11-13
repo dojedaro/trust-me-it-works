@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse both version strings into components (major.minor.patch, pre-release identifiers, and build metadata), then compare them according to SemVer 2.0.0 rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse_version(version_str):\n        # Split off build metadata (everything after +)\n        if '+' in version_str:\n            version_str = version_str.split('+')[0]\n        \n        # Split off pre-release (everything after -)\n        if '-' in version_str:\n            main_part, prerelease_part = version_str.split('-', 1)\n            prerelease = prerelease_part.split('.')\n        else:\n            main_part = version_str\n            prerelease = None\n        \n        # Parse major.minor.patch\n        parts = main_part.split('.')\n        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])\n        \n        return major, minor, patch, prerelease\n    \n    def compare_prerelease(pre_a, pre_b):\n        # If both have no pre-release, they're equal (on this criterion)\n        if pre_a is None and pre_b is None:\n            return 0\n        # Version without pre-release has higher precedence\n        if pre_a is None:\n            return 1\n        if pre_b is None:\n            return -1\n        \n        # Compare pre-release identifiers one by one\n        for i in range(max(len(pre_a), len(pre_b))):\n            if i >= len(pre_a):\n                # pre_a has fewer identifiers, so it has lower precedence\n                return -1\n            if i >= len(pre_b):\n                # pre_b has fewer identifiers, so pre_a has higher precedence\n                return 1\n            \n            id_a = pre_a[i]\n            id_b = pre_b[i]\n            \n            # Check if identifiers are numeric\n            is_numeric_a = id_a.isdigit()\n            is_numeric_b = id_b.isdigit()\n            \n            if is_numeric_a and is_numeric_b:\n                # Both numeric: compare as integers\n                num_a = int(id_a)\n                num_b = int(id_b)\n                if num_a < num_b:\n                    return -1\n                elif num_a > num_b:\n                    return 1\n            elif is_numeric_a:\n                # Only id_a is numeric: numeric identifiers have lower precedence\n                return -1\n            elif is_numeric_b:\n                # Only id_b is numeric: id_a is non-numeric, so higher precedence\n                return 1\n            else:\n                # Both non-numeric: compare as strings\n                if id_a < id_b:\n                    return -1\n                elif id_a > id_b:\n                    return 1\n        \n        return 0\n    \n    major_a, minor_a, patch_a, pre_a = parse_version(a)\n    major_b, minor_b, patch_b, pre_b = parse_version(b)\n    \n    # Compare major.minor.patch\n    if major_a != major_b:\n        return -1 if major_a < major_b else 1\n    if minor_a != minor_b:\n        return -1 if minor_a < minor_b else 1\n    if patch_a != patch_b:\n        return -1 if patch_a < patch_b else 1\n    \n    # Compare pre-release\n    return compare_prerelease(pre_a, pre_b)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 334,
+        "output_tokens": 911,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

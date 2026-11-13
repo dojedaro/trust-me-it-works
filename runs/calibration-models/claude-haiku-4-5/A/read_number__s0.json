@@ -1,0 +1,64 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Break down the number into groups of 4 digits (ones, 만, 억), handle each group with its unit, and apply the special rules for 1 before place values and all-zero groups.",
+      "code": "def read_number(n: int) -> str:\n    if n == 0:\n        return '영'\n    \n    digits = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    \n    def read_group(num):\n        \"\"\"Read a 4-digit group (0-9999)\"\"\"\n        if num == 0:\n            return ''\n        \n        result = ''\n        \n        # 천 (thousands)\n        thousands = num // 1000\n        if thousands > 0:\n            result += digits[thousands] + '천'\n        \n        # 백 (hundreds)\n        hundreds = (num % 1000) // 100\n        if hundreds > 0:\n            result += digits[hundreds] + '백'\n        \n        # 십 (tens)\n        tens = (num % 100) // 10\n        if tens > 0:\n            result += digits[tens] + '십'\n        \n        # 일 (ones)\n        ones = num % 10\n        if ones > 0:\n            result += digits[ones]\n        \n        return result\n    \n    # Split into groups: ones (0-9999), 만 (10000-99999999), 억 (100000000+)\n    ones_group = n % 10000\n    man_group = (n % 100000000) // 10000\n    eok_group = n // 100000000\n    \n    result = ''\n    \n    # 억 group (always include number if present)\n    if eok_group > 0:\n        result += read_group(eok_group) + '억'\n    \n    # 만 group (special: if exactly 1, just read as 만)\n    if man_group > 0:\n        if man_group == 1:\n            result += '만'\n        else:\n            result += read_group(man_group) + '만'\n    \n    # ones group\n    if ones_group > 0:\n        result += read_group(ones_group)\n    \n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 2,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_empty_groups_disappear",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_man_alone_has_no_il",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_silent_one_inside_groups",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_small_numbers",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 315,
+        "output_tokens": 573,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

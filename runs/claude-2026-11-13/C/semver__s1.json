@@ -1,0 +1,54 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version into major, minor, patch, and pre-release components, then compare them according to semantic versioning rules, ignoring build metadata.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse_version(v: str):\n        # Split off build metadata (after +)\n        v = v.split('+')[0]\n        \n        # Split into version and pre-release\n        if '-' in v:\n            version_part, prerelease_part = v.split('-', 1)\n            prerelease = prerelease_part.split('.')\n        else:\n            version_part = v\n            prerelease = None\n        \n        # Parse major.minor.patch\n        parts = version_part.split('.')\n        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])\n        \n        return major, minor, patch, prerelease\n    \n    def compare_prerelease(pre_a, pre_b):\n        # If both are None, they're equal\n        if pre_a is None and pre_b is None:\n            return 0\n        # Version without pre-release has higher precedence\n        if pre_a is None:\n            return 1\n        if pre_b is None:\n            return -1\n        \n        # Compare pre-release identifiers one by one\n        for i in range(max(len(pre_a), len(pre_b))):\n            # More identifiers means higher precedence\n            if i >= len(pre_a):\n                return -1\n            if i >= len(pre_b):\n                return 1\n            \n            id_a = pre_a[i]\n            id_b = pre_b[i]\n            \n            # Check if identifiers are numeric\n            is_num_a = id_a.isdigit()\n            is_num_b = id_b.isdigit()\n            \n            # Numeric identifiers compare numerically\n            if is_num_a and is_num_b:\n                num_a = int(id_a)\n                num_b = int(id_b)\n                if num_a < num_b:\n                    return -1\n                elif num_a > num_b:\n                    return 1\n            # Numeric identifier has lower precedence than non-numeric\n            elif is_num_a and not is_num_b:\n                return -1\n            elif not is_num_a and is_num_b:\n                return 1\n            # Non-numeric identifiers compare in ASCII order\n            else:\n                if id_a < id_b:\n                    return -1\n                elif id_a > id_b:\n                    return 1\n        \n        return 0\n    \n    major_a, minor_a, patch_a, pre_a = parse_version(a)\n    major_b, minor_b, patch_b, pre_b = parse_version(b)\n    \n    # Compare major.minor.patch\n    if major_a != major_b:\n        return -1 if major_a < major_b else 1\n    if minor_a != minor_b:\n        return -1 if minor_a < minor_b else 1\n    if patch_a != patch_b:\n        return -1 if patch_a < patch_b else 1\n    \n    # Compare pre-release\n    return compare_prerelease(pre_a, pre_b)\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 8, 'spec_compliance': 9}. Weakest criterion: edge_cases. Problem: Minor: isdigit() accepts non-ASCII digits (e.g. '²') which int() can't parse, and there is no validation of malformed versions.",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 8,
+          "spec_compliance": 9
+        },
+        "weakest": "Minor: isdigit() accepts non-ASCII digits (e.g. '²') which int() can't parse, and there is no validation of malformed versions."
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 334,
+        "output_tokens": 834,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1486,
+        "output_tokens": 583,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

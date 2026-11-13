@@ -1,0 +1,69 @@
+{
+  "task_id": "display_width",
+  "room": "text",
+  "variant": "F",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests+disputes",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Use the `unicodedata` module to check each character's East Asian Width and general category, calculating the display width according to the specified rules.",
+      "code": "import unicodedata\n\ndef display_width(text: str) -> int:\n    \"\"\"\n    Returns how many columns text takes in a monospaced terminal.\n    \n    - Wide or Fullwidth characters (CJK, Hangul, fullwidth letters, most emoji): 2 columns\n    - Combining marks (category Mn or Me) and format characters (category Cf): 0 columns\n    - Everything else: 1 column\n    \"\"\"\n    width = 0\n    for char in text:\n        category = unicodedata.category(char)\n        east_asian_width = unicodedata.east_asian_width(char)\n        \n        # Combining marks and invisible format characters take 0 columns\n        if category in ('Mn', 'Me', 'Cf'):\n            width += 0\n        # Wide or Fullwidth characters take 2 columns\n        elif east_asian_width in ('W', 'F'):\n            width += 2\n        # Everything else takes 1 column\n        else:\n            width += 1\n    \n    return width\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n18/18 tests passed.",
+      "checker_details": {
+        "tests": "from solution import display_width\nimport unicodedata\n\n\ndef test_empty():\n    assert display_width('') == 0\n\n\ndef test_ascii():\n    assert display_width('abc') == 3\n\n\ndef test_hangul():\n    assert display_width('한국') == 4\n\n\ndef test_fullwidth_letters():\n    assert display_width('ＡＢ') == 4\n\n\ndef test_combining_mn():\n    assert display_width('e\\u0301') == 1\n\n\ndef test_combining_me():\n    assert display_width('a\\u20dd') == 1\n\n\ndef test_zwj():\n    assert display_width('a\\u200db') == 2\n\n\ndef test_emoji_wide():\n    assert display_width('😀') == 2\n\n\ndef test_emoji_zwj_sequence():\n    # 👨 ZWJ 👩 : 2 + 0 + 2\n    assert display_width('👨\\u200d👩') == 4\n\n\ndef test_halfwidth_katakana_is_one():\n    assert display_width('ｱ') == 1\n\n\ndef test_mc_spacing_mark_is_one():\n    # Devanagari vowel sign AA is Mc -> 1 column\n    assert unicodedata.category('\\u093e') == 'Mc'\n    assert display_width('\\u093e') == 1\n\n\ndef test_soft_hyphen_zero():\n    assert display_width('a\\u00adb') == 2\n\n\ndef test_cf_wide_or_not():\n    # Cf takes priority: check any Cf char with W/F width gives 0\n    for cp in range(0x110000):\n        ch = chr(cp)\n        if unicodedata.category(ch) == 'Cf':\n            assert display_width(ch) == 0\n\n\ndef test_all_wide_chars_two():\n    for cp in range(0x3000, 0xA000):\n        ch = chr(cp)\n        if unicodedata.category(ch) in ('Mn', 'Me', 'Cf'):\n            continue\n        if unicodedata.east_asian_width(ch) in ('W', 'F'):\n            assert display_width(ch) == 2\n\n\ndef test_wide_combining_mark_zero():\n    # Mn category with W width, if any, must be 0\n    for cp in range(0x110000):\n        ch = chr(cp)\n        if unicodedata.category(ch) in ('Mn', 'Me') and unicodedata.east_asian_width(ch) in ('W', 'F'):\n            assert display_width(ch) == 0\n\n\ndef test_mixed():\n    assert display_width('a한\\u0301b') == 4\n\n\ndef test_space_and_newline():\n    assert display_width(' \\n') == 2\n\n\ndef test_ambiguous_is_one():\n    assert display_width('±') == 1\n",
+        "report": {
+          "passed": 18,
+          "total": 18,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        },
+        "disputes": {},
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 238,
+        "output_tokens": 294,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 723,
+        "output_tokens": 922,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 18,
+        "total": 18,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

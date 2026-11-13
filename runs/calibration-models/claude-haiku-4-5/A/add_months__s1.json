@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, add n months to it while handling year wraparound, apply the billing rule for day-of-month, and return the formatted result.",
+      "code": "def add_months(day: str, n: int) -> str:\n    from calendar import monthrange\n    \n    # Parse the input date\n    year, month, date = map(int, day.split('-'))\n    \n    # Check if the input day is the last day of its month\n    _, last_day_of_input_month = monthrange(year, month)\n    is_last_day = (date == last_day_of_input_month)\n    \n    # Add n months\n    month += n\n    \n    # Adjust year and month for wraparound\n    while month > 12:\n        month -= 12\n        year += 1\n    while month < 1:\n        month += 12\n        year -= 1\n    \n    # Get the last day of the target month\n    _, last_day_of_target_month = monthrange(year, month)\n    \n    # Apply billing rule\n    if is_last_day:\n        # If input was last day of its month, result is last day of target month\n        result_day = last_day_of_target_month\n    else:\n        # Otherwise, keep the same day, or use last day if target month is too short\n        result_day = min(date, last_day_of_target_month)\n    \n    # Return formatted date\n    return f\"{year:04d}-{month:02d}-{result_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 380,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

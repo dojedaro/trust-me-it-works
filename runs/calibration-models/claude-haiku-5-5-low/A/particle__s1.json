@@ -1,0 +1,47 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Determine whether the word's final sound has a batchim (and whether it is ㄹ) by reading the last Hangul syllable or the pronunciation of a trailing number, then pick the particle form.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Final-sound info: (has_batchim, is_rieul)\n    DIGIT_END = {\n        '0': (True, False),   # 영 ends in ㅇ\n        '1': (True, True),    # 일 ends in ㄹ\n        '2': (False, False),  # 이\n        '3': (True, False),   # 삼 ends in ㅁ\n        '4': (False, False),  # 사\n        '5': (False, False),  # 오\n        '6': (True, False),   # 육 ends in ㄱ\n        '7': (True, True),    # 칠 ends in ㄹ\n        '8': (True, True),    # 팔 ends in ㄹ\n        '9': (False, False),  # 구\n    }\n    # Group units (position >= 4): 만, 억, 조, 경\n    GROUP_END = {1: (True, False),   # 만 ㄴ\n                 2: (True, False),   # 억 ㄱ\n                 3: (False, False),  # 조 ㅗ\n                 4: (False, False)}  # 경 ㅕ\n    # Within-group units: 십 (pos1), 백 (pos2), 천 (pos3)\n    POS_END = {1: (True, False), 2: (True, False), 3: (True, False)}\n\n    def final_info(w):\n        # Trailing digit run\n        i = len(w)\n        while i > 0 and w[i - 1].isdigit():\n            i -= 1\n        if i < len(w):\n            digits = w[i:]\n            n = int(digits)\n            if n == 0:\n                return DIGIT_END['0']\n            s = str(n)\n            # position of the lowest nonzero digit, counted from the right\n            p = None\n            for k, ch in enumerate(reversed(s)):\n                if ch != '0':\n                    p = k\n                    break\n            if p == 0:\n                return DIGIT_END[s[-1]]\n            if p < 4:\n                return POS_END[p]\n            g = p // 4\n            if g in GROUP_END:\n                return GROUP_END[g]\n            return (False, False)\n        # Hangul syllable\n        code = ord(w[-1]) - 0xAC00\n        if code < 0 or code > 11171:\n            return (False, False)\n        jong = code % 28\n        if jong == 0:\n            return (False, False)\n        return (True, jong == 8)  # index 8 is ㄹ\n\n    has_batchim, is_rieul = final_info(word)\n\n    if particle == \"은/는\":\n        suffix = \"은\" if has_batchim else \"는\"\n    elif particle == \"이/가\":\n        suffix = \"이\" if has_batchim else \"가\"\n    elif particle == \"을/를\":\n        suffix = \"을\" if has_batchim else \"를\"\n    elif particle == \"과/와\":\n        suffix = \"과\" if has_batchim else \"와\"\n    elif particle == \"으로/로\":\n        suffix = \"으로\" if (has_batchim and not is_rieul) else \"로\"\n    else:\n        raise ValueError(\"unknown particle: \" + particle)\n\n    return word + suffix\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 373,
+        "output_tokens": 4457,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

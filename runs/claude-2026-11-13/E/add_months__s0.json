@@ -1,0 +1,57 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the date string, calculate the target month/year, handle the billing rules for day-of-month, and return the formatted result.",
+      "code": "def add_months(day: str, n: int) -> str:\n    from calendar import monthrange\n    \n    # Parse the input date\n    year, month, day_of_month = map(int, day.split('-'))\n    \n    # Calculate the new month and year\n    total_months = year * 12 + month + n\n    new_year = (total_months - 1) // 12\n    new_month = (total_months - 1) % 12 + 1\n    \n    # Get the last day of the original month\n    _, last_day_of_original_month = monthrange(year, month)\n    \n    # Get the last day of the target month\n    _, last_day_of_target_month = monthrange(new_year, new_month)\n    \n    # Apply billing rule: if original day was the last day of its month,\n    # use the last day of target month. Otherwise, use the same day or\n    # the last day of target month if it's too short.\n    if day_of_month == last_day_of_original_month:\n        new_day_of_month = last_day_of_target_month\n    else:\n        new_day_of_month = min(day_of_month, last_day_of_target_month)\n    \n    return f\"{new_year:04d}-{new_month:02d}-{new_day_of_month:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "5/5 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 5,
+          "total": 5,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 385,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

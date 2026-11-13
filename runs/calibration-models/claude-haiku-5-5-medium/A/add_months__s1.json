@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert the date to a month index, shift it by `n`, and clamp the day to the target month's length, using the last day whenever the input was a month-end.",
+      "code": "import calendar\n\n\ndef add_months(day: str, n: int) -> str:\n    y, m, d = (int(p) for p in day.split('-'))\n    total = y * 12 + (m - 1) + n\n    ny, nm0 = divmod(total, 12)\n    nm = nm0 + 1\n    last_src = calendar.monthrange(y, m)[1]\n    last_tgt = calendar.monthrange(ny, nm)[1]\n    if d == last_src:\n        nd = last_tgt\n    else:\n        nd = min(d, last_tgt)\n    return f\"{ny:04d}-{nm:02d}-{nd:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 308,
+        "output_tokens": 389,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,52 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the ISO 8601 duration string by handling the P prefix, optional weeks/days component, optional time component, and converting each part to seconds with support for decimal fractions.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    # Check if we have a time component\n    if 'T' in text:\n        parts = text.split('T')\n        if len(parts) != 2:\n            raise ValueError(\"Invalid 'T' placement\")\n        date_part, time_part = parts\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = \"\"\n    \n    # If text is empty or only contains 'T', it's invalid\n    if not date_part and not time_part:\n        raise ValueError(\"At least one component must be present\")\n    \n    total_seconds = 0.0\n    \n    # Parse date part (weeks or days)\n    if date_part:\n        if 'Y' in date_part or 'M' in date_part:\n            raise ValueError(\"Years and months are not supported\")\n        \n        if 'W' in date_part:\n            # Week format: P<n>W\n            if 'D' in date_part:\n                raise ValueError(\"Cannot mix weeks and days\")\n            \n            w_idx = date_part.index('W')\n            if w_idx != len(date_part) - 1:\n                raise ValueError(\"'W' must be at the end of date part\")\n            \n            try:\n                weeks = float(date_part[:w_idx])\n            except ValueError:\n                raise ValueError(\"Invalid week value\")\n            \n            if weeks < 0:\n                raise ValueError(\"Duration values must be non-negative\")\n            \n            total_seconds += weeks * 7 * 86400\n        \n        elif 'D' in date_part:\n            # Day format: P<n>D\n            d_idx = date_part.index('D')\n            if d_idx != len(date_part) - 1:\n                raise ValueError(\"'D' must be at the end of date part\")\n            \n            try:\n                days = float(date_part[:d_idx])\n            except ValueError:\n                raise ValueError(\"Invalid day value\")\n            \n            if days < 0:\n                raise ValueError(\"Duration values must be non-negative\")\n            \n            total_seconds += days * 86400\n        \n        elif date_part:\n            raise ValueError(\"Date part must contain 'W' or 'D'\")\n    \n    # Parse time part (hours, minutes, seconds)\n    if time_part:\n        remaining = time_part\n        \n        # Hours\n        if 'H' in remaining:\n            h_idx = remaining.index('H')\n            try:\n                hours = float(remaining[:h_idx])\n            except ValueError:\n                raise ValueError(\"Invalid hour value\")\n            if hours < 0:\n                raise ValueError(\"Duration values must be non-negative\")\n            total_seconds += hours * 3600\n            remaining = remaining[h_idx + 1:]\n        \n        # Minutes\n        if 'M' in remaining:\n            m_idx = remaining.index('M')\n            try:\n                minutes = float(remaining[:m_idx])\n            except ValueError:\n                raise ValueError(\"Invalid minute value\")\n            if minutes < 0:\n                raise ValueError(\"Duration values must be non-negative\")\n            total_seconds += minutes * 60\n            remaining = remaining[m_idx + 1:]\n        \n        # Seconds\n        if 'S' in remaining:\n            s_idx = remaining.index('S')\n            try:\n                seconds = float(remaining[:s_idx])\n            except ValueError:\n                raise ValueError(\"Invalid second value\")\n            if seconds < 0:\n                raise ValueError(\"Duration values must be non-negative\")\n            total_seconds += seconds\n            remaining = remaining[s_idx + 1:]\n        \n        if remaining:\n            raise ValueError(\"Invalid characters in time part\")\n    \n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "ValueError: Invalid second value"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 1031,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

@@ -1,0 +1,134 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "D",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I need to score a bowling game following standard rules with a house rule that the 10th frame never gets bonus rolls, meaning bonuses can only count existing rolls.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame in range(10):\n        if frame < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                score += 10\n                # Add next two rolls as bonus\n                score += rolls[roll_idx + 1]\n                if roll_idx + 2 < len(rolls):\n                    score += rolls[roll_idx + 2]\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                score += 10\n                # Add next roll as bonus\n                if roll_idx + 2 < len(rolls):\n                    score += rolls[roll_idx + 2]\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10\n            # 10th frame: just add all remaining rolls, no bonuses\n            while roll_idx < len(rolls):\n                score += rolls[roll_idx]\n                roll_idx += 1\n    \n    return score\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n11/12 tests passed.\n- test_valid_mixed: AssertionError",
+      "checker_details": {
+        "tests": "from solution import house_bowling\n\n\ndef test_zeros():\n    assert house_bowling([0] * 20) == 0\n\n\ndef test_single_strike_first():\n    assert house_bowling([10] + [0] * 18) == 10\n\n\ndef test_all_strikes():\n    # 9 frames + 10th strike (one roll): 10 rolls of 10\n    # frames 1-8: 30 each = 240; frame 9: 10+10=20; frame 10: 10\n    assert house_bowling([10] * 10) == 270\n\n\ndef test_tenth_strike_only_ten():\n    rolls = [0] * 18 + [10]\n    assert house_bowling(rolls) == 10\n\n\ndef test_ninth_strike_tenth_strike():\n    rolls = [0] * 16 + [10, 10]\n    assert house_bowling(rolls) == 30\n\n\ndef test_ninth_strike_tenth_open():\n    rolls = [0] * 16 + [10, 3, 4]\n    assert house_bowling(rolls) == 17 + 7\n\n\ndef test_tenth_spare_no_bonus():\n    rolls = [0] * 18 + [5, 5]\n    assert house_bowling(rolls) == 10\n\n\ndef test_ninth_spare_tenth_strike():\n    rolls = [0] * 16 + [4, 6, 10]\n    assert house_bowling(rolls) == 20 + 10\n\n\ndef test_all_fives_spares():\n    # 9 frames spares: each 10+5 = 15 -> 135; frame 10: 5+5=10\n    rolls = [5] * 20\n    assert house_bowling(rolls) == 145\n\n\ndef test_mixed():\n    rolls = [10, 7, 3, 9, 0, 10, 0, 8, 8, 2, 0, 6, 10, 10, 10, 8, 1]\n    # f1 strike:20; f2 spare 7,3 +9:19; f3 9; f4 strike 10+0+8=18; f5 8; \n    # f6 spare 8,2 +0:10; f7 0+6=6; f8 strike 10+10+10=30; f9 strike 10+10+8=28; f10 strike 10 -> but rolls continue\n    # use valid game instead below\n    pass\n\n\ndef test_valid_mixed():\n    rolls = [10, 7, 3, 9, 0, 10, 0, 8, 8, 2, 0, 6, 10, 10, 10, 8, 1][:0] or \\\n        [10, 7, 3, 9, 0, 10, 0, 8, 8, 2, 0, 6, 10, 10, 10, 10]\n    # f1 20; f2 19; f3 9; f4 18; f5 8; f6 10+0=10; f7 6; f8 30; f9 20; f10 10\n    assert house_bowling(rolls) == 20 + 19 + 9 + 18 + 8 + 10 + 6 + 30 + 20 + 10\n\n\ndef test_strike_then_spare_early():\n    rolls = [10, 5, 5, 3] + [0] * 14\n    # f1: 10+5+5=20; f2 spare 5,5 +3=13; f3: 3\n    assert house_bowling(rolls) == 36\n",
+        "report": {
+          "passed": 11,
+          "total": 12,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_valid_mixed",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 321,
+        "output_tokens": 357,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 918,
+        "output_tokens": 1292,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 10,
+        "total": 12,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_strike_then_spare_early",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_valid_mixed",
+            "message": "AssertionError"
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Analyze the failing test case to understand what \"test_valid_mixed\" is testing, then identify the bug in handling strikes in frames 1-9 where bonus rolls might not exist or be incomplete.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame in range(10):\n        if frame < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                score += 10\n                # Add next two rolls as bonus (only if they exist)\n                if roll_idx + 1 < len(rolls):\n                    score += rolls[roll_idx + 1]\n                if roll_idx + 2 < len(rolls):\n                    score += rolls[roll_idx + 2]\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                score += 10\n                # Add next roll as bonus\n                if roll_idx + 2 < len(rolls):\n                    score += rolls[roll_idx + 2]\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10\n            # 10th frame: just add all remaining rolls, no bonuses\n            while roll_idx < len(rolls):\n                score += rolls[roll_idx]\n                roll_idx += 1\n    \n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n14/14 tests passed.",
+      "checker_details": {
+        "tests": "from solution import house_bowling\n\n\ndef test_all_zero():\n    assert house_bowling([0] * 20) == 0\n\n\ndef test_single_strike_first():\n    assert house_bowling([10] + [0] * 18) == 10\n\n\ndef test_all_strikes():\n    # 10 frames of strikes, 10 rolls.\n    # frames 1-8: 30 each = 240; frame 9: 10+10+0 bonus (only one roll after) = 20; frame 10: 10\n    assert house_bowling([10] * 10) == 270\n\n\ndef test_strike_frame9_strike_frame10():\n    rolls = [0] * 16 + [10, 10]\n    assert house_bowling(rolls) == 30\n\n\ndef test_strike_frame10_only():\n    rolls = [0] * 18 + [10]\n    assert house_bowling(rolls) == 10\n\n\ndef test_spare_frame9_then_frame10_open():\n    rolls = [0] * 16 + [5, 5, 3, 4]\n    # frame9: 10+3 =13, frame10: 7\n    assert house_bowling(rolls) == 20\n\n\ndef test_spare_frame10_no_bonus():\n    rolls = [0] * 18 + [5, 5]\n    assert house_bowling(rolls) == 10\n\n\ndef test_strike_frame9_open_frame10():\n    rolls = [0] * 16 + [10, 3, 4]\n    # frame9: 10+3+4=17, frame10: 7\n    assert house_bowling(rolls) == 24\n\n\ndef test_strike_frame9_then_spare_frame10():\n    rolls = [0] * 16 + [10, 6, 4]\n    # frame9: 20, frame10: 10\n    assert house_bowling(rolls) == 30\n\n\ndef test_all_spares():\n    # 5,5 x10 = 20 rolls; frames1-9: 15 each =135; frame10: 10\n    assert house_bowling([5] * 20) == 145\n\n\ndef test_strike_then_spare_early():\n    rolls = [10, 4, 6, 3, 0] + [0] * 14\n    # f1: 20, f2: 10+3=13, f3: 3\n    assert house_bowling(rolls) == 36\n\n\ndef test_open_frames():\n    assert house_bowling([3, 4] * 10) == 70\n\n\ndef test_two_strikes_early():\n    rolls = [10, 10, 1, 2] + [0] * 14\n    # f1: 21, f2: 13, f3: 3\n    assert house_bowling(rolls) == 37\n\n\ndef test_zero_ten_is_spare():\n    rolls = [0, 10] + [2, 0] * 1 + [0] * 14\n    # f1 spare: 10+2=12, f2: 2\n    assert house_bowling(rolls) == 14\n",
+        "report": {
+          "passed": 14,
+          "total": 14,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 697,
+        "output_tokens": 467,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 945,
+        "output_tokens": 990,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 13,
+        "total": 14,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_zero_ten_is_spare",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

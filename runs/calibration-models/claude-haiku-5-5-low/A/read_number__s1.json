@@ -1,0 +1,47 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Split n into 억, 만, and remainder 4-digit groups, convert each group with a helper that drops a leading 1 before 천/백/십, and skip zero groups.",
+      "code": "def read_number(n: int) -> str:\n    digits = \"일이삼사오육칠팔구\"\n\n    def group(g: int) -> str:\n        # Reads a number from 1 to 9999 in Sino-Korean.\n        s = \"\"\n        for val, unit in ((1000, \"천\"), (100, \"백\"), (10, \"십\")):\n            d = (g // val) % 10\n            if d:\n                s += unit if d == 1 else digits[d - 1] + unit\n        ones = g % 10\n        if ones:\n            s += digits[ones - 1]\n        return s\n\n    if n == 0:\n        return \"영\"\n\n    result = \"\"\n    eok = n // 100000000\n    man = (n // 10000) % 10000\n    rest = n % 10000\n\n    if eok:\n        result += group(eok) + \"억\"\n    if man:\n        result += \"만\" if man == 1 else group(man) + \"만\"\n    if rest:\n        result += group(rest)\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 374,
+        "output_tokens": 1181,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

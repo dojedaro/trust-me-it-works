@@ -1,0 +1,266 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the rolls into frames, then score each frame according to bowling rules, ensuring frame 10 doesn't get bonus rolls beyond what exists.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame in range(10):\n        if frame < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                score += 10 + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                score += 10 + rolls[roll_idx + 2]\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10\n            # Frame 10: just add remaining rolls, no bonuses\n            if rolls[roll_idx] == 10:  # Strike in frame 10\n                score += rolls[roll_idx]\n            else:\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 4, 'edge_cases': 4, 'spec_compliance': 3}. Weakest criterion: spec_compliance. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 4,
+          "edge_cases": 4,
+          "spec_compliance": 3
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_all_strikes",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_bonus_into_frame_ten",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_mixed_game",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 321,
+        "output_tokens": 319,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 688,
+        "output_tokens": 483,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "The issue is that the 10th frame scoring is incorrect - it should add all remaining rolls in frame 10, not just the first roll for strikes. In frame 10, you always get to bowl all your rolls (1 if strike, 2 otherwise), and they all count toward the score.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame in range(10):\n        if frame < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                score += 10 + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                score += 10 + rolls[roll_idx + 2]\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10\n            # Frame 10: add all remaining rolls (no bonuses beyond frame 10)\n            if rolls[roll_idx] == 10:  # Strike in frame 10\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n            else:\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 2, 'spec_compliance': 4}. Weakest criterion: edge_cases. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 2,
+          "spec_compliance": 4
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 2,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_all_strikes",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_bonus_into_frame_ten",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_mixed_game",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_strike_in_frame_ten_scores_ten",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 678,
+        "output_tokens": 369,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 703,
+        "output_tokens": 592,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 2,
+      "plan": "The issue is that in frame 10, when there's a strike, we're adding two rolls, but we should add all remaining rolls (which could be 2 or 3 depending on what happens). Also, for a spare in frame 10, we should add 3 rolls. The frame 10 logic needs to account for the fact that extra rolls are allowed in frame 10 only.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame in range(10):\n        if frame < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                score += 10 + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                score += 10 + rolls[roll_idx + 2]\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10\n            # Frame 10: add all remaining rolls in the list\n            # A strike or spare in frame 10 gets bonus rolls, but they stay within frame 10\n            if rolls[roll_idx] == 10:  # Strike in frame 10\n                # Strike gets 2 bonus rolls (all 3 rolls in frame 10)\n                score += rolls[roll_idx] + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare in frame 10\n                # Spare gets 1 bonus roll (all 3 rolls in frame 10)\n                score += rolls[roll_idx] + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n            else:  # Open frame in frame 10\n                # No bonus rolls (just 2 rolls in frame 10)\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 2, 'edge_cases': 2, 'spec_compliance': 2}. Weakest criterion: correctness. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 2,
+          "edge_cases": 2,
+          "spec_compliance": 2
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 1,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_all_strikes",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_bonus_into_frame_ten",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_mixed_game",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_spare_in_frame_ten_has_no_bonus",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_strike_in_frame_ten_scores_ten",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 693,
+        "output_tokens": 547,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 859,
+        "output_tokens": 477,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 3,
+      "plan": "Re-examine the scoring logic for frames 1-9, particularly how bonuses are calculated when the next rolls might be in frame 10 (where the house rule applies).",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame in range(10):\n        if frame < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                score += 10 + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                score += 10 + rolls[roll_idx + 2]\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10\n            # Frame 10: the house rule says it never gets extra rolls\n            # So frame 10 is just 1 roll if strike, 2 rolls otherwise\n            # and we simply add those rolls to the score\n            if rolls[roll_idx] == 10:  # Strike in frame 10\n                score += rolls[roll_idx]\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare in frame 10\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n            else:  # Open frame in frame 10\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 6, 'edge_cases': 5, 'spec_compliance': 4}. Weakest criterion: spec_compliance. Problem: spec_compliance",
+      "checker_details": {
+        "scores": {
+          "correctness": 6,
+          "edge_cases": 5,
+          "spec_compliance": 4
+        },
+        "weakest": "spec_compliance"
+      },
+      "ground_truth": {
+        "passed": 3,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_all_strikes",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_bonus_into_frame_ten",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_mixed_game",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 848,
+        "output_tokens": 892,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 782,
+        "output_tokens": 542,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 4,
+      "plan": "The issue is with spec_compliance - I need to re-read the house rule carefully. The problem states \"Bonuses count only rolls that exist, so a strike in frame 9 followed by a strike in frame 10 scores 10 + 10\" - this means frame 9's strike bonus should only count the existing rolls. Additionally, frame 10 bonus rolls don't exist under the house rule, so frame 9's strike cannot use frame 10's potential bonus rolls beyond what exists.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    for frame in range(10):\n        if frame < 9:  # Frames 1-9\n            if rolls[roll_idx] == 10:  # Strike\n                bonus = 10 + rolls[roll_idx + 1]\n                if roll_idx + 2 < len(rolls):\n                    bonus += rolls[roll_idx + 2]\n                score += bonus\n                roll_idx += 1\n            elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n                bonus = 10 + rolls[roll_idx + 2]\n                score += bonus\n                roll_idx += 2\n            else:  # Open frame\n                score += rolls[roll_idx] + rolls[roll_idx + 1]\n                roll_idx += 2\n        else:  # Frame 10\n            # Frame 10: just add all remaining rolls (1 if strike, 2 otherwise)\n            score += rolls[roll_idx]\n            if roll_idx + 1 < len(rolls):\n                score += rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 2, 'edge_cases': 2, 'spec_compliance': 3}. Weakest criterion: correctness. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 2,
+          "edge_cases": 2,
+          "spec_compliance": 3
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 773,
+        "output_tokens": 766,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 709,
+        "output_tokens": 568,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,54 @@
+{
+  "task_id": "merge_intervals",
+  "room": "spec",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Sort intervals by start position, filter out empty ones, then iterate through merging overlapping/touching intervals by comparing the current interval's end with the next interval's start.",
+      "code": "def merge_intervals(intervals: list) -> list[tuple[int, int]]:\n    # Filter out empty intervals and convert to tuples, then sort by start position\n    valid_intervals = sorted(\n        ((start, end) for start, end in intervals if end > start),\n        key=lambda x: x[0]\n    )\n    \n    if not valid_intervals:\n        return []\n    \n    # Merge overlapping or touching intervals\n    merged = []\n    current_start, current_end = valid_intervals[0]\n    \n    for start, end in valid_intervals[1:]:\n        if start <= current_end:\n            # Intervals overlap or touch, merge them\n            current_end = max(current_end, end)\n        else:\n            # No overlap, add current interval to result and start a new one\n            merged.append((current_start, current_end))\n            current_start, current_end = start, end\n    \n    # Don't forget to add the last interval\n    merged.append((current_start, current_end))\n    \n    return merged\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 10, 'spec_compliance': 10}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 278,
+        "output_tokens": 301,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 621,
+        "output_tokens": 340,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

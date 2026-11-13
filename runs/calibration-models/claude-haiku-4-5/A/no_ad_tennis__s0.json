@@ -1,0 +1,47 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement a tennis scoring system that tracks points, converts them to tennis scores (0, 15, 30, 40), handles deuce/no-ad situations, and stops when someone wins.",
+      "code": "def game_score(points: str) -> str:\n    a_points = 0\n    b_points = 0\n    \n    for point in points:\n        # Check if game is already won\n        if a_points >= 4 and a_points > b_points:\n            return \"Game A\"\n        if b_points >= 4 and b_points > a_points:\n            return \"Game B\"\n        \n        # Award the point\n        if point == 'A':\n            a_points += 1\n        else:\n            b_points += 1\n    \n    # Check if game is won after all points\n    if a_points >= 4 and a_points > b_points:\n        return \"Game A\"\n    if b_points >= 4 and b_points > a_points:\n        return \"Game B\"\n    \n    # Convert points to tennis score\n    score_map = {0: '0', 1: '15', 2: '30', 3: '40'}\n    \n    # Handle 40-40 and deuce situations\n    if a_points >= 3 and b_points >= 3:\n        if a_points == b_points:\n            return \"40-40\"\n        elif a_points > b_points:\n            return \"Game A\"\n        else:\n            return \"Game B\"\n    \n    a_score = score_map.get(a_points, '40')\n    b_score = score_map.get(b_points, '40')\n    \n    return f\"{a_score}-{b_score}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 251,
+        "output_tokens": 431,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

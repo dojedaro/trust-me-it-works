@@ -1,0 +1,52 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll implement the allocation algorithm by first handling edge cases, then computing each part's floor share, calculating fractional remainders, and distributing remaining cents to parts with the largest remainders (with ties broken by earlier position).",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    # Check if all weights are 0\n    if all(w == 0 for w in weights):\n        raise ValueError(\"All weights are 0\")\n    \n    # Handle negative total by allocating abs(total) and negating\n    is_negative = total < 0\n    abs_total = abs(total)\n    \n    # Calculate the sum of weights\n    weight_sum = sum(weights)\n    \n    # Initialize parts with floor of exact share\n    parts = []\n    remainders = []\n    \n    for i, weight in enumerate(weights):\n        if weight == 0:\n            parts.append(0)\n            remainders.append(0.0)\n        else:\n            exact_share = (abs_total * weight) / weight_sum\n            floor_share = int(exact_share)\n            fractional_part = exact_share - floor_share\n            \n            parts.append(floor_share)\n            remainders.append((fractional_part, i))  # Store (remainder, index) for tie-breaking\n    \n    # Calculate how many cents are left to distribute\n    allocated = sum(parts)\n    remaining_cents = abs_total - allocated\n    \n    # Distribute remaining cents to parts with largest fractional remainders\n    # Create list of (remainder, original_index) tuples, sorted by remainder (descending) then by index (ascending)\n    remainder_indices = []\n    for i, weight in enumerate(weights):\n        if weight > 0:\n            exact_share = (abs_total * weight) / weight_sum\n            floor_share = int(exact_share)\n            fractional_part = exact_share - floor_share\n            remainder_indices.append((fractional_part, i))\n    \n    # Sort by fractional part (descending), then by index (ascending) for tie-breaking\n    remainder_indices.sort(key=lambda x: (-x[0], x[1]))\n    \n    # Distribute the remaining cents\n    for j in range(remaining_cents):\n        idx = remainder_indices[j][1]\n        parts[idx] += 1\n    \n    # Negate if original total was negative\n    if is_negative:\n        parts = [-p for p in parts]\n    \n    return parts\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 606,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

@@ -1,0 +1,60 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the rolls into frames, handle frames 1-9 with strike/spare bonuses, and handle the special 10th frame with no bonus rolls.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    roll_idx = 0\n    \n    # Process frames 1-9\n    for frame in range(9):\n        if rolls[roll_idx] == 10:  # Strike\n            score += 10 + rolls[roll_idx + 1] + rolls[roll_idx + 2]\n            roll_idx += 1\n        elif rolls[roll_idx] + rolls[roll_idx + 1] == 10:  # Spare\n            score += 10 + rolls[roll_idx + 2]\n            roll_idx += 2\n        else:  # Open frame\n            score += rolls[roll_idx] + rolls[roll_idx + 1]\n            roll_idx += 2\n    \n    # Process frame 10 (no bonus rolls)\n    if rolls[roll_idx] == 10:  # Strike in frame 10\n        score += 10\n    else:  # Not a strike in frame 10\n        score += rolls[roll_idx] + rolls[roll_idx + 1]\n    \n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 3,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_all_strikes",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_bonus_into_frame_ten",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_mixed_game",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 321,
+        "output_tokens": 312,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

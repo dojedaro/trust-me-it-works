@@ -1,0 +1,57 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version string into core version and pre-release parts, compare core versions numerically, then compare pre-release versions according to Semantic Versioning rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse_version(version: str):\n        # Remove build metadata (everything after +)\n        version = version.split('+')[0]\n        \n        # Split into core version and pre-release\n        if '-' in version:\n            core, prerelease = version.split('-', 1)\n            prerelease_parts = prerelease.split('.')\n        else:\n            core = version\n            prerelease_parts = None\n        \n        # Parse core version (MAJOR.MINOR.PATCH)\n        core_parts = core.split('.')\n        major, minor, patch = int(core_parts[0]), int(core_parts[1]), int(core_parts[2])\n        \n        return (major, minor, patch), prerelease_parts\n    \n    def compare_prerelease(pre_a, pre_b):\n        # If both have no pre-release, they're equal in this regard\n        if pre_a is None and pre_b is None:\n            return 0\n        # Version without pre-release has higher precedence\n        if pre_a is None:\n            return 1\n        if pre_b is None:\n            return -1\n        \n        # Compare pre-release identifiers\n        for i in range(max(len(pre_a), len(pre_b))):\n            # If one has fewer identifiers, it has lower precedence\n            if i >= len(pre_a):\n                return -1\n            if i >= len(pre_b):\n                return 1\n            \n            id_a = pre_a[i]\n            id_b = pre_b[i]\n            \n            # Check if identifiers are numeric\n            is_numeric_a = id_a.isdigit()\n            is_numeric_b = id_b.isdigit()\n            \n            # Numeric identifiers have lower precedence than non-numeric\n            if is_numeric_a and not is_numeric_b:\n                return -1\n            if is_numeric_b and not is_numeric_a:\n                return 1\n            \n            # Both numeric: compare numerically\n            if is_numeric_a and is_numeric_b:\n                num_a = int(id_a)\n                num_b = int(id_b)\n                if num_a < num_b:\n                    return -1\n                if num_a > num_b:\n                    return 1\n            else:\n                # Both non-numeric: compare lexically (ASCII order)\n                if id_a < id_b:\n                    return -1\n                if id_a > id_b:\n                    return 1\n        \n        return 0\n    \n    core_a, pre_a = parse_version(a)\n    core_b, pre_b = parse_version(b)\n    \n    # Compare core versions\n    if core_a < core_b:\n        return -1\n    if core_a > core_b:\n        return 1\n    \n    # Core versions are equal, compare pre-release\n    return compare_prerelease(pre_a, pre_b)\n",
+      "verdict": "FINAL",
+      "feedback": "5/5 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 5,
+          "total": 5,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 334,
+        "output_tokens": 797,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

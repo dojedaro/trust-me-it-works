@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Strip build metadata, split each version into its numeric core and pre-release identifiers, then compare core tuples first and pre-release identifiers per the SemVer rules.",
+      "code": "def _parse(version):\n    # Build metadata is ignored entirely.\n    version = version.split('+', 1)[0]\n    if '-' in version:\n        core, pre = version.split('-', 1)\n        pre_ids = pre.split('.')\n    else:\n        core = version\n        pre_ids = None\n    nums = tuple(int(part) for part in core.split('.'))\n    return nums, pre_ids\n\n\ndef _cmp_identifier(x, y):\n    x_num = x.isdigit()\n    y_num = y.isdigit()\n    if x_num and y_num:\n        xi, yi = int(x), int(y)\n        return (xi > yi) - (xi < yi)\n    if x_num:\n        return -1  # numeric has lower precedence than non-numeric\n    if y_num:\n        return 1\n    return (x > y) - (x < y)\n\n\ndef _cmp_prerelease(a_ids, b_ids):\n    # None means no pre-release, which has higher precedence.\n    if a_ids is None and b_ids is None:\n        return 0\n    if a_ids is None:\n        return 1\n    if b_ids is None:\n        return -1\n    for x, y in zip(a_ids, b_ids):\n        c = _cmp_identifier(x, y)\n        if c != 0:\n            return c\n    return (len(a_ids) > len(b_ids)) - (len(a_ids) < len(b_ids))\n\n\ndef compare_versions(a: str, b: str) -> int:\n    a_nums, a_pre = _parse(a)\n    b_nums, b_pre = _parse(b)\n    if a_nums != b_nums:\n        return 1 if a_nums > b_nums else -1\n    return _cmp_prerelease(a_pre, b_pre)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 447,
+        "output_tokens": 1121,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

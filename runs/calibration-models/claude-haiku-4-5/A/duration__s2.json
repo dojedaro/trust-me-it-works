@@ -1,0 +1,52 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the ISO 8601 duration string by first validating the format, then extracting and converting each component (weeks, days, hours, minutes, seconds) to total seconds.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    # Split by 'T' to separate date and time parts\n    if 'T' in text:\n        date_part, time_part = text.split('T')\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = None\n    \n    total_seconds = 0.0\n    \n    # Parse date part (weeks or days)\n    if date_part:\n        if date_part.endswith('W'):\n            # Weeks only\n            if time_part:\n                raise ValueError(\"Weeks cannot be combined with time components\")\n            week_str = date_part[:-1]\n            if not week_str:\n                raise ValueError(\"Invalid duration: missing value for W\")\n            try:\n                weeks = float(week_str.replace(',', '.'))\n                total_seconds += weeks * 7 * 86400\n            except ValueError:\n                raise ValueError(f\"Invalid weeks value: {week_str}\")\n        elif date_part.endswith('D'):\n            # Days\n            day_str = date_part[:-1]\n            if not day_str:\n                raise ValueError(\"Invalid duration: missing value for D\")\n            try:\n                days = float(day_str.replace(',', '.'))\n                total_seconds += days * 86400\n            except ValueError:\n                raise ValueError(f\"Invalid days value: {day_str}\")\n        else:\n            raise ValueError(\"Date part must end with 'W' or 'D'\")\n    \n    # Parse time part (hours, minutes, seconds)\n    if time_part:\n        i = 0\n        while i < len(time_part):\n            # Find the next letter\n            j = i\n            while j < len(time_part) and time_part[j] not in 'HMS':\n                j += 1\n            \n            if j == len(time_part):\n                raise ValueError(\"Time part must contain H, M, or S\")\n            \n            value_str = time_part[i:j]\n            unit = time_part[j]\n            \n            if not value_str:\n                raise ValueError(f\"Missing value for {unit}\")\n            \n            try:\n                value = float(value_str.replace(',', '.'))\n            except ValueError:\n                raise ValueError(f\"Invalid {unit} value: {value_str}\")\n            \n            if unit == 'H':\n                total_seconds += value * 3600\n            elif unit == 'M':\n                total_seconds += value * 60\n            elif unit == 'S':\n                total_seconds += value\n            \n            i = j + 1\n        \n        # Check for invalid characters in time part\n        if i != len(time_part):\n            raise ValueError(\"Invalid characters in time part\")\n    \n    # At least one component must be present\n    if total_seconds == 0.0 and not date_part and not time_part:\n        raise ValueError(\"At least one duration component must be present\")\n    \n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 840,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

@@ -1,0 +1,66 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "D",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target month/year, handle the day adjustment based on whether the input is the last day of its month and whether the target month is shorter, then format and return the result.",
+      "code": "from datetime import datetime, timedelta\nimport calendar\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    date_obj = datetime.strptime(day, \"%Y-%m-%d\")\n    year = date_obj.year\n    month = date_obj.month\n    day_of_month = date_obj.day\n    \n    # Calculate target month and year\n    total_months = year * 12 + month - 1 + n  # -1 because months are 1-indexed\n    target_year = total_months // 12\n    target_month = total_months % 12 + 1  # +1 to convert back to 1-indexed\n    \n    # Check if the original day is the last day of its month\n    last_day_of_original_month = calendar.monthrange(year, month)[1]\n    is_last_day = (day_of_month == last_day_of_original_month)\n    \n    # Determine the day for the target month\n    last_day_of_target_month = calendar.monthrange(target_year, target_month)[1]\n    \n    if is_last_day:\n        # If original was last day of month, use last day of target month\n        target_day = last_day_of_target_month\n    else:\n        # Otherwise, use the same day or the last day if target month is too short\n        target_day = min(day_of_month, last_day_of_target_month)\n    \n    # Create and return the target date\n    result_date = datetime(target_year, target_month, target_day)\n    return result_date.strftime(\"%Y-%m-%d\")\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n18/18 tests passed.",
+      "checker_details": {
+        "tests": "from solution import add_months\n\ndef test_basic():\n    assert add_months('2026-01-15', 1) == '2026-02-15'\n\ndef test_end_of_month_short():\n    assert add_months('2026-01-31', 1) == '2026-02-28'\n\ndef test_last_day_feb_to_march():\n    assert add_months('2026-02-28', 1) == '2026-03-31'\n\ndef test_last_day_feb_leap_to_march():\n    assert add_months('2024-02-29', 1) == '2024-03-31'\n\ndef test_last_day_30_to_31():\n    assert add_months('2026-04-30', 1) == '2026-05-31'\n\ndef test_not_last_day_30_stays():\n    assert add_months('2026-03-30', 1) == '2026-04-30'\n\ndef test_day_30_to_feb():\n    assert add_months('2026-01-30', 1) == '2026-02-28'\n\ndef test_leap_target():\n    assert add_months('2026-01-31', 25) == '2028-02-29'\n\ndef test_zero():\n    assert add_months('2026-02-28', 0) == '2026-02-28'\n\ndef test_negative():\n    assert add_months('2026-03-31', -1) == '2026-02-28'\n\ndef test_negative_cross_year():\n    assert add_months('2026-01-15', -2) == '2025-11-15'\n\ndef test_forward_cross_year():\n    assert add_months('2025-11-30', 3) == '2026-02-28'\n\ndef test_large_negative():\n    assert add_months('2026-01-31', -24) == '2024-01-31'\n\ndef test_large_positive_12():\n    assert add_months('2026-06-15', 12) == '2027-06-15'\n\ndef test_feb28_nonleap_not_last_in_leap():\n    assert add_months('2026-02-28', 12) == '2027-02-28'\n    assert add_months('2027-02-28', 12) == '2028-02-29'\n\ndef test_leap_feb28_not_last():\n    assert add_months('2024-02-28', 1) == '2024-03-28'\n\ndef test_padding_year():\n    assert add_months('0999-01-15', 1) == '0999-02-15'\n\ndef test_december_boundary():\n    assert add_months('2026-12-31', 1) == '2027-01-31'\n    assert add_months('2026-01-31', -1) == '2025-12-31'\n",
+        "report": {
+          "passed": 18,
+          "total": 18,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 465,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 858,
+        "output_tokens": 916,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 18,
+        "total": 18,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

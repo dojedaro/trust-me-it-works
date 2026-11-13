@@ -1,0 +1,47 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll implement the function by parsing the input amount, applying currency-specific rounding (away from zero), formatting with proper comma grouping and decimal places, and handling edge cases like negative zero.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef format_amount(amount: str, currency: str) -> str:\n    # Define decimal places for each currency\n    decimal_places = {\n        'KRW': 0,\n        'JPY': 0,\n        'USD': 2,\n        'EUR': 2,\n        'BHD': 3,\n        'KWD': 3,\n    }\n    \n    # Check if currency is known\n    if currency not in decimal_places:\n        raise ValueError(f\"Unknown currency: {currency}\")\n    \n    decimals = decimal_places[currency]\n    \n    # Parse the amount as Decimal for precise arithmetic\n    value = Decimal(amount)\n    \n    # Round to the appropriate number of decimal places, halves away from zero\n    quantize_exp = Decimal(10) ** -decimals\n    rounded = value.quantize(quantize_exp, rounding=ROUND_HALF_UP)\n    \n    # Check if result rounds to zero - if so, make it positive\n    if rounded == 0:\n        rounded = abs(rounded)\n    \n    # Determine if negative\n    is_negative = rounded < 0\n    abs_value = abs(rounded)\n    \n    # Split into integer and decimal parts\n    value_str = str(abs_value)\n    if '.' in value_str:\n        int_part, dec_part = value_str.split('.')\n    else:\n        int_part = value_str\n        dec_part = ''\n    \n    # Pad or truncate decimal part to the correct number of places\n    dec_part = dec_part.ljust(decimals, '0')[:decimals]\n    \n    # Group integer part by 3s from the right\n    int_part_reversed = int_part[::-1]\n    groups = [int_part_reversed[i:i+3] for i in range(0, len(int_part_reversed), 3)]\n    int_part_formatted = ','.join(groups)[::-1]\n    \n    # Construct the result\n    if decimals > 0:\n        formatted_number = f\"{int_part_formatted}.{dec_part}\"\n    else:\n        formatted_number = int_part_formatted\n    \n    # Add negative sign if needed\n    if is_negative:\n        formatted_number = f\"-{formatted_number}\"\n    \n    return f\"{currency} {formatted_number}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 292,
+        "output_tokens": 638,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

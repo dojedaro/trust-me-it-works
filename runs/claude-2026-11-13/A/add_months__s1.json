@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target month/year, handle the billing rule for last day of month, and return the formatted result.",
+      "code": "from datetime import datetime, timedelta\nimport calendar\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    date_obj = datetime.strptime(day, \"%Y-%m-%d\")\n    year = date_obj.year\n    month = date_obj.month\n    dom = date_obj.day\n    \n    # Check if the input day is the last day of its month\n    last_day_of_month = calendar.monthrange(year, month)[1]\n    is_last_day = (dom == last_day_of_month)\n    \n    # Calculate target month and year\n    target_month = month + n\n    target_year = year\n    \n    # Adjust year and month if needed\n    while target_month > 12:\n        target_month -= 12\n        target_year += 1\n    while target_month < 1:\n        target_month += 12\n        target_year -= 1\n    \n    # Determine the day in the target month\n    last_day_of_target = calendar.monthrange(target_year, target_month)[1]\n    \n    if is_last_day:\n        # If original day was last day of month, use last day of target month\n        target_day = last_day_of_target\n    else:\n        # Otherwise, use the same day, or last day if target month is too short\n        target_day = min(dom, last_day_of_target)\n    \n    # Create and return the new date\n    result_date = datetime(target_year, target_month, target_day)\n    return result_date.strftime(\"%Y-%m-%d\")\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 437,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

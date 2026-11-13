@@ -1,0 +1,175 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the ISO 8601 duration string by first validating the format, then extracting weeks/days and optional time components (hours, minutes, seconds), converting each to seconds and summing them.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Invalid duration format\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    total_seconds = 0.0\n    \n    # Split by 'T' to separate date and time parts\n    if 'T' in text:\n        date_part, time_part = text.split('T', 1)\n        if not time_part:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = None\n    \n    # Parse date part\n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both W and D\")\n            # Extract weeks\n            parts = date_part.split('W')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid week format\")\n            try:\n                weeks = float(parts[0].replace(',', '.'))\n            except ValueError:\n                raise ValueError(\"Invalid week value\")\n            total_seconds += weeks * 7 * 86400\n        elif 'D' in date_part:\n            # Extract days\n            parts = date_part.split('D')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid day format\")\n            try:\n                days = float(parts[0].replace(',', '.'))\n            except ValueError:\n                raise ValueError(\"Invalid day value\")\n            total_seconds += days * 86400\n        else:\n            if date_part:\n                raise ValueError(\"Invalid date format\")\n    \n    # Parse time part\n    if time_part:\n        remaining = time_part\n        \n        # Hours\n        if 'H' in remaining:\n            parts = remaining.split('H', 1)\n            try:\n                hours = float(parts[0].replace(',', '.'))\n            except ValueError:\n                raise ValueError(\"Invalid hour value\")\n            total_seconds += hours * 3600\n            remaining = parts[1]\n        \n        # Minutes\n        if 'M' in remaining:\n            parts = remaining.split('M', 1)\n            try:\n                minutes = float(parts[0].replace(',', '.'))\n            except ValueError:\n                raise ValueError(\"Invalid minute value\")\n            total_seconds += minutes * 60\n            remaining = parts[1]\n        \n        # Seconds\n        if 'S' in remaining:\n            parts = remaining.split('S', 1)\n            if parts[1] != '':\n                raise ValueError(\"Invalid format after seconds\")\n            try:\n                seconds = float(parts[0].replace(',', '.'))\n            except ValueError:\n                raise ValueError(\"Invalid second value\")\n            total_seconds += seconds\n            remaining = ''\n        \n        if remaining:\n            raise ValueError(\"Invalid time format\")\n    \n    if total_seconds == 0:\n        raise ValueError(\"At least one component must be present\")\n    \n    return total_seconds\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 4, 'edge_cases': 2, 'spec_compliance': 2}. Weakest criterion: edge_cases. Problem: Zero durations such as 'PT0S' or 'P0D' wrongly raise ValueError because the check uses total_seconds == 0. Number parsing relies on float(), which accepts '1e3', 'inf', 'nan', '-1', ' 1', and '1_0'. Fractions are not restricted to the last component, so 'PT1.5H30M' is accepted. Fractions are also allowed on weeks and days when a time part follows, e.g. 'P1.5DT1H'. Weeks are accepted together with a time part, e.g. 'P1WT1H'. Component order is not enforced, e.g. 'PT1S1M' can slip through, and a string like 'PT1H' + '1M' is mishandled. Time-part garbage after H or M is not rejected cleanly.",
+      "checker_details": {
+        "scores": {
+          "correctness": 4,
+          "edge_cases": 2,
+          "spec_compliance": 2
+        },
+        "weakest": "Zero durations such as 'PT0S' or 'P0D' wrongly raise ValueError because the check uses total_seconds == 0. Number parsing relies on float(), which accepts '1e3', 'inf', 'nan', '-1', ' 1', and '1_0'. Fractions are not restricted to the last component, so 'PT1.5H30M' is accepted. Fractions are also allowed on weeks and days when a time part follows, e.g. 'P1.5DT1H'. Weeks are accepted together with a time part, e.g. 'P1WT1H'. Component order is not enforced, e.g. 'PT1S1M' can slip through, and a string like 'PT1H' + '1M' is mishandled. Time-part garbage after H or M is not rejected cleanly."
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 798,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1480,
+        "output_tokens": 303,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Fix edge cases by (1) allowing zero durations, (2) validating number format strictly (non-negative integers except last component), (3) allowing fractions on any component but not just the last, (4) allowing weeks with time part, (5) enforcing component order, and (6) rejecting malformed input more carefully.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Invalid duration format\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    if not text:\n        raise ValueError(\"At least one component must be present\")\n    \n    total_seconds = 0.0\n    \n    # Split by 'T' to separate date and time parts\n    if 'T' in text:\n        date_part, time_part = text.split('T', 1)\n        if not time_part:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = None\n    \n    # Helper to validate and parse a number (non-negative int or decimal)\n    def parse_number(s):\n        if not s:\n            raise ValueError(\"Empty number\")\n        # Replace comma with dot for decimal separator\n        s = s.replace(',', '.')\n        # Check for valid format: optional digits, optional dot, optional digits\n        # Must contain at least one digit\n        if not any(c.isdigit() for c in s):\n            raise ValueError(f\"Invalid number format: {s}\")\n        # Reject scientific notation, underscores, spaces, signs, infinity, nan\n        if 'e' in s.lower() or '_' in s or ' ' in s or s.startswith('+') or s.startswith('-'):\n            raise ValueError(f\"Invalid number format: {s}\")\n        try:\n            val = float(s)\n            if val < 0:\n                raise ValueError(f\"Negative number not allowed: {s}\")\n            return val\n        except ValueError:\n            raise ValueError(f\"Invalid number: {s}\")\n    \n    # Parse date part\n    if date_part:\n        if 'W' in date_part and 'D' in date_part:\n            raise ValueError(\"Cannot have both W and D\")\n        \n        if 'W' in date_part:\n            # Extract weeks\n            parts = date_part.split('W')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid week format\")\n            weeks = parse_number(parts[0])\n            total_seconds += weeks * 7 * 86400\n        elif 'D' in date_part:\n            # Extract days\n            parts = date_part.split('D')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid day format\")\n            days = parse_number(parts[0])\n            total_seconds += days * 86400\n        else:\n            raise ValueError(\"Invalid date format\")\n    \n    # Parse time part\n    if time_part:\n        remaining = time_part\n        found_component = False\n        \n        # Hours\n        if 'H' in remaining:\n            parts = remaining.split('H', 1)\n            hours = parse_number(parts[0])\n            total_seconds += hours * 3600\n            remaining = parts[1]\n            found_component = True\n        \n        # Minutes\n        if 'M' in remaining:\n            parts = remaining.split('M', 1)\n            minutes = parse_number(parts[0])\n            total_seconds += minutes * 60\n            remaining = parts[1]\n            found_component = True\n        \n        # Seconds\n        if 'S' in remaining:\n            parts = remaining.split('S', 1)\n            if parts[1] != '':\n                raise ValueError(\"Invalid format after seconds\")\n            seconds = parse_number(parts[0])\n            total_seconds += seconds\n            remaining = ''\n            found_component = True\n        \n        if remaining or not found_component:\n            raise ValueError(\"Invalid time format\")\n    \n    if total_seconds == 0 and not date_part and not time_part:\n        raise ValueError(\"At least one component must be present\")\n    \n    return total_seconds\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 6, 'edge_cases': 3, 'spec_compliance': 3}. Weakest criterion: edge_cases. Problem: Fractions are accepted on non-last components, and 'P<n>W' is accepted with a time part (e.g. 'P1WT1H'), and number parsing is lenient (unicode digits, '1.', '.5', whitespace)",
+      "checker_details": {
+        "scores": {
+          "correctness": 6,
+          "edge_cases": 3,
+          "spec_compliance": 3
+        },
+        "weakest": "Fractions are accepted on non-last components, and 'P<n>W' is accepted with a time part (e.g. 'P1WT1H'), and number parsing is lenient (unicode digits, '1.', '.5', whitespace)"
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1321,
+        "output_tokens": 1041,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1718,
+        "output_tokens": 829,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 2,
+      "plan": "Fix edge cases by (1) only allowing fractions on the last component written, (2) rejecting weeks with a time part, (3) making number parsing strict to only accept ASCII digits, and require at least one digit before and after the decimal point.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Invalid duration format\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    if not text:\n        raise ValueError(\"At least one component must be present\")\n    \n    total_seconds = 0.0\n    \n    # Split by 'T' to separate date and time parts\n    if 'T' in text:\n        date_part, time_part = text.split('T', 1)\n        if not time_part:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = None\n    \n    # Helper to validate and parse a number (non-negative int or decimal)\n    # is_last: whether this is the last component (only one allowed to have fraction)\n    def parse_number(s, is_last=False):\n        if not s:\n            raise ValueError(\"Empty number\")\n        # Replace comma with dot for decimal separator\n        s = s.replace(',', '.')\n        \n        # Check format strictly: digits, optionally followed by dot and more digits\n        # Must contain at least one digit\n        if '.' in s:\n            parts = s.split('.')\n            if len(parts) != 2:\n                raise ValueError(f\"Invalid number format: {s}\")\n            before, after = parts\n            # Both parts must have at least one ASCII digit\n            if not before or not after:\n                raise ValueError(f\"Invalid number format: {s}\")\n            # All characters must be ASCII digits\n            if not all(c in '0123456789' for c in before) or not all(c in '0123456789' for c in after):\n                raise ValueError(f\"Invalid number format: {s}\")\n            # Fractions only allowed on last component\n            if not is_last:\n                raise ValueError(f\"Fractions only allowed on last component: {s}\")\n        else:\n            # Must be all ASCII digits\n            if not s or not all(c in '0123456789' for c in s):\n                raise ValueError(f\"Invalid number format: {s}\")\n        \n        try:\n            val = float(s)\n            if val < 0:\n                raise ValueError(f\"Negative number not allowed: {s}\")\n            return val\n        except ValueError:\n            raise ValueError(f\"Invalid number: {s}\")\n    \n    # Parse date part\n    if date_part:\n        if 'W' in date_part and 'D' in date_part:\n            raise ValueError(\"Cannot have both W and D\")\n        \n        if 'W' in date_part:\n            # Extract weeks - weeks cannot have a time part\n            if time_part:\n                raise ValueError(\"Weeks cannot be combined with time part\")\n            parts = date_part.split('W')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid week format\")\n            weeks = parse_number(parts[0], is_last=True)\n            total_seconds += weeks * 7 * 86400\n        elif 'D' in date_part:\n            # Extract days\n            parts = date_part.split('D')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid day format\")\n            # Days can have fraction only if no time part\n            days = parse_number(parts[0], is_last=(time_part is None))\n            total_seconds += days * 86400\n        else:\n            raise ValueError(\"Invalid date format\")\n    \n    # Parse time part\n    if time_part:\n        remaining = time_part\n        found_component = False\n        last_component_index = -1\n        \n        # Find the last component\n        for i, char in enumerate(remaining):\n            if char in 'HMS':\n                last_component_index = i\n        \n        # Hours\n        if 'H' in remaining:\n            parts = remaining.split('H', 1)\n            hours = parse_number(parts[0], is_last=(remaining.index('H') == last_component_index))\n            total_seconds += hours * 3600\n            remaining = parts[1]\n            found_component = True\n        \n        # Minutes\n        if 'M' in remaining:\n            parts = remaining.split('M', 1)\n            minutes = parse_number(parts[0], is_last=(remaining.index('M') == last_component_index))\n            total_seconds += minutes * 60\n            remaining = parts[1]\n            found_component = True\n        \n        # Seconds\n        if 'S' in remaining:\n            parts = remaining.split('S', 1)\n            if parts[1] != '':\n                raise ValueError(\"Invalid format after seconds\")\n            seconds = parse_number(parts[0], is_last=True)\n            total_seconds += seconds\n            remaining = ''\n            found_component = True\n        \n        if remaining or not found_component:\n            raise ValueError(\"Invalid time format\")\n    \n    if total_seconds == 0 and not date_part and not time_part:\n        raise ValueError(\"At least one component must be present\")\n    \n    return total_seconds\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 6, 'edge_cases': 4, 'spec_compliance': 5}. Weakest criterion: edge_cases. Problem: Fractional minutes after hours (e.g. 'PT1H1.5M') are wrongly rejected because the last-component index is compared against a shortened string.",
+      "checker_details": {
+        "scores": {
+          "correctness": 6,
+          "edge_cases": 4,
+          "spec_compliance": 5
+        },
+        "weakest": "Fractional minutes after hours (e.g. 'PT1H1.5M') are wrongly rejected because the last-component index is compared against a shortened string."
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1390,
+        "output_tokens": 1326,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 2087,
+        "output_tokens": 948,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 3,
+      "plan": "Fix the last-component detection by tracking positions before string modifications, and rewrite the time parsing to handle all components in order with proper fraction detection.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Invalid duration format\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    if not text:\n        raise ValueError(\"At least one component must be present\")\n    \n    total_seconds = 0.0\n    \n    # Split by 'T' to separate date and time parts\n    if 'T' in text:\n        date_part, time_part = text.split('T', 1)\n        if not time_part:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = None\n    \n    # Helper to validate and parse a number (non-negative int or decimal)\n    def parse_number(s, is_last=False):\n        if not s:\n            raise ValueError(\"Empty number\")\n        # Replace comma with dot for decimal separator\n        s = s.replace(',', '.')\n        \n        # Check format strictly: digits, optionally followed by dot and more digits\n        if '.' in s:\n            parts = s.split('.')\n            if len(parts) != 2:\n                raise ValueError(f\"Invalid number format: {s}\")\n            before, after = parts\n            # Both parts must have at least one ASCII digit\n            if not before or not after:\n                raise ValueError(f\"Invalid number format: {s}\")\n            # All characters must be ASCII digits\n            if not all(c in '0123456789' for c in before) or not all(c in '0123456789' for c in after):\n                raise ValueError(f\"Invalid number format: {s}\")\n            # Fractions only allowed on last component\n            if not is_last:\n                raise ValueError(f\"Fractions only allowed on last component: {s}\")\n        else:\n            # Must be all ASCII digits\n            if not s or not all(c in '0123456789' for c in s):\n                raise ValueError(f\"Invalid number format: {s}\")\n        \n        try:\n            val = float(s)\n            if val < 0:\n                raise ValueError(f\"Negative number not allowed: {s}\")\n            return val\n        except ValueError:\n            raise ValueError(f\"Invalid number: {s}\")\n    \n    # Parse date part\n    if date_part:\n        if 'W' in date_part and 'D' in date_part:\n            raise ValueError(\"Cannot have both W and D\")\n        \n        if 'W' in date_part:\n            # Extract weeks - weeks cannot have a time part\n            if time_part:\n                raise ValueError(\"Weeks cannot be combined with time part\")\n            parts = date_part.split('W')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid week format\")\n            weeks = parse_number(parts[0], is_last=True)\n            total_seconds += weeks * 7 * 86400\n        elif 'D' in date_part:\n            # Extract days\n            parts = date_part.split('D')\n            if len(parts) != 2 or parts[1] != '':\n                raise ValueError(\"Invalid day format\")\n            # Days can have fraction only if no time part\n            days = parse_number(parts[0], is_last=(time_part is None))\n            total_seconds += days * 86400\n        else:\n            raise ValueError(\"Invalid date format\")\n    \n    # Parse time part\n    if time_part:\n        # Find the last component character (H, M, or S) in the original time_part\n        last_component_char = None\n        for char in ['H', 'M', 'S']:\n            if char in time_part:\n                last_component_char = char\n        \n        if last_component_char is None:\n            raise ValueError(\"T must be followed by at least one time component\")\n        \n        remaining = time_part\n        found_component = False\n        \n        # Hours\n        if 'H' in remaining:\n            parts = remaining.split('H', 1)\n            is_last = (last_component_char == 'H')\n            hours = parse_number(parts[0], is_last=is_last)\n            total_seconds += hours * 3600\n            remaining = parts[1]\n            found_component = True\n        \n        # Minutes\n        if 'M' in remaining:\n            parts = remaining.split('M', 1)\n            is_last = (last_component_char == 'M')\n            minutes = parse_number(parts[0], is_last=is_last)\n            total_seconds += minutes * 60\n            remaining = parts[1]\n            found_component = True\n        \n        # Seconds\n        if 'S' in remaining:\n            parts = remaining.split('S', 1)\n            if parts[1] != '':\n                raise ValueError(\"Invalid format after seconds\")\n            is_last = (last_component_char == 'S')\n            seconds = parse_number(parts[0], is_last=is_last)\n            total_seconds += seconds\n            remaining = ''\n            found_component = True\n        \n        if remaining or not found_component:\n            raise ValueError(\"Invalid time format\")\n    \n    if total_seconds == 0 and not date_part and not time_part:\n        raise ValueError(\"At least one component must be present\")\n    \n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 9, 'spec_compliance': 9}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 9,
+          "spec_compliance": 9
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1672,
+        "output_tokens": 1355,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 2126,
+        "output_tokens": 985,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

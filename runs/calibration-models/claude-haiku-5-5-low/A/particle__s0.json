@@ -1,0 +1,47 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Reduce a trailing digit string to its Sino-Korean last syllable, then pick the batchim or vowel form of the particle from that syllable.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    DIG = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    GROUP = ['', '만', '억', '조', '경']\n    PLACE = ['', '십', '백', '천']\n\n    def last_syllable(w):\n        if w and w[-1].isdigit():\n            # Collect trailing digit run\n            j = len(w)\n            while j > 0 and w[j - 1].isdigit():\n                j -= 1\n            n = int(w[j:])\n            if n == 0:\n                return '영'\n            d = n % 10\n            if d != 0:\n                return DIG[d]\n            # trailing zeros: find position of lowest nonzero digit\n            p = 0\n            m = n\n            while m % 10 == 0:\n                m //= 10\n                p += 1\n            if p % 4 == 0:\n                return GROUP[p // 4]\n            return PLACE[p % 4]\n        return w[-1]\n\n    def has_batchim(ch):\n        code = ord(ch)\n        if not (0xAC00 <= code <= 0xD7A3):\n            return False\n        return (code - 0xAC00) % 28 != 0\n\n    def is_rieul(ch):\n        code = ord(ch)\n        if not (0xAC00 <= code <= 0xD7A3):\n            return False\n        return (code - 0xAC00) % 28 == 8\n\n    last = last_syllable(word)\n    consonant_form, vowel_form = particle.split('/')\n\n    if particle == '으로/로':\n        if not has_batchim(last) or is_rieul(last):\n            chosen = vowel_form\n        else:\n            chosen = consonant_form\n    else:\n        chosen = consonant_form if has_batchim(last) else vowel_form\n\n    return word + chosen\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 373,
+        "output_tokens": 2441,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

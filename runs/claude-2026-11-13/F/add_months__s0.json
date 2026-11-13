@@ -1,0 +1,347 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "F",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests+disputes",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I need to parse the date string, determine if the input day is the last day of its month, calculate the target month/year, and return the last day of the target month if needed, otherwise the same day if it exists in the target month.",
+      "code": "from datetime import datetime, timedelta\nfrom calendar import monthrange\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    year, month, date = map(int, day.split('-'))\n    \n    # Check if the input day is the last day of its month\n    last_day_of_month = monthrange(year, month)[1]\n    is_last_day = (date == last_day_of_month)\n    \n    # Calculate target month and year\n    target_month = month + n\n    target_year = year\n    \n    # Adjust year and month if necessary\n    while target_month > 12:\n        target_month -= 12\n        target_year += 1\n    while target_month < 1:\n        target_month += 12\n        target_year -= 1\n    \n    # Get the last day of the target month\n    last_day_of_target = monthrange(target_year, target_month)[1]\n    \n    # Determine the day to use in the target month\n    if is_last_day:\n        # If original day was last day of month, use last day of target month\n        target_day = last_day_of_target\n    else:\n        # Otherwise, use the same day if it exists, otherwise use last day\n        target_day = min(date, last_day_of_target)\n    \n    # Format and return the result\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 10/11 passed, 0 withdrawn on review.\n- test_large_n: AssertionError",
+      "checker_details": {
+        "tests": "from solution import add_months\n\n\ndef test_examples():\n    assert add_months('2026-01-15', 1) == '2026-02-15'\n    assert add_months('2026-01-31', 1) == '2026-02-28'\n\n\ndef test_zero():\n    assert add_months('2026-03-10', 0) == '2026-03-10'\n    assert add_months('2026-02-28', 0) == '2026-02-28'\n\n\ndef test_last_day_feb_to_longer():\n    assert add_months('2026-02-28', 1) == '2026-03-31'\n    assert add_months('2024-02-29', 1) == '2024-03-31'\n\n\ndef test_last_day_30_to_31():\n    assert add_months('2026-04-30', 1) == '2026-05-31'\n\n\ndef test_non_last_day_clamped():\n    assert add_months('2026-01-30', 1) == '2026-02-28'\n    assert add_months('2024-01-30', 1) == '2024-02-29'\n\n\ndef test_leap_year():\n    assert add_months('2024-02-29', 12) == '2025-02-28'\n    assert add_months('2024-02-29', 48) == '2028-02-29'\n    assert add_months('2023-02-28', 12) == '2024-02-29'\n\n\ndef test_negative():\n    assert add_months('2026-03-31', -1) == '2026-02-28'\n    assert add_months('2026-01-15', -1) == '2025-12-15'\n    assert add_months('2026-01-15', -13) == '2024-12-15'\n\n\ndef test_year_wrap_exact_multiples():\n    assert add_months('2026-12-15', 12) == '2027-12-15'\n    assert add_months('2026-12-15', 1) == '2027-01-15'\n    assert add_months('2026-01-15', -12) == '2025-01-15'\n    assert add_months('2026-06-15', 24) == '2028-06-15'\n\n\ndef test_large_n():\n    assert add_months('2026-01-31', 1200) == '3026-01-31'\n    assert add_months('2026-01-15', -24000 + 0) == '0026-01-15'\n\n\ndef test_not_last_day_stays():\n    assert add_months('2026-02-27', 1) == '2026-03-27'\n    assert add_months('2026-05-30', 1) == '2026-06-30'\n\n\ndef test_last_day_to_shorter_month_back():\n    assert add_months('2026-05-31', -1) == '2026-04-30'\n    assert add_months('2026-03-31', -13) == '2025-02-28'\n",
+        "report": {
+          "passed": 10,
+          "total": 11,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_large_n",
+              "message": "AssertionError"
+            }
+          ]
+        },
+        "disputes": {
+          "test_large_n": {
+            "action": "accept",
+            "reason": ""
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 431,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 2330,
+        "output_tokens": 1636,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 10,
+        "total": 11,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_large_n",
+            "message": "AssertionError"
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Fix the while loops that adjust year and month to use divmod for more efficient and correct handling of large values of n.",
+      "code": "from calendar import monthrange\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    year, month, date = map(int, day.split('-'))\n    \n    # Check if the input day is the last day of its month\n    last_day_of_month = monthrange(year, month)[1]\n    is_last_day = (date == last_day_of_month)\n    \n    # Calculate target month and year\n    target_month = month + n\n    target_year = year\n    \n    # Adjust year and month if necessary using divmod\n    # Convert to 0-indexed months, adjust, then convert back\n    total_months = (target_year - 1) * 12 + (target_month - 1)\n    target_year = total_months // 12\n    target_month = (total_months % 12) + 1\n    \n    # Get the last day of the target month\n    last_day_of_target = monthrange(target_year, target_month)[1]\n    \n    # Determine the day to use in the target month\n    if is_last_day:\n        # If original day was last day of month, use last day of target month\n        target_day = last_day_of_target\n    else:\n        # Otherwise, use the same day if it exists, otherwise use last day\n        target_day = min(date, last_day_of_target)\n    \n    # Format and return the result\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 0/17 passed, 0 withdrawn on review.\n- test_century_non_leap: AssertionError\n- test_december_boundary: AssertionError\n- test_example_basic: AssertionError\n- test_example_end_of_month: AssertionError\n- test_large_negative: AssertionError",
+      "checker_details": {
+        "tests": "from solution import add_months\n\n\ndef test_example_basic():\n    assert add_months('2026-01-15', 1) == '2026-02-15'\n\n\ndef test_example_end_of_month():\n    assert add_months('2026-01-31', 1) == '2026-02-28'\n\n\ndef test_zero():\n    assert add_months('2026-03-10', 0) == '2026-03-10'\n\n\ndef test_zero_last_day():\n    assert add_months('2026-02-28', 0) == '2026-02-28'\n\n\ndef test_last_day_feb_to_march():\n    # Feb 28 is last day -> Mar 31\n    assert add_months('2026-02-28', 1) == '2026-03-31'\n\n\ndef test_last_day_leap_feb_to_march():\n    assert add_months('2024-02-29', 1) == '2024-03-31'\n\n\ndef test_last_day_to_leap_feb():\n    assert add_months('2023-01-31', 13) == '2024-02-29'\n\n\ndef test_last_day_30_to_31():\n    assert add_months('2026-04-30', 1) == '2026-05-31'\n\n\ndef test_non_last_day_short_month():\n    assert add_months('2026-01-30', 1) == '2026-02-28'\n    assert add_months('2024-01-30', 1) == '2024-02-29'\n\n\ndef test_non_last_day_keeps_day():\n    # Feb 28 in leap year is not last day\n    assert add_months('2024-02-28', 12) == '2025-02-28'\n    assert add_months('2024-02-28', 1) == '2024-03-28'\n\n\ndef test_negative():\n    assert add_months('2026-03-31', -1) == '2026-02-28'\n    assert add_months('2026-01-15', -1) == '2025-12-15'\n\n\ndef test_negative_year_cross():\n    assert add_months('2026-01-31', -2) == '2025-11-30'\n\n\ndef test_large_positive():\n    assert add_months('2026-01-15', 24) == '2028-01-15'\n    assert add_months('2026-12-31', 1) == '2027-01-31'\n\n\ndef test_large_negative():\n    assert add_months('2026-06-15', -30) == '2023-12-15'\n\n\ndef test_december_boundary():\n    assert add_months('2026-11-30', 1) == '2026-12-31'\n    assert add_months('2026-01-31', 11) == '2026-12-31'\n\n\ndef test_year_padding():\n    assert add_months('0999-12-15', 1) == '1000-01-15'\n    assert add_months('0100-03-15', 0) == '0100-03-15'\n\n\ndef test_century_non_leap():\n    assert add_months('2000-01-31', 1) == '2000-02-29'\n    assert add_months('1900-01-31', 1) == '1900-02-28'\n",
+        "report": {
+          "passed": 0,
+          "total": 17,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_century_non_leap",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_december_boundary",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_example_basic",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_example_end_of_month",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_large_negative",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_large_positive",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_last_day_30_to_31",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_last_day_feb_to_march",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_last_day_leap_feb_to_march",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_last_day_to_leap_feb",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_negative",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_negative_year_cross",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_non_last_day_keeps_day",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_non_last_day_short_month",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_year_padding",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_last_day",
+              "message": "AssertionError"
+            }
+          ]
+        },
+        "disputes": {
+          "test_last_day_leap_feb_to_march": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_negative_year_cross": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_year_padding": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_zero_last_day": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_last_day_30_to_31": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_zero": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_century_non_leap": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_december_boundary": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_negative": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_example_basic": {
+            "action": "accept",
+            "reason": "Code has a bug in year calculation when adding months. The formula subtracts 1 from target_year before multiplying by 12, but doesn't add it back after division, resulting in incorrect years."
+          },
+          "test_example_end_of_month": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_last_day_to_leap_feb": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_non_last_day_keeps_day": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_non_last_day_short_month": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_last_day_feb_to_march": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_large_negative": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          },
+          "test_large_positive": {
+            "action": "accept",
+            "reason": "Same year calculation bug as above."
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 0,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_end_of_month_is_sticky",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_leap_years",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_negative_and_across_years",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_plain_and_clamped",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 691,
+        "output_tokens": 419,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 2655,
+        "output_tokens": 1849,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 17,
+        "total": 17,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 2,
+      "plan": "The issue is in the year calculation logic - when I calculate `total_months // 12`, I'm not accounting for the fact that month indexing starts at 1, not 0. I need to fix the arithmetic to properly handle the conversion between year-month pairs and total months.",
+      "code": "from calendar import monthrange\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    year, month, date = map(int, day.split('-'))\n    \n    # Check if the input day is the last day of its month\n    last_day_of_month = monthrange(year, month)[1]\n    is_last_day = (date == last_day_of_month)\n    \n    # Calculate target month and year\n    # Convert to total months (0-indexed from year 1, month 1)\n    total_months = year * 12 + month - 1\n    total_months += n\n    \n    # Convert back to year and month\n    target_year = total_months // 12\n    target_month = (total_months % 12) + 1\n    \n    # Get the last day of the target month\n    last_day_of_target = monthrange(target_year, target_month)[1]\n    \n    # Determine the day to use in the target month\n    if is_last_day:\n        # If original day was last day of month, use last day of target month\n        target_day = last_day_of_target\n    else:\n        # Otherwise, use the same day if it exists, otherwise use last day\n        target_day = min(date, last_day_of_target)\n    \n    # Format and return the result\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n15/15 tests passed.",
+      "checker_details": {
+        "tests": "from solution import add_months\n\ndef test_basic():\n    assert add_months('2026-01-15', 1) == '2026-02-15'\n\ndef test_last_day_to_feb():\n    assert add_months('2026-01-31', 1) == '2026-02-28'\n\ndef test_last_day_leap():\n    assert add_months('2024-01-31', 1) == '2024-02-29'\n\ndef test_last_day_feb_to_31():\n    assert add_months('2026-02-28', 1) == '2026-03-31'\n\ndef test_last_day_leap_feb_to_march():\n    assert add_months('2024-02-29', 1) == '2024-03-31'\n\ndef test_feb28_leap_not_last():\n    assert add_months('2024-02-28', 12) == '2025-02-28'\n    assert add_months('2024-02-28', 1) == '2024-03-28'\n\ndef test_last_day_april_to_may():\n    assert add_months('2026-04-30', 1) == '2026-05-31'\n\ndef test_not_last_day_clamp():\n    assert add_months('2026-01-30', 1) == '2026-02-28'\n    assert add_months('2026-03-30', -1) == '2026-02-28'\n\ndef test_zero():\n    assert add_months('2026-03-17', 0) == '2026-03-17'\n    assert add_months('2026-04-30', 0) == '2026-04-30'\n\ndef test_negative_year_rollover():\n    assert add_months('2026-01-15', -1) == '2025-12-15'\n    assert add_months('2026-01-15', -13) == '2024-12-15'\n\ndef test_positive_year_rollover():\n    assert add_months('2026-12-31', 1) == '2027-01-31'\n    assert add_months('2026-11-30', 2) == '2027-01-31'\n\ndef test_large():\n    assert add_months('2026-01-31', 120) == '2036-01-31'\n    assert add_months('2026-01-31', -24) == '2024-01-31'\n\ndef test_multiple_of_12_negative():\n    assert add_months('2026-12-15', -12) == '2025-12-15'\n\ndef test_leap_century():\n    assert add_months('2000-01-31', 1) == '2000-02-29'\n    assert add_months('1900-01-31', 1) == '1900-02-28'\n\ndef test_pad_year():\n    assert add_months('0999-12-31', 1) == '1000-01-31'\n",
+        "report": {
+          "passed": 15,
+          "total": 15,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        },
+        "disputes": {},
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 760,
+        "output_tokens": 434,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 797,
+        "output_tokens": 829,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 15,
+        "total": 15,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

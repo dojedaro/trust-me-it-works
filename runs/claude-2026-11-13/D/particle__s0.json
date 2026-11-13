@@ -1,0 +1,400 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "D",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Determine if the final sound has a batchim by checking if it's a Hangul character and extracting its final consonant, handle digits specially, then select the correct particle form.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Digit to Sino-Korean pronunciation (what batchim it has)\n    # True = has batchim (consonant), False = no batchim (vowel)\n    digit_batchim = {\n        '0': True,   # 영\n        '1': True,   # 일\n        '2': False,  # 이\n        '3': True,   # 삼\n        '4': False,  # 사\n        '5': False,  # 오\n        '6': True,   # 육\n        '7': True,   # 칠\n        '8': True,   # 팔\n        '9': False,  # 구\n    }\n    \n    last_char = word[-1]\n    \n    # Check if last character is a digit\n    if last_char.isdigit():\n        has_batchim = digit_batchim[last_char]\n    else:\n        # Check if it's a Hangul syllable\n        char_code = ord(last_char)\n        if 0xAC00 <= char_code <= 0xD7A3:\n            # Hangul syllable\n            # Each syllable = (initial × 588) + (medial × 28) + final\n            relative_code = char_code - 0xAC00\n            final_index = relative_code % 28\n            has_batchim = final_index != 0\n            \n            # Special case for 으로/로: if particle is 으로/로 and final is ㄹ\n            if particle == \"으로/로\" and final_index == 8:  # ㄹ is at index 8\n                has_batchim = False\n        else:\n            # Not a Hangul character, assume no batchim\n            has_batchim = False\n    \n    # Select the appropriate form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n10/14 tests passed.\n- test_digit_1_euro: AssertionError\n- test_digit_7_euro: AssertionError\n- test_digit_8_euro: AssertionError\n- test_multi_digit_18: AssertionError",
+      "checker_details": {
+        "tests": "from solution import attach_particle\n\n\ndef test_digit_1_euro():\n    assert attach_particle('1', '으로/로') == '1로'\n\n\ndef test_digit_8_euro():\n    assert attach_particle('8', '으로/로') == '8로'\n\n\ndef test_digit_7_euro():\n    assert attach_particle('7', '으로/로') == '7로'\n\n\ndef test_digit_6_euro():\n    assert attach_particle('6', '으로/로') == '6으로'\n\n\ndef test_digit_3_euro():\n    assert attach_particle('3', '으로/로') == '3으로'\n\n\ndef test_multi_digit_18():\n    assert attach_particle('18', '으로/로') == '18로'\n\n\ndef test_ten():\n    assert attach_particle('10', '으로/로') == '10으로'\n\n\ndef test_zero():\n    assert attach_particle('0', '은/는') == '0은'\n\n\ndef test_digit_2():\n    assert attach_particle('2', '과/와') == '2와'\n\n\ndef test_hangul_rieul_euro():\n    assert attach_particle('서울', '으로/로') == '서울로'\n\n\ndef test_hangul_rieul_other():\n    assert attach_particle('서울', '은/는') == '서울은'\n\n\ndef test_hangul_batchim_euro():\n    assert attach_particle('집', '으로/로') == '집으로'\n\n\ndef test_hangul_vowel():\n    assert attach_particle('나무', '이/가') == '나무가'\n\n\ndef test_basic():\n    assert attach_particle('책', '을/를') == '책을'\n",
+        "report": {
+          "passed": 10,
+          "total": 14,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_digit_1_euro",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_digit_7_euro",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_digit_8_euro",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_multi_digit_18",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 299,
+        "output_tokens": 924,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1017,
+        "output_tokens": 893,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 14,
+        "total": 14,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Fix the special case for \"으로/로\" particle with digits - the digit-to-batchim mapping needs adjustment since some digits with batchim should still use \"로\" for this particle, and I need to handle multi-digit numbers by looking at the last digit's pronunciation.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Digit to Sino-Korean pronunciation (what batchim it has)\n    # True = has batchim (consonant), False = no batchim (vowel)\n    digit_batchim = {\n        '0': True,   # 영\n        '1': True,   # 일\n        '2': False,  # 이\n        '3': True,   # 삼\n        '4': False,  # 사\n        '5': False,  # 오\n        '6': True,   # 육\n        '7': True,   # 칠\n        '8': True,   # 팔\n        '9': False,  # 구\n    }\n    \n    # For 으로/로 particle, these digits should use 로 (as if no batchim)\n    euro_ro_vowel = {'2', '4', '5', '9'}  # 이, 사, 오, 구\n    \n    last_char = word[-1]\n    \n    # Check if last character is a digit\n    if last_char.isdigit():\n        if particle == \"으로/로\":\n            has_batchim = last_char not in euro_ro_vowel\n        else:\n            has_batchim = digit_batchim[last_char]\n    else:\n        # Check if it's a Hangul syllable\n        char_code = ord(last_char)\n        if 0xAC00 <= char_code <= 0xD7A3:\n            # Hangul syllable\n            # Each syllable = (initial × 588) + (medial × 28) + final\n            relative_code = char_code - 0xAC00\n            final_index = relative_code % 28\n            has_batchim = final_index != 0\n            \n            # Special case for 으로/로: if particle is 으로/로 and final is ㄹ\n            if particle == \"으로/로\" and final_index == 8:  # ㄹ is at index 8\n                has_batchim = False\n        else:\n            # Not a Hangul character, assume no batchim\n            has_batchim = False\n    \n    # Select the appropriate form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n6/9 tests passed.\n- test_euro_digit_1: AssertionError\n- test_euro_digit_18: AssertionError\n- test_euro_digit_8: AssertionError",
+      "checker_details": {
+        "tests": "from solution import attach_particle\n\n\ndef test_euro_digit_1():\n    assert attach_particle('1', '으로/로') == '1로'\n\n\ndef test_euro_digit_8():\n    assert attach_particle('8', '으로/로') == '8로'\n\n\ndef test_euro_digit_6():\n    assert attach_particle('6', '으로/로') == '6으로'\n\n\ndef test_euro_digit_18():\n    assert attach_particle('18', '으로/로') == '18로'\n\n\ndef test_euro_digit_10():\n    assert attach_particle('10', '으로/로') == '10으로'\n\n\ndef test_euro_hangul_rieul():\n    assert attach_particle('서울', '으로/로') == '서울로'\n\n\ndef test_zero():\n    assert attach_particle('0', '이/가') == '0이'\n\n\ndef test_hundred():\n    assert attach_particle('100', '은/는') == '100은'\n\n\ndef test_digit_2():\n    assert attach_particle('2', '과/와') == '2와'\n",
+        "report": {
+          "passed": 6,
+          "total": 9,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_euro_digit_1",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_euro_digit_18",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_euro_digit_8",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 917,
+        "output_tokens": 679,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1125,
+        "output_tokens": 1049,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 9,
+        "total": 9,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 2,
+      "plan": "Analyze the failing tests to understand the issue with digit handling in the \"으로/로\" particle case.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Digit to Sino-Korean pronunciation\n    # Value: final consonant index (0 = no batchim, else has batchim)\n    # 0: 영 (no batchim)\n    # 1: 일 (ㄹ)\n    # 2: 이 (no batchim)\n    # 3: 삼 (ㅁ)\n    # 4: 사 (no batchim)\n    # 5: 오 (no batchim)\n    # 6: 육 (ㄱ)\n    # 7: 칠 (ㄹ)\n    # 8: 팔 (ㄹ)\n    # 9: 구 (no batchim)\n    \n    digit_final = {\n        '0': 0,      # 영 - no batchim\n        '1': 8,      # 일 - ㄹ\n        '2': 0,      # 이 - no batchim\n        '3': 16,     # 삼 - ㅁ\n        '4': 0,      # 사 - no batchim\n        '5': 0,      # 오 - no batchim\n        '6': 3,      # 육 - ㄱ\n        '7': 8,      # 칠 - ㄹ\n        '8': 8,      # 팔 - ㄹ\n        '9': 0,      # 구 - no batchim\n    }\n    \n    last_char = word[-1]\n    \n    # Check if last character is a digit\n    if last_char.isdigit():\n        final_index = digit_final[last_char]\n        has_batchim = final_index != 0\n        \n        # Special case for 으로/로: if final is ㄹ (index 8), use 로\n        if particle == \"으로/로\" and final_index == 8:\n            has_batchim = False\n    else:\n        # Check if it's a Hangul syllable\n        char_code = ord(last_char)\n        if 0xAC00 <= char_code <= 0xD7A3:\n            # Hangul syllable\n            # Each syllable = (initial × 588) + (medial × 28) + final\n            relative_code = char_code - 0xAC00\n            final_index = relative_code % 28\n            has_batchim = final_index != 0\n            \n            # Special case for 으로/로: if particle is 으로/로 and final is ㄹ\n            if particle == \"으로/로\" and final_index == 8:  # ㄹ is at index 8\n                has_batchim = False\n        else:\n            # Not a Hangul character, assume no batchim\n            has_batchim = False\n    \n    # Select the appropriate form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n3/10 tests passed.\n- test_hundred: AssertionError\n- test_ten: AssertionError\n- test_ten_euro: AssertionError\n- test_ten_thousand: AssertionError\n- test_thousand: AssertionError",
+      "checker_details": {
+        "tests": "from solution import attach_particle\n\ndef test_zero_has_batchim():\n    assert attach_particle('0', '이/가') == '0이'\n\ndef test_ten():\n    assert attach_particle('10', '이/가') == '10이'\n\ndef test_ten_euro():\n    assert attach_particle('10', '으로/로') == '10으로'\n\ndef test_hundred():\n    assert attach_particle('100', '은/는') == '100은'\n\ndef test_thousand():\n    assert attach_particle('1000', '이/가') == '1000이'\n\ndef test_ten_thousand():\n    assert attach_particle('10000', '을/를') == '10000을'\n\ndef test_twenty():\n    assert attach_particle('20', '과/와') == '20과'\n\ndef test_eight_ro():\n    assert attach_particle('8', '으로/로') == '8로'\n\ndef test_sixteen():\n    assert attach_particle('16', '으로/로') == '16으로'\n\ndef test_hangul_rieul():\n    assert attach_particle('서울', '으로/로') == '서울로'\n    assert attach_particle('서울', '은/는') == '서울은'\n",
+        "report": {
+          "passed": 3,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_hundred",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_ten",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_ten_euro",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_ten_thousand",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_thousand",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_twenty",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_has_batchim",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_round_numbers_are_read_as_a_whole",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1000,
+        "output_tokens": 1078,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1313,
+        "output_tokens": 967,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 10,
+        "total": 10,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 3,
+      "plan": "I need to analyze the digit pronunciation rules more carefully - the issue is that I'm incorrectly determining which Sino-Korean numbers have batchim. Let me reconsider: 일(1-ㄹ), 삼(3-ㅁ), 육(6-ㄱ), 칠(7-ㄹ), 팔(8-ㄹ) have batchim, while 영(0), 이(2), 사(4), 오(5), 구(9) don't. However, when digits are combined (like 10, 100, 1000), the final sound depends on the Sino-Korean word for that magnitude. Also, for multi-digit numbers, I need to consider the full pronunciation, not just the last digit.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    last_char = word[-1]\n    \n    # Check if last character is a digit\n    if last_char.isdigit():\n        # For multi-digit numbers, we need to determine the final consonant\n        # based on the full Sino-Korean pronunciation\n        \n        # Sino-Korean numbers:\n        # 0: 영 (no batchim)\n        # 1: 일 (ㄹ)\n        # 2: 이 (no batchim)\n        # 3: 삼 (ㅁ)\n        # 4: 사 (no batchim)\n        # 5: 오 (no batchim)\n        # 6: 육 (ㄱ)\n        # 7: 칠 (ㄹ)\n        # 8: 팔 (ㄹ)\n        # 9: 구 (no batchim)\n        # 10: 십 (ㅂ)\n        # 100: 백 (ㄱ)\n        # 1000: 천 (ㄴ)\n        # 10000: 만 (ㄴ)\n        \n        digit_batchim = {\n            '0': False,  # 영\n            '1': True,   # 일 - ㄹ\n            '2': False,  # 이\n            '3': True,   # 삼 - ㅁ\n            '4': False,  # 사\n            '5': False,  # 오\n            '6': True,   # 육 - ㄱ\n            '7': True,   # 칠 - ㄹ\n            '8': True,   # 팔 - ㄹ\n            '9': False,  # 구\n        }\n        \n        # For numbers with multiple digits, the final sound is determined by\n        # the structure. We need to parse the number to find the last meaningful part\n        num_str = word.lstrip('-+')  # Remove signs if any\n        \n        # Determine the pronunciation's final consonant\n        if len(num_str) == 1:\n            has_batchim = digit_batchim[num_str]\n        else:\n            # For multi-digit numbers, find the last non-zero position\n            # and determine based on place value\n            if num_str.endswith('0'):\n                # Number ends in 0\n                # Find the last non-zero digit and determine by place value\n                for i in range(len(num_str) - 1, -1, -1):\n                    if num_str[i] != '0':\n                        last_nonzero_pos = i\n                        break\n                \n                # Determine the place value\n                place_value = len(num_str) - 1 - last_nonzero_pos\n                # 0: ones place (마지막 숫자)\n                # 1: tens (십)\n                # 2: hundreds (백)\n                # 3: thousands (천)\n                # 4+: 만 and higher\n                \n                if place_value == 1:  # 십 has batchim ㅂ\n                    has_batchim = True\n                elif place_value == 2:  # 백 has batchim ㄱ\n                    has_batchim = True\n                elif place_value == 3:  # 천 has batchim ㄴ\n                    has_batchim = True\n                else:  # 만 and higher have batchim ㄴ\n                    has_batchim = True\n            else:\n                # Number doesn't end in 0, use the last digit\n                has_batchim = digit_batchim[num_str[-1]]\n        \n        # Special case for 으로/로: if final is ㄹ, use 로\n        if particle == \"으로/로\" and has_batchim:\n            # Need to check if the batchim is ㄹ\n            # For digits: 1, 7, 8 have ㄹ\n            if num_str[-1] in ['1', '7', '8']:\n                has_batchim = False\n            elif len(num_str) > 1 and num_str.endswith('0'):\n                # For tens, hundreds, etc., need to check\n                # Actually, 십(ㅂ), 백(ㄱ), 천(ㄴ) don't have ㄹ\n                pass\n    else:\n        # Check if it's a Hangul syllable\n        char_code = ord(last_char)\n        if 0xAC00 <= char_code <= 0xD7A3:\n            # Hangul syllable\n            relative_code = char_code - 0xAC00\n            final_index = relative_code % 28\n            has_batchim = final_index != 0\n            \n            # Special case for 으로/로: if final is ㄹ (index 8), use 로\n            if particle == \"으로/로\" and final_index == 8:  # ㄹ is at index 8\n                has_batchim = False\n        else:\n            # Not a Hangul character, assume no batchim\n            has_batchim = False\n    \n    # Select the appropriate form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n6/10 tests passed.\n- test_hae_no_batchim: AssertionError\n- test_jo_no_batchim: AssertionError\n- test_zero_euro: AssertionError\n- test_zero_has_batchim: AssertionError",
+      "checker_details": {
+        "tests": "from solution import attach_particle\n\ndef test_zero_has_batchim():\n    assert attach_particle('0', '이/가') == '0이'\n\ndef test_zero_euro():\n    assert attach_particle('0', '으로/로') == '0으로'\n\ndef test_jo_no_batchim():\n    assert attach_particle('1000000000000', '이/가') == '1000000000000가'\n\ndef test_hae_no_batchim():\n    assert attach_particle('100000000000000000000', '은/는') == '100000000000000000000는'\n\ndef test_eok_batchim():\n    assert attach_particle('100000000', '이/가') == '100000000이'\n\ndef test_man_batchim():\n    assert attach_particle('10000', '을/를') == '10000을'\n\ndef test_ten_euro():\n    assert attach_particle('10', '으로/로') == '10으로'\n\ndef test_hangul_rieul_euro():\n    assert attach_particle('물', '으로/로') == '물로'\n\ndef test_hangul_basic():\n    assert attach_particle('책', '을/를') == '책을'\n\ndef test_one_euro():\n    assert attach_particle('1', '으로/로') == '1로'\n",
+        "report": {
+          "passed": 6,
+          "total": 10,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_hae_no_batchim",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_jo_no_batchim",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_euro",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_has_batchim",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1209,
+        "output_tokens": 1591,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1985,
+        "output_tokens": 990,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 10,
+        "total": 10,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    },
+    {
+      "index": 4,
+      "plan": "I need to analyze the failing tests. The issues are likely with: 1) how I'm determining batchim for digits, especially 0, and 2) how I'm handling the \"으로/로\" special case for ㄹ. Let me reconsider the digit batchim mappings and fix them systematically.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    last_char = word[-1]\n    \n    # Check if last character is a digit\n    if last_char.isdigit():\n        # Sino-Korean numbers and their final consonants:\n        # 0: 영 (no batchim)\n        # 1: 일 (ㄹ batchim)\n        # 2: 이 (no batchim)\n        # 3: 삼 (ㅁ batchim)\n        # 4: 사 (no batchim)\n        # 5: 오 (no batchim)\n        # 6: 육 (ㄱ batchim)\n        # 7: 칠 (ㄹ batchim)\n        # 8: 팔 (ㄹ batchim)\n        # 9: 구 (no batchim)\n        \n        digit_has_batchim = {\n            '0': False,  # 영\n            '1': True,   # 일 - ㄹ\n            '2': False,  # 이\n            '3': True,   # 삼 - ㅁ\n            '4': False,  # 사\n            '5': False,  # 오\n            '6': True,   # 육 - ㄱ\n            '7': True,   # 칠 - ㄹ\n            '8': True,   # 팔 - ㄹ\n            '9': False,  # 구\n        }\n        \n        digit_final_consonant = {\n            '0': None,   # 영 - no batchim\n            '1': 'ㄹ',   # 일\n            '2': None,   # 이 - no batchim\n            '3': 'ㅁ',   # 삼\n            '4': None,   # 사 - no batchim\n            '5': None,   # 오 - no batchim\n            '6': 'ㄱ',   # 육\n            '7': 'ㄹ',   # 칠\n            '8': 'ㄹ',   # 팔\n            '9': None,   # 구 - no batchim\n        }\n        \n        num_str = word.lstrip('-+')\n        \n        # Determine the pronunciation's final consonant\n        if len(num_str) == 1:\n            has_batchim = digit_has_batchim[num_str]\n            final_consonant = digit_final_consonant[num_str]\n        else:\n            # For multi-digit numbers, find what the last pronounced part is\n            # e.g., \"10\" = 십, \"20\" = 이십, \"100\" = 백, \"120\" = 백이십\n            \n            # Find the last non-zero digit to determine the final sound\n            last_nonzero_idx = -1\n            for i in range(len(num_str) - 1, -1, -1):\n                if num_str[i] != '0':\n                    last_nonzero_idx = i\n                    break\n            \n            if last_nonzero_idx == -1:\n                # All zeros (shouldn't happen normally)\n                has_batchim = False\n                final_consonant = None\n            else:\n                # The final consonant is determined by:\n                # - The last non-zero digit in ones place (if any)\n                # - Or the place value itself (십, 백, 천, 만, etc.)\n                \n                ones_place = int(num_str[-1])\n                \n                if ones_place != 0:\n                    # If ones place is non-zero, use its pronunciation\n                    has_batchim = digit_has_batchim[num_str[-1]]\n                    final_consonant = digit_final_consonant[num_str[-1]]\n                else:\n                    # Ones place is 0, so use the place value\n                    num_zeros = len(num_str) - 1 - last_nonzero_idx\n                    \n                    if num_zeros == 1:  # tens place\n                        has_batchim = True\n                        final_consonant = 'ㅂ'  # 십\n                    elif num_zeros == 2:  # hundreds place\n                        has_batchim = True\n                        final_consonant = 'ㄱ'  # 백\n                    elif num_zeros == 3:  # thousands place\n                        has_batchim = True\n                        final_consonant = 'ㄴ'  # 천\n                    else:  # 만 and higher\n                        has_batchim = True\n                        final_consonant = 'ㄴ'  # 만\n        \n        # Special case for 으로/로: if final consonant is ㄹ, use 로\n        if particle == \"으로/로\" and final_consonant == 'ㄹ':\n            has_batchim = False\n    else:\n        # Check if it's a Hangul syllable\n        char_code = ord(last_char)\n        if 0xAC00 <= char_code <= 0xD7A3:\n            # Hangul syllable\n            relative_code = char_code - 0xAC00\n            final_index = relative_code % 28\n            has_batchim = final_index != 0\n            \n            # Special case for 으로/로: if final is ㄹ (index 8), use 로\n            if particle == \"으로/로\" and final_index == 8:  # ㄹ is at index 8\n                has_batchim = False\n        else:\n            # Not a Hangul character, assume no batchim\n            has_batchim = False\n    \n    # Select the appropriate form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer wrote tests against your code.\n10/14 tests passed.\n- test_trillion: AssertionError\n- test_trillion_euro: AssertionError\n- test_zero_euro: AssertionError\n- test_zero_has_batchim: AssertionError",
+      "checker_details": {
+        "tests": "from solution import attach_particle\n\ndef test_zero_has_batchim():\n    assert attach_particle('0', '이/가') == '0이'\n\ndef test_zero_euro():\n    assert attach_particle('0', '으로/로') == '0으로'\n\ndef test_hundred_million():\n    assert attach_particle('100000000', '이/가') == '100000000이'\n\ndef test_trillion():\n    assert attach_particle('1000000000000', '이/가') == '1000000000000가'\n\ndef test_ten_million_digits():\n    assert attach_particle('1000000000', '을/를') == '1000000000을'\n\ndef test_eight_euro():\n    assert attach_particle('8', '으로/로') == '8로'\n\ndef test_ten_euro():\n    assert attach_particle('10', '으로/로') == '10으로'\n\ndef test_six_euro():\n    assert attach_particle('6', '으로/로') == '6으로'\n\ndef test_hangul_rieul():\n    assert attach_particle('서울', '으로/로') == '서울로'\n\ndef test_hangul_rieul_other():\n    assert attach_particle('서울', '은/는') == '서울은'\n\ndef test_hangul_batchim_euro():\n    assert attach_particle('집', '으로/로') == '집으로'\n\ndef test_vowel():\n    assert attach_particle('나무', '과/와') == '나무와'\n\ndef test_two():\n    assert attach_particle('12', '이/가') == '12가'\n\ndef test_trillion_euro():\n    assert attach_particle('1000000000000', '으로/로') == '1000000000000로'\n",
+        "report": {
+          "passed": 10,
+          "total": 14,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_trillion",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_trillion_euro",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_euro",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_has_batchim",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1807,
+        "output_tokens": 1612,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 2121,
+        "output_tokens": 1137,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 14,
+        "total": 14,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": false,
+  "error": null
+}

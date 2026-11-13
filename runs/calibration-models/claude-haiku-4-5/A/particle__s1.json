@@ -1,0 +1,56 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the function by detecting batchim presence in the final syllable, handling digits as Sino-Korean numbers, and applying the special rule for ㄹ with \"으로/로\".",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    def has_batchim(char: str) -> bool:\n        \"\"\"Check if a Hangul character has a final consonant (batchim).\"\"\"\n        if not char:\n            return False\n        code = ord(char)\n        # Hangul syllables: U+AC00 to U+D7A3\n        if 0xAC00 <= code <= 0xD7A3:\n            # Each syllable: (initial * 588) + (medial * 28) + final\n            # final ranges from 0 to 27, where 0 means no batchim\n            final = (code - 0xAC00) % 28\n            return final != 0\n        return False\n    \n    def get_final_index(char: str) -> int:\n        \"\"\"Get the final consonant index (0-27) for a Hangul character.\"\"\"\n        if not char:\n            return 0\n        code = ord(char)\n        if 0xAC00 <= code <= 0xD7A3:\n            return (code - 0xAC00) % 28\n        return 0\n    \n    def digit_to_sino_korean(digit_str: str) -> str:\n        \"\"\"Convert a digit string to Sino-Korean number words.\"\"\"\n        sino_korean_digits = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n        result = ''\n        for digit in digit_str:\n            result += sino_korean_digits[int(digit)]\n        return result\n    \n    # Determine the last character/sound\n    if word[-1].isdigit():\n        # Convert digits to Sino-Korean and get the last syllable\n        sino_korean = digit_to_sino_korean(word)\n        last_char = sino_korean[-1]\n    else:\n        last_char = word[-1]\n    \n    # Determine which particle form to use\n    particle_forms = particle.split('/')\n    \n    # Special handling for \"으로/로\" with ㄹ batchim\n    if particle == \"으로/로\":\n        final_index = get_final_index(last_char)\n        # ㄹ is at index 8\n        if final_index == 8:\n            return word + particle_forms[1]  # Use \"로\"\n        elif has_batchim(last_char) and final_index != 8:\n            return word + particle_forms[0]  # Use \"으로\"\n        else:\n            return word + particle_forms[1]  # Use \"로\"\n    else:\n        # For other particles: check if there's a batchim\n        if has_batchim(last_char):\n            return word + particle_forms[0]  # Form before slash (with batchim)\n        else:\n            return word + particle_forms[1]  # Form after slash (without batchim)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "ValueError: invalid literal for int() with base 10: '아'"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 299,
+        "output_tokens": 990,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

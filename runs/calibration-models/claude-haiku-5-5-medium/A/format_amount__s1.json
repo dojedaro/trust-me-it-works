@@ -1,0 +1,47 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the amount as a Decimal, quantize it to the currency's decimal places with ROUND_HALF_UP (which rounds ties away from zero), then format the absolute value with comma grouping and add \"-\" only when the rounded result is nonzero.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP, localcontext\n\n_DECIMALS = {'KRW': 0, 'JPY': 0, 'USD': 2, 'EUR': 2, 'BHD': 3, 'KWD': 3}\n\n\ndef format_amount(amount: str, currency: str) -> str:\n    if currency not in _DECIMALS:\n        raise ValueError(f\"unknown currency: {currency!r}\")\n    places = _DECIMALS[currency]\n    exp = Decimal(1).scaleb(-places)\n    with localcontext() as ctx:\n        ctx.prec = max(28, len(amount) + places + 10)\n        value = Decimal(amount).quantize(exp, rounding=ROUND_HALF_UP)\n        negative = value < 0\n        magnitude = abs(value)\n        body = f\"{magnitude:,.{places}f}\"\n    if negative and magnitude != 0:\n        body = \"-\" + body\n    return f\"{currency} {body}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 371,
+        "output_tokens": 1181,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

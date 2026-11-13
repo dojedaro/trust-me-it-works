@@ -1,0 +1,162 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Iterate through the points, tracking scores for A and B, converting point count to tennis score (0/15/30/40), handling the 40-40 deuce case with no-ad scoring, and detecting when a player wins.",
+      "code": "def game_score(points: str) -> str:\n    a_points = 0\n    b_points = 0\n    \n    for point in points:\n        # Check if someone has already won\n        if a_points >= 3 and a_points > b_points + 1:\n            return \"Game A\"\n        if b_points >= 3 and b_points > a_points + 1:\n            return \"Game B\"\n        \n        # Award the point\n        if point == 'A':\n            a_points += 1\n        elif point == 'B':\n            b_points += 1\n    \n    # Check if someone won after all points\n    if a_points >= 3 and a_points > b_points + 1:\n        return \"Game A\"\n    if b_points >= 3 and b_points > a_points + 1:\n        return \"Game B\"\n    \n    # Convert points to tennis score\n    score_map = {0: '0', 1: '15', 2: '30', 3: '40'}\n    \n    # Handle regular scoring\n    if a_points < 3 or b_points < 3:\n        return f\"{score_map[a_points]}-{score_map[b_points]}\"\n    \n    # Both have at least 3 points (40-40 or beyond with no-ad)\n    if a_points == b_points:\n        return \"40-40\"\n    elif a_points > b_points:\n        return \"Game A\"\n    else:\n        return \"Game B\"\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 1, 'edge_cases': 1, 'spec_compliance': 1}. Weakest criterion: correctness. Problem: Uses a win-by-2 rule instead of first to 4 points: 'AAA' returns 'Game A' instead of '40-0', and 'AAAA' raises KeyError.",
+      "checker_details": {
+        "scores": {
+          "correctness": 1,
+          "edge_cases": 1,
+          "spec_compliance": 1
+        },
+        "weakest": "Uses a win-by-2 rule instead of first to 4 points: 'AAA' returns 'Game A' instead of '40-0', and 'AAAA' raises KeyError."
+      },
+      "ground_truth": {
+        "passed": 1,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_deciding_point",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_forty_all_is_a_score",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_points_after_the_game_are_ignored",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_regular_scores",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 251,
+        "output_tokens": 442,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 839,
+        "output_tokens": 622,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Fix the scoring logic to correctly handle tennis scoring where at 40-40 (deuce), the next point wins immediately (no-ad rule), and ensure we don't have KeyError when accessing the score_map.",
+      "code": "def game_score(points: str) -> str:\n    a_points = 0\n    b_points = 0\n    \n    for point in points:\n        # Check if someone has already won\n        if a_points >= 3 and b_points < 3:\n            # A is at 40 and B hasn't reached 40, A wins on next point\n            if a_points > b_points:\n                return \"Game A\"\n        if b_points >= 3 and a_points < 3:\n            # B is at 40 and A hasn't reached 40, B wins on next point\n            if b_points > a_points:\n                return \"Game B\"\n        \n        # At 40-40 (deuce), next point wins the game\n        if a_points >= 3 and b_points >= 3 and a_points == b_points:\n            if point == 'A':\n                return \"Game A\"\n            elif point == 'B':\n                return \"Game B\"\n        \n        # Award the point\n        if point == 'A':\n            a_points += 1\n        elif point == 'B':\n            b_points += 1\n    \n    # Convert points to tennis score\n    score_map = {0: '0', 1: '15', 2: '30', 3: '40'}\n    \n    # Handle deuce/40-40 case\n    if a_points >= 3 and b_points >= 3:\n        return \"40-40\"\n    \n    # Handle regular scoring (cap at 3 for display purposes)\n    a_display = min(a_points, 3)\n    b_display = min(b_points, 3)\n    \n    return f\"{score_map[a_display]}-{score_map[b_display]}\"\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 2, 'edge_cases': 3, 'spec_compliance': 3}. Weakest criterion: correctness. Problem: At 40-x (x<40), the code declares the leader the winner on the next point regardless of who actually won it, so 'AAAB' returns 'Game A' instead of '40-15'.",
+      "checker_details": {
+        "scores": {
+          "correctness": 2,
+          "edge_cases": 3,
+          "spec_compliance": 3
+        },
+        "weakest": "At 40-x (x<40), the code declares the leader the winner on the next point regardless of who actually won it, so 'AAAB' returns 'Game A' instead of '40-15'."
+      },
+      "ground_truth": {
+        "passed": 1,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_deciding_point",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_forty_all_is_a_score",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_points_after_the_game_are_ignored",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_regular_scores",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 754,
+        "output_tokens": 495,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 907,
+        "output_tokens": 784,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 2,
+      "plan": "Fix the logic to only declare a winner when the point is actually won - check for win conditions AFTER awarding the point, not before, and ensure at 40-x the leader only wins if they score the next point.",
+      "code": "def game_score(points: str) -> str:\n    a_points = 0\n    b_points = 0\n    \n    for point in points:\n        # Award the point\n        if point == 'A':\n            a_points += 1\n        elif point == 'B':\n            b_points += 1\n        \n        # Check win conditions after awarding the point\n        # At 40-40 (deuce), next point wins the game\n        if a_points >= 3 and b_points >= 3:\n            if a_points > b_points:\n                return \"Game A\"\n            elif b_points > a_points:\n                return \"Game B\"\n        # A reaches 40+ and is ahead by 2+ points from 40-40, or A at 4+ with B at 0-2\n        elif a_points >= 4 and b_points < a_points:\n            return \"Game A\"\n        elif b_points >= 4 and a_points < b_points:\n            return \"Game B\"\n    \n    # Convert points to tennis score\n    score_map = {0: '0', 1: '15', 2: '30', 3: '40'}\n    \n    # Handle deuce/40-40 case\n    if a_points >= 3 and b_points >= 3:\n        return \"40-40\"\n    \n    # Handle regular scoring (cap at 3 for display purposes)\n    a_display = min(a_points, 3)\n    b_display = min(b_points, 3)\n    \n    return f\"{score_map[a_display]}-{score_map[b_display]}\"\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 9, 'spec_compliance': 9}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 9,
+          "spec_compliance": 9
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 813,
+        "output_tokens": 462,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 876,
+        "output_tokens": 605,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

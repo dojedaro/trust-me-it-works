@@ -1,0 +1,344 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "F",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests+disputes",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the ISO 8601 duration string by validating the format, extracting components (weeks/days and optional time parts), and converting everything to seconds with proper error handling.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Remove the 'P' prefix\n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must contain at least one component\")\n    \n    total_seconds = 0.0\n    \n    # Check if 'T' is present for time components\n    if 'T' in remaining:\n        date_part, time_part = remaining.split('T', 1)\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = remaining\n        time_part = None\n    \n    # Parse date part (weeks or days)\n    weeks = 0\n    days = 0\n    \n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both weeks and days\")\n            # Parse weeks\n            if not date_part.endswith('W'):\n                raise ValueError(\"Invalid duration format\")\n            week_str = date_part[:-1]\n            if not week_str or not is_valid_number(week_str):\n                raise ValueError(\"Invalid week value\")\n            weeks = parse_number(week_str)\n        elif 'D' in date_part:\n            # Parse days\n            if not date_part.endswith('D'):\n                raise ValueError(\"Invalid duration format\")\n            day_str = date_part[:-1]\n            if not day_str or not is_valid_number(day_str):\n                raise ValueError(\"Invalid day value\")\n            days = parse_number(day_str)\n        else:\n            if date_part:\n                raise ValueError(\"Invalid duration format\")\n    \n    # Parse time part (hours, minutes, seconds)\n    hours = 0\n    minutes = 0\n    seconds = 0.0\n    \n    if time_part:\n        # Must have at least one component\n        has_component = False\n        \n        # Parse hours\n        if 'H' in time_part:\n            idx = time_part.index('H')\n            hour_str = time_part[:idx]\n            if not hour_str or not is_valid_number(hour_str):\n                raise ValueError(\"Invalid hour value\")\n            hours = parse_number(hour_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        # Parse minutes\n        if 'M' in time_part:\n            idx = time_part.index('M')\n            min_str = time_part[:idx]\n            if not min_str or not is_valid_number(min_str):\n                raise ValueError(\"Invalid minute value\")\n            minutes = parse_number(min_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        # Parse seconds\n        if 'S' in time_part:\n            idx = time_part.index('S')\n            sec_str = time_part[:idx]\n            if not sec_str or not is_valid_number(sec_str):\n                raise ValueError(\"Invalid second value\")\n            seconds = parse_number(sec_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        if time_part:\n            raise ValueError(\"Invalid characters in time part\")\n        \n        if not has_component:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    \n    # Check that at least one component is present\n    if weeks == 0 and days == 0 and hours == 0 and minutes == 0 and seconds == 0:\n        raise ValueError(\"Duration must contain at least one non-zero component\")\n    \n    total_seconds = weeks * 7 * 86400 + days * 86400 + hours * 3600 + minutes * 60 + seconds\n    \n    return total_seconds\n\n\ndef is_valid_number(s: str) -> bool:\n    \"\"\"Check if string is a valid non-negative integer or decimal number\"\"\"\n    if not s:\n        return False\n    \n    # Count dots and commas\n    decimal_count = s.count('.') + s.count(',')\n    if decimal_count > 1:\n        return False\n    \n    if decimal_count == 1:\n        # Has decimal - must have digits on both sides\n        parts = s.replace(',', '.').split('.')\n        return all(part.isdigit() and part for part in parts)\n    else:\n        # No decimal - just digits\n        return s.isdigit()\n\n\ndef parse_number(s: str) -> float:\n    \"\"\"Parse a number string, handling both '.' and ',' as decimal separator\"\"\"\n    s = s.replace(',', '.')\n    return float(s)\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 14/20 passed, 0 withdrawn on review.\n- test_fraction_day_with_time_invalid: AssertionError\n- test_fraction_last_only: AssertionError\n- test_fraction_last_with_skipped: AssertionError\n- test_unicode_digits: AssertionError\n- test_week_with_time_invalid: AssertionError",
+      "checker_details": {
+        "tests": "from solution import parse_duration\n\n\ndef raises(s):\n    try:\n        parse_duration(s)\n    except ValueError:\n        return True\n    except Exception:\n        return False\n    return False\n\n\ndef test_zero_components_valid():\n    assert parse_duration('P0D') == 0.0\n    assert parse_duration('PT0S') == 0.0\n\n\ndef test_basic():\n    assert parse_duration('PT1H30M') == 5400.0\n    assert parse_duration('P1W') == 604800.0\n    assert parse_duration('P1DT1S') == 86401.0\n\n\ndef test_fraction_last_only():\n    assert parse_duration('PT0.5S') == 0.5\n    assert parse_duration('PT1,5H') == 5400.0\n    assert parse_duration('P1.5D') == 129600.0\n    assert raises('PT1.5H30M')\n\n\ndef test_fraction_week():\n    assert parse_duration('P0.5W') == 302400.0\n\n\ndef test_fraction_day_with_time_invalid():\n    assert raises('P1.5DT1H')\n\n\ndef test_week_with_time_invalid():\n    assert raises('P1WT1H')\n\n\ndef test_week_and_day_invalid():\n    assert raises('P1W1D')\n\n\ndef test_empty_T():\n    assert raises('P1DT')\n    assert raises('PT')\n\n\ndef test_just_P():\n    assert raises('P')\n    assert raises('')\n\n\ndef test_years_months():\n    assert raises('P1Y')\n    assert raises('P1M')\n    assert raises('P1Y2M3DT4H')\n\n\ndef test_lowercase():\n    assert raises('pt1h')\n    assert raises('P1d')\n    assert raises('PT1h')\n\n\ndef test_order():\n    assert raises('PT30M1H')\n    assert raises('PT1S1M')\n\n\ndef test_duplicates():\n    assert raises('PT1H1H')\n\n\ndef test_unicode_digits():\n    assert raises('PT١H')\n\n\ndef test_bad_numbers():\n    assert raises('PT-1H')\n    assert raises('PT.5S')\n    assert raises('PT5.S')\n    assert raises('PT1e2S')\n    assert raises('PT 1S')\n\n\ndef test_whitespace():\n    assert raises(' PT1S')\n    assert raises('PT1S ')\n\n\ndef test_minutes_in_date_part():\n    assert raises('P1MT1S')\n\n\ndef test_large_int():\n    assert parse_duration('P2D') == 172800.0\n    assert isinstance(parse_duration('PT1S'), float)\n\n\ndef test_all_components():\n    assert parse_duration('P1DT2H3M4S') == 86400 + 7200 + 180 + 4\n    assert parse_duration('P1DT2H3M4.5S') == 86400 + 7200 + 180 + 4.5\n\n\ndef test_fraction_last_with_skipped():\n    assert parse_duration('PT1H0.5M') == 3630.0\n    assert raises('PT0.5H1S')\n",
+        "report": {
+          "passed": 14,
+          "total": 20,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_fraction_day_with_time_invalid",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_fraction_last_only",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_fraction_last_with_skipped",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_unicode_digits",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_week_with_time_invalid",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_components_valid",
+              "message": "ValueError: Duration must contain at least one non-zero component"
+            }
+          ]
+        },
+        "disputes": {
+          "test_unicode_digits": {
+            "action": "accept",
+            "reason": "The task specifies 'Numbers are non-negative integers' using standard ASCII digits. Unicode digits like '١' should be rejected, but Python's isdigit() accepts them."
+          },
+          "test_fraction_last_only": {
+            "action": "accept",
+            "reason": "The task states 'the last component written may have a decimal fraction'. PT1,5H is invalid because H is not the last component (M or S could follow). Only PT1H0.5M is valid where M is actually last."
+          },
+          "test_fraction_day_with_time_invalid": {
+            "action": "accept",
+            "reason": "The task states 'the last component written may have a decimal fraction'. If a day has a decimal, it's the last component, so time components cannot follow it."
+          },
+          "test_week_with_time_invalid": {
+            "action": "accept",
+            "reason": "The task states the format is 'weeks alone, \"P<n>W\", or \"P<n>D\" followed by an optional time part'. Weeks are meant to be alone without time components."
+          },
+          "test_fraction_last_with_skipped": {
+            "action": "accept",
+            "reason": "The task states 'the last component written may have a decimal fraction'. PT1H0.5M is valid (M is last), but PT0.5H1S is invalid (H is not last, S follows)."
+          },
+          "test_zero_components_valid": {
+            "action": "accept",
+            "reason": "The task requires 'at least one must be present overall' meaning at least one component syntactically, not that the total must be non-zero. P0D and PT0S are valid durations with zero seconds."
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 1232,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 4411,
+        "output_tokens": 1805,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 19,
+        "total": 20,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_unicode_digits",
+            "message": "AssertionError"
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "plan": "Analyze the failing tests to identify the weakest points: the issue is that my current implementation doesn't properly validate that ONLY the last component can have a decimal fraction, and it doesn't reject fractions in non-last components or in components followed by other components.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Remove the 'P' prefix\n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must contain at least one component\")\n    \n    total_seconds = 0.0\n    \n    # Check if 'T' is present for time components\n    if 'T' in remaining:\n        date_part, time_part = remaining.split('T', 1)\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = remaining\n        time_part = None\n    \n    # Parse date part (weeks or days)\n    weeks = 0\n    days = 0\n    \n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both weeks and days\")\n            # Parse weeks\n            if not date_part.endswith('W'):\n                raise ValueError(\"Invalid duration format\")\n            week_str = date_part[:-1]\n            if not week_str or not is_valid_number(week_str):\n                raise ValueError(\"Invalid week value\")\n            # Weeks cannot have decimal if there's a time part\n            if time_part and ('.' in week_str or ',' in week_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            weeks = parse_number(week_str)\n        elif 'D' in date_part:\n            # Parse days\n            if not date_part.endswith('D'):\n                raise ValueError(\"Invalid duration format\")\n            day_str = date_part[:-1]\n            if not day_str or not is_valid_number(day_str):\n                raise ValueError(\"Invalid day value\")\n            # Days cannot have decimal if there's a time part\n            if time_part and ('.' in day_str or ',' in day_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            days = parse_number(day_str)\n        else:\n            if date_part:\n                raise ValueError(\"Invalid duration format\")\n    \n    # Parse time part (hours, minutes, seconds)\n    hours = 0\n    minutes = 0\n    seconds = 0.0\n    \n    if time_part:\n        # Must have at least one component\n        has_component = False\n        original_time_part = time_part\n        \n        # Parse hours\n        if 'H' in time_part:\n            idx = time_part.index('H')\n            hour_str = time_part[:idx]\n            if not hour_str or not is_valid_number(hour_str):\n                raise ValueError(\"Invalid hour value\")\n            # Hours cannot have decimal if there are more components after\n            if ('M' in time_part[idx+1:] or 'S' in time_part[idx+1:]) and ('.' in hour_str or ',' in hour_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            hours = parse_number(hour_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        # Parse minutes\n        if 'M' in time_part:\n            idx = time_part.index('M')\n            min_str = time_part[:idx]\n            if not min_str or not is_valid_number(min_str):\n                raise ValueError(\"Invalid minute value\")\n            # Minutes cannot have decimal if there are more components after\n            if ('S' in time_part[idx+1:]) and ('.' in min_str or ',' in min_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            minutes = parse_number(min_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        # Parse seconds\n        if 'S' in time_part:\n            idx = time_part.index('S')\n            sec_str = time_part[:idx]\n            if not sec_str or not is_valid_number(sec_str):\n                raise ValueError(\"Invalid second value\")\n            seconds = parse_number(sec_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        if time_part:\n            raise ValueError(\"Invalid characters in time part\")\n        \n        if not has_component:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    \n    # Check that at least one component is present\n    if weeks == 0 and days == 0 and hours == 0 and minutes == 0 and seconds == 0:\n        raise ValueError(\"Duration must contain at least one non-zero component\")\n    \n    total_seconds = weeks * 7 * 86400 + days * 86400 + hours * 3600 + minutes * 60 + seconds\n    \n    return total_seconds\n\n\ndef is_valid_number(s: str) -> bool:\n    \"\"\"Check if string is a valid non-negative integer or decimal number\"\"\"\n    if not s:\n        return False\n    \n    # Count dots and commas\n    decimal_count = s.count('.') + s.count(',')\n    if decimal_count > 1:\n        return False\n    \n    if decimal_count == 1:\n        # Has decimal - must have digits on both sides\n        parts = s.replace(',', '.').split('.')\n        return all(part.isdigit() and part for part in parts)\n    else:\n        # No decimal - just digits\n        return s.isdigit()\n\n\ndef parse_number(s: str) -> float:\n    \"\"\"Parse a number string, handling both '.' and ',' as decimal separator\"\"\"\n    s = s.replace(',', '.')\n    return float(s)\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 19/22 passed, 0 withdrawn on review.\n- test_unicode_digits: AssertionError\n- test_weeks_with_time_invalid: AssertionError\n- test_zero_duration_valid: ValueError: Duration must contain at least one non-zero component",
+      "checker_details": {
+        "tests": "from solution import parse_duration\n\n\ndef raises(s):\n    try:\n        parse_duration(s)\n    except ValueError:\n        return True\n    except Exception:\n        return False\n    return False\n\n\ndef test_zero_duration_valid():\n    assert parse_duration('PT0S') == 0.0\n    assert parse_duration('P0D') == 0.0\n\n\ndef test_basic():\n    assert parse_duration('PT1H30M') == 5400.0\n    assert parse_duration('P1W') == 604800.0\n    assert parse_duration('P1DT1S') == 86401.0\n\n\ndef test_weeks_with_time_invalid():\n    assert raises('P1WT1H')\n\n\ndef test_fraction_last_only():\n    assert parse_duration('PT1.5H') == 5400.0\n    assert parse_duration('PT0,5S') == 0.5\n    assert raises('PT1.5H30M')\n    assert raises('P1.5DT1H')\n\n\ndef test_fraction_day_alone():\n    assert parse_duration('P1.5D') == 129600.0\n\n\ndef test_fraction_week():\n    assert parse_duration('P0.5W') == 302400.0\n\n\ndef test_order_wrong():\n    assert raises('PT1S1M')\n    assert raises('PT1M1H')\n\n\ndef test_duplicates():\n    assert raises('PT1H1H')\n    assert raises('PT1M2M')\n\n\ndef test_T_empty():\n    assert raises('PT')\n    assert raises('P1DT')\n\n\ndef test_empty_P():\n    assert raises('P')\n    assert raises('')\n\n\ndef test_years_months():\n    assert raises('P1Y')\n    assert raises('P1M')\n    assert raises('P1Y2M3DT4H')\n\n\ndef test_lowercase():\n    assert raises('pt1h')\n    assert raises('PT1h')\n\n\ndef test_garbage_in_date():\n    assert raises('P1X')\n    assert raises('P1D2')\n    assert raises('PD')\n\n\ndef test_negative_and_sign():\n    assert raises('P-1D')\n    assert raises('PT+1S')\n\n\ndef test_unicode_digits():\n    assert raises('PT١S')\n\n\ndef test_whitespace():\n    assert raises(' PT1S')\n    assert raises('PT1S ')\n\n\ndef test_bad_decimals():\n    assert raises('PT.5S')\n    assert raises('PT5.S')\n    assert raises('PT1.2.3S')\n\n\ndef test_time_junk_before_unit():\n    assert raises('PT1X1H')\n    assert raises('PT1S1')\n\n\ndef test_min_sec_with_M_in_date():\n    assert raises('P1MT1S')\n\n\ndef test_fraction_in_week_with_nothing_else():\n    assert parse_duration('P2W') == 1209600.0\n\n\ndef test_day_and_time_full():\n    assert parse_duration('P1DT2H3M4S') == 86400 + 7200 + 180 + 4\n\n\ndef test_fraction_seconds_last_after_others():\n    assert parse_duration('PT1H2M3.5S') == 3723.5\n",
+        "report": {
+          "passed": 19,
+          "total": 22,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_unicode_digits",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_weeks_with_time_invalid",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero_duration_valid",
+              "message": "ValueError: Duration must contain at least one non-zero component"
+            }
+          ]
+        },
+        "disputes": {
+          "test_unicode_digits": {
+            "action": "accept",
+            "reason": "The `isdigit()` method accepts Unicode digits like '١' (Arabic-Indic digit one), but the task specifies 'Numbers are non-negative integers', implying ASCII digits only. The validation should reject Unicode digits."
+          },
+          "test_weeks_with_time_invalid": {
+            "action": "accept",
+            "reason": "The task states 'weeks alone' or 'P<n>D followed by an optional time part'. Weeks cannot be combined with time components. The code must validate that if weeks are present, no time part (T) should follow."
+          },
+          "test_zero_duration_valid": {
+            "action": "accept",
+            "reason": "Zero durations like 'PT0S' and 'P0D' are valid according to ISO 8601. The code incorrectly rejects them with the check 'if weeks == 0 and days == 0 and hours == 0 and minutes == 0 and seconds == 0: raise ValueError'. At least one component must be present in the string, not have a non-zero value."
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1613,
+        "output_tokens": 1493,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 4943,
+        "output_tokens": 1545,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 21,
+        "total": 22,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_unicode_digits",
+            "message": "AssertionError"
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "plan": "Fix the three failing tests by (1) allowing zero values in any component since ISO 8601 allows \"P0D\" or \"PT0S\", (2) rejecting weeks combined with time components, and (3) handling unicode digits properly.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Remove the 'P' prefix\n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must contain at least one component\")\n    \n    total_seconds = 0.0\n    \n    # Check if 'T' is present for time components\n    if 'T' in remaining:\n        date_part, time_part = remaining.split('T', 1)\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = remaining\n        time_part = None\n    \n    # Parse date part (weeks or days)\n    weeks = 0\n    days = 0\n    has_week = False\n    \n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both weeks and days\")\n            # Weeks cannot be combined with time part\n            if time_part:\n                raise ValueError(\"Weeks cannot be combined with time components\")\n            # Parse weeks\n            if not date_part.endswith('W'):\n                raise ValueError(\"Invalid duration format\")\n            week_str = date_part[:-1]\n            if not week_str or not is_valid_number(week_str):\n                raise ValueError(\"Invalid week value\")\n            weeks = parse_number(week_str)\n            has_week = True\n        elif 'D' in date_part:\n            # Parse days\n            if not date_part.endswith('D'):\n                raise ValueError(\"Invalid duration format\")\n            day_str = date_part[:-1]\n            if not day_str or not is_valid_number(day_str):\n                raise ValueError(\"Invalid day value\")\n            # Days cannot have decimal if there's a time part\n            if time_part and ('.' in day_str or ',' in day_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            days = parse_number(day_str)\n        else:\n            if date_part:\n                raise ValueError(\"Invalid duration format\")\n    \n    # Parse time part (hours, minutes, seconds)\n    hours = 0\n    minutes = 0\n    seconds = 0.0\n    \n    if time_part:\n        # Must have at least one component\n        has_component = False\n        original_time_part = time_part\n        \n        # Parse hours\n        if 'H' in time_part:\n            idx = time_part.index('H')\n            hour_str = time_part[:idx]\n            if not hour_str or not is_valid_number(hour_str):\n                raise ValueError(\"Invalid hour value\")\n            # Hours cannot have decimal if there are more components after\n            if ('M' in time_part[idx+1:] or 'S' in time_part[idx+1:]) and ('.' in hour_str or ',' in hour_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            hours = parse_number(hour_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        # Parse minutes\n        if 'M' in time_part:\n            idx = time_part.index('M')\n            min_str = time_part[:idx]\n            if not min_str or not is_valid_number(min_str):\n                raise ValueError(\"Invalid minute value\")\n            # Minutes cannot have decimal if there are more components after\n            if ('S' in time_part[idx+1:]) and ('.' in min_str or ',' in min_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            minutes = parse_number(min_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        # Parse seconds\n        if 'S' in time_part:\n            idx = time_part.index('S')\n            sec_str = time_part[:idx]\n            if not sec_str or not is_valid_number(sec_str):\n                raise ValueError(\"Invalid second value\")\n            seconds = parse_number(sec_str)\n            time_part = time_part[idx+1:]\n            has_component = True\n        \n        if time_part:\n            raise ValueError(\"Invalid characters in time part\")\n        \n        if not has_component:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    \n    # Check that at least one component is present (including zeros now)\n    if weeks == 0 and days == 0 and hours == 0 and minutes == 0 and seconds == 0:\n        # Allow zero durations as long as we have a valid format\n        if not (date_part or time_part):\n            raise ValueError(\"Duration must contain at least one component\")\n    \n    total_seconds = weeks * 7 * 86400 + days * 86400 + hours * 3600 + minutes * 60 + seconds\n    \n    return total_seconds\n\n\ndef is_valid_number(s: str) -> bool:\n    \"\"\"Check if string is a valid non-negative integer or decimal number\"\"\"\n    if not s:\n        return False\n    \n    # Count dots and commas\n    decimal_count = s.count('.') + s.count(',')\n    if decimal_count > 1:\n        return False\n    \n    if decimal_count == 1:\n        # Has decimal - must have digits on both sides\n        parts = s.replace(',', '.').split('.')\n        return all(part and all(c.isdigit() for c in part) for part in parts)\n    else:\n        # No decimal - just digits\n        return all(c.isdigit() for c in s)\n\n\ndef parse_number(s: str) -> float:\n    \"\"\"Parse a number string, handling both '.' and ',' as decimal separator\"\"\"\n    s = s.replace(',', '.')\n    return float(s)\n",
+      "verdict": "ITERATING",
+      "feedback": "The reviewer's tests: 23/25 passed, 0 withdrawn on review.\n- test_unicode_digits: AssertionError\n- test_zero: ValueError: Duration must contain at least one component",
+      "checker_details": {
+        "tests": "from solution import parse_duration\n\n\ndef raises(s):\n    try:\n        parse_duration(s)\n    except ValueError:\n        return True\n    except Exception:\n        return False\n    return False\n\n\ndef test_basic():\n    assert parse_duration('PT1H30M') == 5400.0\n    assert parse_duration('P1W') == 604800.0\n\n\ndef test_day_with_time():\n    assert parse_duration('P1DT1H') == 90000.0\n\n\ndef test_week_with_time_invalid():\n    assert raises('P1WT1H')\n\n\ndef test_week_with_day_invalid():\n    assert raises('P1W2D')\n\n\ndef test_empty_T():\n    assert raises('P1DT')\n    assert raises('PT')\n\n\ndef test_just_P():\n    assert raises('P')\n\n\ndef test_years_months():\n    assert raises('P1Y')\n    assert raises('P1M')\n    assert raises('P1Y2M3D')\n\n\ndef test_lowercase():\n    assert raises('pt1h')\n    assert raises('PT1h')\n\n\ndef test_fraction_last():\n    assert parse_duration('PT1.5S') == 1.5\n    assert parse_duration('PT0,5H') == 1800.0\n    assert parse_duration('P0.5D') == 43200.0\n    assert parse_duration('P1.5W') == 907200.0\n\n\ndef test_fraction_not_last():\n    assert raises('PT1.5H30M')\n    assert raises('P1.5DT1H')\n    assert raises('PT1.5M2S')\n\n\ndef test_wrong_order():\n    assert raises('PT30M1H')\n    assert raises('PT1S1M')\n\n\ndef test_duplicate():\n    assert raises('PT1H1H')\n    assert raises('PT1M1M')\n\n\ndef test_garbage_between():\n    assert raises('PT1H5')\n    assert raises('PT1X')\n    assert raises('PTH')\n    assert raises('PT1HM')\n\n\ndef test_negative_and_sign():\n    assert raises('P-1D')\n    assert raises('PT+1H')\n\n\ndef test_bad_decimals():\n    assert raises('PT.5S')\n    assert raises('PT5.S')\n    assert raises('PT1.2.3S')\n\n\ndef test_unicode_digits():\n    assert raises('PT٣S')\n\n\ndef test_time_without_T():\n    assert raises('P1H')\n    assert raises('P1S')\n\n\ndef test_day_after_T():\n    assert raises('PT1D')\n\n\ndef test_zero():\n    assert parse_duration('PT0S') == 0.0\n    assert parse_duration('P0D') == 0.0\n\n\ndef test_whitespace():\n    assert raises(' P1D')\n    assert raises('P1D ')\n\n\ndef test_empty():\n    assert raises('')\n\n\ndef test_types():\n    assert isinstance(parse_duration('P1D'), float)\n\n\ndef test_full():\n    assert parse_duration('P2DT3H4M5S') == 2 * 86400 + 3 * 3600 + 4 * 60 + 5\n    assert parse_duration('P1DT1M1.5S') == 86400 + 60 + 1.5\n\n\ndef test_two_T():\n    assert raises('PT1HT1M')\n\n\ndef test_days_after_weeks_misc():\n    assert raises('PW')\n    assert raises('PD')\n    assert raises('P1D1W')\n",
+        "report": {
+          "passed": 23,
+          "total": 25,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_unicode_digits",
+              "message": "AssertionError"
+            },
+            {
+              "name": "test_zero",
+              "message": "ValueError: Duration must contain at least one component"
+            }
+          ]
+        },
+        "disputes": {
+          "test_unicode_digits": {
+            "action": "accept",
+            "reason": "Unicode digits like '٣' should not be accepted. The is_valid_number function uses isdigit() which returns True for unicode digits, but only ASCII digits 0-9 should be allowed."
+          },
+          "test_zero": {
+            "action": "accept",
+            "reason": "PT0S and P0D should be valid and return 0.0. The logic for checking 'at least one component' is incorrect - it should check if we found at least one valid numeric component during parsing, not if all final values are zero. A zero value is still a valid component."
+          }
+        },
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1829,
+        "output_tokens": 1531,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 2,
+        "input_tokens": 5077,
+        "output_tokens": 2106,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 24,
+        "total": 25,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_unicode_digits",
+            "message": "AssertionError"
+          }
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "plan": "The `test_zero` failure shows that a duration like \"P0D\" or \"PT0S\" should be valid (zero duration), but my check at the end rejects it. I need to track whether we successfully parsed at least one component, not whether the total is zero. The `test_unicode_digits` likely fails because I'm using `isdigit()` which accepts Unicode digits - I should use a stricter check for ASCII digits only.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Remove the 'P' prefix\n    remaining = text[1:]\n    \n    if not remaining:\n        raise ValueError(\"Duration must contain at least one component\")\n    \n    total_seconds = 0.0\n    parsed_any_component = False\n    \n    # Check if 'T' is present for time components\n    if 'T' in remaining:\n        date_part, time_part = remaining.split('T', 1)\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = remaining\n        time_part = None\n    \n    # Parse date part (weeks or days)\n    weeks = 0\n    days = 0\n    has_week = False\n    \n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both weeks and days\")\n            # Weeks cannot be combined with time part\n            if time_part:\n                raise ValueError(\"Weeks cannot be combined with time components\")\n            # Parse weeks\n            if not date_part.endswith('W'):\n                raise ValueError(\"Invalid duration format\")\n            week_str = date_part[:-1]\n            if not week_str or not is_valid_number(week_str):\n                raise ValueError(\"Invalid week value\")\n            weeks = parse_number(week_str)\n            has_week = True\n            parsed_any_component = True\n        elif 'D' in date_part:\n            # Parse days\n            if not date_part.endswith('D'):\n                raise ValueError(\"Invalid duration format\")\n            day_str = date_part[:-1]\n            if not day_str or not is_valid_number(day_str):\n                raise ValueError(\"Invalid day value\")\n            # Days cannot have decimal if there's a time part\n            if time_part and ('.' in day_str or ',' in day_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            days = parse_number(day_str)\n            parsed_any_component = True\n        else:\n            if date_part:\n                raise ValueError(\"Invalid duration format\")\n    \n    # Parse time part (hours, minutes, seconds)\n    hours = 0\n    minutes = 0\n    seconds = 0.0\n    \n    if time_part:\n        # Must have at least one component\n        original_time_part = time_part\n        \n        # Parse hours\n        if 'H' in time_part:\n            idx = time_part.index('H')\n            hour_str = time_part[:idx]\n            if not hour_str or not is_valid_number(hour_str):\n                raise ValueError(\"Invalid hour value\")\n            # Hours cannot have decimal if there are more components after\n            if ('M' in time_part[idx+1:] or 'S' in time_part[idx+1:]) and ('.' in hour_str or ',' in hour_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            hours = parse_number(hour_str)\n            time_part = time_part[idx+1:]\n            parsed_any_component = True\n        \n        # Parse minutes\n        if 'M' in time_part:\n            idx = time_part.index('M')\n            min_str = time_part[:idx]\n            if not min_str or not is_valid_number(min_str):\n                raise ValueError(\"Invalid minute value\")\n            # Minutes cannot have decimal if there are more components after\n            if ('S' in time_part[idx+1:]) and ('.' in min_str or ',' in min_str):\n                raise ValueError(\"Only the last component can have a decimal fraction\")\n            minutes = parse_number(min_str)\n            time_part = time_part[idx+1:]\n            parsed_any_component = True\n        \n        # Parse seconds\n        if 'S' in time_part:\n            idx = time_part.index('S')\n            sec_str = time_part[:idx]\n            if not sec_str or not is_valid_number(sec_str):\n                raise ValueError(\"Invalid second value\")\n            seconds = parse_number(sec_str)\n            time_part = time_part[idx+1:]\n            parsed_any_component = True\n        \n        if time_part:\n            raise ValueError(\"Invalid characters in time part\")\n    \n    # Check that at least one component was actually parsed\n    if not parsed_any_component:\n        raise ValueError(\"Duration must contain at least one component\")\n    \n    total_seconds = weeks * 7 * 86400 + days * 86400 + hours * 3600 + minutes * 60 + seconds\n    \n    return total_seconds\n\n\ndef is_valid_number(s: str) -> bool:\n    \"\"\"Check if string is a valid non-negative integer or decimal number (ASCII digits only)\"\"\"\n    if not s:\n        return False\n    \n    # Count dots and commas\n    decimal_count = s.count('.') + s.count(',')\n    if decimal_count > 1:\n        return False\n    \n    if decimal_count == 1:\n        # Has decimal - must have digits on both sides\n        parts = s.replace(',', '.').split('.')\n        return all(part and all(c in '0123456789' for c in part) for part in parts)\n    else:\n        # No decimal - just digits\n        return all(c in '0123456789' for c in s)\n\n\ndef parse_number(s: str) -> float:\n    \"\"\"Parse a number string, handling both '.' and ',' as decimal separator\"\"\"\n    s = s.replace(',', '.')\n    return float(s)\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n27/27 tests passed.",
+      "checker_details": {
+        "tests": "from solution import parse_duration\n\n\ndef raises(s):\n    try:\n        parse_duration(s)\n    except ValueError:\n        return True\n    return False\n\n\ndef test_basic():\n    assert parse_duration('PT1H30M') == 5400.0\n    assert parse_duration('P1W') == 604800.0\n\n\ndef test_days_with_time():\n    assert parse_duration('P1DT1H') == 90000.0\n\n\ndef test_week_with_time_invalid():\n    assert raises('P1WT1H')\n\n\ndef test_decimal_hours_comma():\n    assert parse_duration('PT1,5H') == 5400.0\n\n\ndef test_decimal_seconds():\n    assert parse_duration('PT0.5S') == 0.5\n\n\ndef test_decimal_not_last():\n    assert raises('PT1.5H30M')\n    assert raises('P1.5DT1H')\n\n\ndef test_decimal_day_last():\n    assert parse_duration('P1.5D') == 129600.0\n\n\ndef test_decimal_week():\n    assert parse_duration('P0.5W') == 302400.0\n\n\ndef test_empty_and_P():\n    assert raises('')\n    assert raises('P')\n    assert raises('PT')\n    assert raises('P1DT')\n\n\ndef test_lowercase():\n    assert raises('pt1h')\n    assert raises('PT1h')\n\n\ndef test_year_month():\n    assert raises('P1Y')\n    assert raises('P1M')\n    assert raises('P1Y2M3DT4H')\n\n\ndef test_order_wrong():\n    assert raises('PT1M1H')\n    assert raises('PT30M1H')\n\n\ndef test_duplicate_components():\n    assert raises('PT1H1H')\n    assert raises('PT1S1S')\n\n\ndef test_garbage_between():\n    assert raises('PT1H5')\n    assert raises('PT1X1M')\n    assert raises('PT1H2')\n\n\ndef test_negative_and_sign():\n    assert raises('P-1D')\n    assert raises('PT-1H')\n    assert raises('+P1D')\n\n\ndef test_bad_decimals():\n    assert raises('PT.5S')\n    assert raises('PT5.S')\n    assert raises('PT1.2.3S')\n\n\ndef test_unicode_digits():\n    assert raises('PT١H')\n\n\ndef test_whitespace():\n    assert raises(' P1D')\n    assert raises('P1D ')\n\n\ndef test_time_after_days_missing_T():\n    assert raises('P1D1H')\n\n\ndef test_two_T():\n    assert raises('PT1HT1M')\n\n\ndef test_zero():\n    assert parse_duration('PT0S') == 0.0\n    assert parse_duration('P0D') == 0.0\n\n\ndef test_full():\n    assert parse_duration('P2DT3H4M5S') == 2*86400 + 3*3600 + 4*60 + 5\n\n\ndef test_decimal_minutes_last():\n    assert parse_duration('PT1H1.5M') == 3690.0\n\n\ndef test_week_and_day():\n    assert raises('P1W1D')\n    assert raises('P1D1W')\n\n\ndef test_return_float():\n    assert isinstance(parse_duration('PT1S'), float)\n\n\ndef test_time_only_with_D_in_time():\n    assert raises('PT1D')\n\n\ndef test_W_in_time():\n    assert raises('PT1W')\n",
+        "report": {
+          "passed": 27,
+          "total": 27,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        },
+        "disputes": {},
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1846,
+        "output_tokens": 1528,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 2253,
+        "output_tokens": 1066,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 26,
+        "total": 27,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_unicode_digits",
+            "message": "AssertionError"
+          }
+        ]
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

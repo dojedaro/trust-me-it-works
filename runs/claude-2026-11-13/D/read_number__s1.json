@@ -1,0 +1,66 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "D",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Break down the number into groups of 4 digits (ones, 만, 억), handle each group with special rules for implicit 1s and zero groups, then join them together.",
+      "code": "def read_number(n: int) -> str:\n    if n == 0:\n        return '영'\n    \n    digits = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    \n    def read_group(num):\n        \"\"\"Read a group of up to 4 digits (0-9999)\"\"\"\n        if num == 0:\n            return ''\n        \n        result = ''\n        \n        # 천 (thousands)\n        thousands = num // 1000\n        if thousands > 0:\n            if thousands != 1:\n                result += digits[thousands]\n            result += '천'\n        \n        # 백 (hundreds)\n        hundreds = (num % 1000) // 100\n        if hundreds > 0:\n            if hundreds != 1:\n                result += digits[hundreds]\n            result += '백'\n        \n        # 십 (tens)\n        tens = (num % 100) // 10\n        if tens > 0:\n            if tens != 1:\n                result += digits[tens]\n            result += '십'\n        \n        # 일 (ones)\n        ones = num % 10\n        if ones > 0:\n            result += digits[ones]\n        \n        return result\n    \n    # Break number into groups: ones (0-9999), 만 (10000-99999999), 억 (100000000+)\n    ones_group = n % 10000\n    mans_group = (n % 100000000) // 10000\n    eoks_group = n // 100000000\n    \n    result = ''\n    \n    # 억 group (always include the number if non-zero)\n    if eoks_group > 0:\n        result += read_group(eoks_group) + '억'\n    \n    # 만 group (special: if exactly 1, read as just 만)\n    if mans_group > 0:\n        if mans_group == 1:\n            result += '만'\n        else:\n            result += read_group(mans_group) + '만'\n    \n    # ones group (always read if non-zero)\n    if ones_group > 0:\n        result += read_group(ones_group)\n    \n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n7/7 tests passed.",
+      "checker_details": {
+        "tests": "from solution import read_number\n\n\ndef test_zero():\n    assert read_number(0) == '영'\n\n\ndef test_basic():\n    assert read_number(1) == '일'\n    assert read_number(10) == '십'\n    assert read_number(11) == '십일'\n    assert read_number(110) == '백십'\n    assert read_number(2026) == '이천이십육'\n\n\ndef test_thousand_hundred():\n    assert read_number(1000) == '천'\n    assert read_number(100) == '백'\n    assert read_number(1001) == '천일'\n    assert read_number(9999) == '구천구백구십구'\n\n\ndef test_man():\n    assert read_number(10000) == '만'\n    assert read_number(20000) == '이만'\n    assert read_number(11000) == '만천'\n    assert read_number(10001) == '만일'\n    assert read_number(110000) == '십일만'\n    assert read_number(100000) == '십만'\n    assert read_number(1000000) == '백만'\n    assert read_number(10000000) == '천만'\n    assert read_number(99999999) == '구천구백구십구만구천구백구십구'\n\n\ndef test_eok():\n    assert read_number(100000000) == '일억'\n    assert read_number(100010000) == '일억만'\n    assert read_number(120000000) == '일억이천만'\n    assert read_number(100000001) == '일억일'\n    assert read_number(1000000000) == '십억'\n    assert read_number(10**11) == '천억'\n\n\ndef test_max():\n    assert read_number(10**12 - 1) == '구천구백구십구억구천구백구십구만구천구백구십구'\n\n\ndef test_eok_group_one_thousand_skip():\n    assert read_number(110000000000) == '천백억'\n    assert read_number(100000000000 + 10000) == '천억만'\n",
+        "report": {
+          "passed": 7,
+          "total": 7,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 315,
+        "output_tokens": 616,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1090,
+        "output_tokens": 729,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

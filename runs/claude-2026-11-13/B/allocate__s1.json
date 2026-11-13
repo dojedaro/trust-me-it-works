@@ -1,0 +1,59 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the allocate function by first handling edge cases (all zero weights, empty list), then distributing the total proportionally using floor division and allocating remainder cents to parts with largest fractional remainders (breaking ties by earlier position).",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if not weights or all(w == 0 for w in weights):\n        raise ValueError(\"At least one weight must be non-zero\")\n    \n    # Handle negative total by working with absolute value and negating result\n    is_negative = total < 0\n    abs_total = abs(total)\n    \n    # Calculate the sum of weights\n    weight_sum = sum(weights)\n    \n    # Initialize parts with floor division\n    parts = []\n    remainders = []\n    \n    for i, weight in enumerate(weights):\n        if weight_sum == 0:\n            base = 0\n            remainder = 0.0\n        else:\n            exact_share = (abs_total * weight) / weight_sum\n            base = int(exact_share)  # floor division\n            remainder = exact_share - base\n        \n        parts.append(base)\n        remainders.append((remainder, i))\n    \n    # Calculate how many cents are left to distribute\n    distributed = sum(parts)\n    leftover = abs_total - distributed\n    \n    # Sort by remainder (descending), then by index (ascending for tie-breaking)\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n    \n    # Allocate the leftover cents to parts with largest fractional remainders\n    for j in range(leftover):\n        idx = remainders[j][1]\n        parts[idx] += 1\n    \n    # Negate if original total was negative\n    if is_negative:\n        parts = [-p for p in parts]\n    \n    return parts\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 10, 'spec_compliance': 10}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 454,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 762,
+        "output_tokens": 507,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

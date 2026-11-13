@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version into numeric core, pre-release identifiers (dropping build metadata), then compare core numerically and pre-release per SemVer rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse(v):\n        v = v.strip()\n        if '+' in v:\n            v = v.split('+', 1)[0]\n        pre = None\n        if '-' in v:\n            v, pre_str = v.split('-', 1)\n            pre = pre_str.split('.')\n        core = [int(x) for x in v.split('.')]\n        while len(core) < 3:\n            core.append(0)\n        return core, pre\n\n    def cmp(x, y):\n        return (x > y) - (x < y)\n\n    ca, pa = parse(a)\n    cb, pb = parse(b)\n\n    c = cmp(ca, cb)\n    if c != 0:\n        return c\n\n    if pa is None and pb is None:\n        return 0\n    if pa is None:\n        return 1\n    if pb is None:\n        return -1\n\n    for ia, ib in zip(pa, pb):\n        a_num = ia.isdigit()\n        b_num = ib.isdigit()\n        if a_num and b_num:\n            c = cmp(int(ia), int(ib))\n        elif a_num:\n            c = -1\n        elif b_num:\n            c = 1\n        else:\n            c = cmp(ia, ib)\n        if c != 0:\n            return c\n\n    return cmp(len(pa), len(pb))\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 447,
+        "output_tokens": 485,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,80 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target month/year, handle the special cases for end-of-month dates, and return the result in the same format.",
+      "code": "from datetime import datetime, timedelta\nimport calendar\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    year, month, date = map(int, day.split('-'))\n    \n    # Calculate the target month and year\n    target_month = month + n\n    target_year = year\n    \n    # Adjust year and month if necessary\n    while target_month > 12:\n        target_month -= 12\n        target_year += 1\n    \n    while target_month < 1:\n        target_month += 12\n        target_year -= 1\n    \n    # Determine if the original day is the last day of its month\n    last_day_of_original_month = calendar.monthrange(year, month)[1]\n    is_last_day_of_month = date == last_day_of_original_month\n    \n    # Determine the day to use in the target month\n    last_day_of_target_month = calendar.monthrange(target_year, target_month)[1]\n    \n    if is_last_day_of_month:\n        # If original date was the last day of the month, use the last day of target month\n        target_day = last_day_of_target_month\n    else:\n        # Otherwise, use the same day, but cap at the last day of target month if needed\n        target_day = min(date, last_day_of_target_month)\n    \n    # Return the result in YYYY-MM-DD format\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "ITERATING",
+      "feedback": "The review could not be parsed. Re-check the solution against every requirement.",
+      "checker_details": {
+        "parse_error": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+        "raw": "Checking the logic: the month arithmetic with while loops is correct, though slow for huge n (e.g., n = 10^9 would loop ~83 million times). The last-day rule and the capping are implemented correctly.\n\nEdge cases:\n- Negative n: handled by the second loop.\n- n = 0: the result is the same date, and a last-day date stays the last day. Fine.\n- Leap years: calendar.monthrange handles them.\n- Year formatting: {:04d} is fine for years of 4 digits. Years below 1000 are padded.\n- Year bounds: year 0 or negative, or above 9999, would give odd results. monthrange with year 0 might work, but this is unlikely to be tested.\n- Invalid input is not validated, which the spec does not require.\n- The unused imports (datetime, timedelta) are harmless.\n\nThe only real weakness is the loop for large n, which a divmod would avoid. Performance is a minor concern, but tests with large n such as 12000 are fine (1000 iterations).\n\nSpec compliance is good.\n\n{\"scores\": {\"correctness\": 9, \"edge_cases\": 7, \"spec_compliance\": 9}, \"weakest\": \"Month normalization uses while loops, so very large |n| is slow (O(n)); divmod would be better. Also unused imports.\"}"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 435,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 871,
+        "output_tokens": 424,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Review the solution against all requirements - the logic looks correct for handling month arithmetic, last-day-of-month billing rules, and short months, so I'll verify the implementation handles edge cases properly and re-test the examples mentally.",
+      "code": "from datetime import datetime, timedelta\nimport calendar\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    year, month, date = map(int, day.split('-'))\n    \n    # Calculate the target month and year\n    target_month = month + n\n    target_year = year\n    \n    # Adjust year and month if necessary\n    while target_month > 12:\n        target_month -= 12\n        target_year += 1\n    \n    while target_month < 1:\n        target_month += 12\n        target_year -= 1\n    \n    # Determine if the original day is the last day of its month\n    last_day_of_original_month = calendar.monthrange(year, month)[1]\n    is_last_day_of_month = date == last_day_of_original_month\n    \n    # Determine the day to use in the target month\n    last_day_of_target_month = calendar.monthrange(target_year, target_month)[1]\n    \n    if is_last_day_of_month:\n        # If original date was the last day of the month, use the last day of target month\n        target_day = last_day_of_target_month\n    else:\n        # Otherwise, use the same day, but cap at the last day of target month if needed\n        target_day = min(date, last_day_of_target_month)\n    \n    # Return the result in YYYY-MM-DD format\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "UNCHANGED",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 699,
+        "output_tokens": 450,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "UNCHANGED",
+  "final_correct": true,
+  "error": null
+}

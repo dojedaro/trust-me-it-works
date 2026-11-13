@@ -1,0 +1,69 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "F",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests+disputes",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version string into core version (MAJOR.MINOR.PATCH) and pre-release identifiers, then compare them according to Semantic Versioning 2.0.0 rules, ignoring build metadata.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse_version(version_str):\n        # Remove build metadata (everything after +)\n        version_str = version_str.split('+')[0]\n        \n        # Split into core version and pre-release\n        if '-' in version_str:\n            core, prerelease = version_str.split('-', 1)\n            prerelease_ids = prerelease.split('.')\n        else:\n            core = version_str\n            prerelease_ids = None\n        \n        # Parse core version (MAJOR.MINOR.PATCH)\n        parts = core.split('.')\n        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])\n        \n        return (major, minor, patch), prerelease_ids\n    \n    def compare_prerelease(pre_a, pre_b):\n        # If both have no pre-release, they're equal (in terms of pre-release)\n        if pre_a is None and pre_b is None:\n            return 0\n        # Version without pre-release has higher precedence\n        if pre_a is None:\n            return 1\n        if pre_b is None:\n            return -1\n        \n        # Both have pre-releases, compare identifiers\n        for i in range(max(len(pre_a), len(pre_b))):\n            # If one has fewer identifiers, it has lower precedence\n            if i >= len(pre_a):\n                return -1\n            if i >= len(pre_b):\n                return 1\n            \n            id_a, id_b = pre_a[i], pre_b[i]\n            \n            # Check if identifiers are numeric\n            is_numeric_a = id_a.isdigit()\n            is_numeric_b = id_b.isdigit()\n            \n            # Numeric identifiers are compared numerically\n            if is_numeric_a and is_numeric_b:\n                num_a, num_b = int(id_a), int(id_b)\n                if num_a < num_b:\n                    return -1\n                if num_a > num_b:\n                    return 1\n            # Numeric identifiers have lower precedence than non-numeric\n            elif is_numeric_a:\n                return -1\n            elif is_numeric_b:\n                return 1\n            # Non-numeric identifiers are compared lexically\n            else:\n                if id_a < id_b:\n                    return -1\n                if id_a > id_b:\n                    return 1\n        \n        return 0\n    \n    core_a, pre_a = parse_version(a)\n    core_b, pre_b = parse_version(b)\n    \n    # Compare core versions\n    if core_a < core_b:\n        return -1\n    if core_a > core_b:\n        return 1\n    \n    # Core versions are equal, compare pre-releases\n    return compare_prerelease(pre_a, pre_b)\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n12/12 tests passed.",
+      "checker_details": {
+        "tests": "from solution import compare_versions\n\ndef test_examples():\n    assert compare_versions('1.2.10', '1.2.9') == 1\n    assert compare_versions('1.0.0-alpha', '1.0.0') == -1\n\ndef test_equal():\n    assert compare_versions('1.2.3', '1.2.3') == 0\n\ndef test_build_ignored():\n    assert compare_versions('1.0.0+a', '1.0.0+b') == 0\n    assert compare_versions('1.0.0-rc.1+x', '1.0.0-rc.1') == 0\n\ndef test_spec_chain():\n    chain = ['1.0.0-alpha', '1.0.0-alpha.1', '1.0.0-alpha.beta', '1.0.0-beta',\n             '1.0.0-beta.2', '1.0.0-beta.11', '1.0.0-rc.1', '1.0.0']\n    for i in range(len(chain)):\n        for j in range(len(chain)):\n            exp = (i > j) - (i < j)\n            assert compare_versions(chain[i], chain[j]) == exp\n\ndef test_ascii_order():\n    assert compare_versions('1.0.0-Z', '1.0.0-a') == -1\n    assert compare_versions('1.0.0-a', '1.0.0-Z') == 1\n\ndef test_numeric_vs_alpha():\n    assert compare_versions('1.0.0-1', '1.0.0-a') == -1\n    assert compare_versions('1.0.0-a', '1.0.0-1') == 1\n\ndef test_hyphen_in_prerelease():\n    assert compare_versions('1.0.0-alpha-1', '1.0.0-alpha-2') == -1\n    assert compare_versions('1.0.0-alpha-1', '1.0.0-alpha') == 1\n\ndef test_hyphen_in_build():\n    assert compare_versions('1.0.0+a-b', '1.0.0') == 0\n\ndef test_major_minor():\n    assert compare_versions('2.0.0', '1.99.99') == 1\n    assert compare_versions('1.10.0', '1.9.0') == 1\n    assert compare_versions('1.0.0', '1.0.1') == -1\n\ndef test_large_numbers():\n    assert compare_versions('1.0.0-99999999999999999999', '1.0.0-99999999999999999998') == 1\n\ndef test_prerelease_core_precedence():\n    assert compare_versions('1.0.1-alpha', '1.0.0') == 1\n\ndef test_alphanumeric_id():\n    assert compare_versions('1.0.0-1a', '1.0.0-2') == 1\n",
+        "report": {
+          "passed": 12,
+          "total": 12,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        },
+        "disputes": {},
+        "rulings": {},
+        "withdrawn": []
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 334,
+        "output_tokens": 800,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1412,
+        "output_tokens": 1100,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 12,
+        "total": 12,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

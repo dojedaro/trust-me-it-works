@@ -1,0 +1,57 @@
+{
+  "task_id": "display_width",
+  "room": "text",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll use the unicodedata module to check each character's East Asian Width and general category, then sum up the column widths according to the specified rules.",
+      "code": "import unicodedata\n\ndef display_width(text: str) -> int:\n    width = 0\n    for char in text:\n        # Get the East Asian Width property\n        ea_width = unicodedata.east_asian_width(char)\n        \n        # Get the general category\n        category = unicodedata.category(char)\n        \n        # Combining marks (Mn, Me) and format characters (Cf) take 0 columns\n        if category in ('Mn', 'Me', 'Cf'):\n            width += 0\n        # Wide or Fullwidth characters take 2 columns\n        elif ea_width in ('W', 'F'):\n            width += 2\n        # Everything else takes 1 column\n        else:\n            width += 1\n    \n    return width\n",
+      "verdict": "FINAL",
+      "feedback": "5/5 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 5,
+          "total": 5,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 238,
+        "output_tokens": 233,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

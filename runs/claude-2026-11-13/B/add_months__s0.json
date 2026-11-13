@@ -1,0 +1,54 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll parse the date string, calculate the target month/year, handle the special case where the input day is the last day of its month, and return the formatted result.",
+      "code": "def add_months(day: str, n: int) -> str:\n    from datetime import date\n    \n    # Parse the input date\n    year, month, day_of_month = map(int, day.split('-'))\n    \n    # Calculate target month and year\n    total_months = year * 12 + month + n\n    target_year = (total_months - 1) // 12\n    target_month = ((total_months - 1) % 12) + 1\n    \n    # Find the last day of the current month\n    if month == 12:\n        next_month_first = date(year + 1, 1, 1)\n    else:\n        next_month_first = date(year, month + 1, 1)\n    from datetime import timedelta\n    last_day_current_month = (next_month_first - timedelta(days=1)).day\n    \n    # Check if input day is the last day of its month\n    is_last_day = (day_of_month == last_day_current_month)\n    \n    # Find the last day of the target month\n    if target_month == 12:\n        next_month_first = date(target_year + 1, 1, 1)\n    else:\n        next_month_first = date(target_year, target_month + 1, 1)\n    from datetime import timedelta\n    last_day_target_month = (next_month_first - timedelta(days=1)).day\n    \n    # Determine the day to use in target month\n    if is_last_day:\n        target_day = last_day_target_month\n    else:\n        target_day = min(day_of_month, last_day_target_month)\n    \n    # Format and return the result\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 9, 'spec_compliance': 10}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 9,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 506,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 803,
+        "output_tokens": 57,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

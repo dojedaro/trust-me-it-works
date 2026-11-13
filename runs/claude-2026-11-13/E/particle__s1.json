@@ -1,0 +1,152 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I need to detect whether a Korean word ends with a consonant (batchim) or vowel to choose the correct particle form, with special handling for digits and the ㄹ batchim case.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Korean Hangul syllable range: AC00-D7A3 in Unicode\n    HANGUL_START = 0xAC00\n    HANGUL_END = 0xD7A3\n    \n    # Determine what we're checking\n    last_char = word[-1]\n    \n    # Handle digits - convert to Sino-Korean number and check its final sound\n    if last_char.isdigit():\n        # Map digits to their Sino-Korean pronunciations\n        digit_map = {\n            '0': '영',  # yeong - no batchim\n            '1': '일',  # il - batchim ㄹ\n            '2': '이',  # i - no batchim\n            '3': '삼',  # sam - batchim ㅁ\n            '4': '사',  # sa - no batchim\n            '5': '오',  # o - no batchim\n            '6': '육',  # yuk - batchim ㄱ\n            '7': '칠',  # chil - batchim ㄹ\n            '8': '팔',  # pal - batchim ㄹ\n            '9': '구',  # gu - no batchim\n        }\n        # Use the last digit's pronunciation\n        last_char = digit_map[last_char]\n    \n    # Check if it's a Hangul syllable\n    if HANGUL_START <= ord(last_char) <= HANGUL_END:\n        # Get the jamo index within Hangul block\n        index = ord(last_char) - HANGUL_START\n        \n        # Decompose: initial=choseong, middle=jungseong, final=jongseong\n        # Formula: index = choseong*588 + jungseong*28 + jongseong\n        jongseong = index % 28  # 0 means no final consonant (vowel-ending)\n        \n        has_batchim = jongseong != 0\n        \n        # Special case for \"으로/로\": ㄹ batchim (jongseong == 8) is treated as vowel\n        if particle == \"으로/로\" and jongseong == 8:\n            has_batchim = False\n    else:\n        # Not a Hangul syllable, assume no batchim (shouldn't happen based on spec)\n        has_batchim = False\n    \n    # Select the appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "6/7 tests passed.\n- test_jo_ends_in_a_vowel: AssertionError",
+      "checker_details": {
+        "report": {
+          "passed": 6,
+          "total": 7,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_jo_ends_in_a_vowel",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 299,
+        "output_tokens": 725,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Fix the particle form selection by ensuring correct handling of the \"은/는\" particle and verify the complete jongseong mapping is accurate.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Korean Hangul syllable range: AC00-D7A3 in Unicode\n    HANGUL_START = 0xAC00\n    \n    # Determine what we're checking\n    last_char = word[-1]\n    \n    # Handle digits - convert to Sino-Korean number and check its final sound\n    if last_char.isdigit():\n        # Map digits to their Sino-Korean pronunciations\n        digit_map = {\n            '0': '영',  # yeong - no batchim\n            '1': '일',  # il - batchim ㄹ\n            '2': '이',  # i - no batchim\n            '3': '삼',  # sam - batchim ㅁ\n            '4': '사',  # sa - no batchim\n            '5': '오',  # o - no batchim\n            '6': '육',  # yuk - batchim ㄱ\n            '7': '칠',  # chil - batchim ㄹ\n            '8': '팔',  # pal - batchim ㄹ\n            '9': '구',  # gu - no batchim\n        }\n        # Use the last digit's pronunciation\n        last_char = digit_map[last_char]\n    \n    # Check if it's a Hangul syllable\n    if HANGUL_START <= ord(last_char) <= HANGUL_START + 11172:\n        # Get the jamo index within Hangul block\n        index = ord(last_char) - HANGUL_START\n        \n        # Decompose: index = choseong*588 + jungseong*28 + jongseong\n        jongseong = index % 28  # 0 means no final consonant (vowel-ending)\n        \n        has_batchim = jongseong != 0\n        \n        # Special case for \"으로/로\": ㄹ batchim (jongseong == 8) is treated as vowel\n        if particle == \"으로/로\" and jongseong == 8:\n            has_batchim = False\n    else:\n        # Not a Hangul syllable, assume no batchim (shouldn't happen based on spec)\n        has_batchim = False\n    \n    # Select the appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "6/7 tests passed.\n- test_jo_ends_in_a_vowel: AssertionError",
+      "checker_details": {
+        "report": {
+          "passed": 6,
+          "total": 7,
+          "all_passed": false,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": [
+            {
+              "name": "test_jo_ends_in_a_vowel",
+              "message": "AssertionError"
+            }
+          ]
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1030,
+        "output_tokens": 1254,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 2,
+      "plan": "Analyze the failing test to understand what's wrong with vowel-ending detection, particularly for the \"을/를\" particle case.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Korean Hangul syllable range: AC00-D7A3 in Unicode\n    HANGUL_START = 0xAC00\n    \n    # Determine what we're checking\n    last_char = word[-1]\n    \n    # Handle digits - convert to Sino-Korean number and check its final sound\n    if last_char.isdigit():\n        # Map digits to their Sino-Korean pronunciations\n        digit_map = {\n            '0': '영',  # yeong - no batchim\n            '1': '일',  # il - batchim ㄹ\n            '2': '이',  # i - no batchim\n            '3': '삼',  # sam - batchim ㅁ\n            '4': '사',  # sa - no batchim\n            '5': '오',  # o - no batchim\n            '6': '육',  # yuk - batchim ㄱ\n            '7': '칠',  # chil - batchim ㄹ\n            '8': '팔',  # pal - batchim ㄹ\n            '9': '구',  # gu - no batchim\n        }\n        # Use the last digit's pronunciation\n        last_char = digit_map[last_char]\n    \n    # Check if it's a Hangul syllable\n    if HANGUL_START <= ord(last_char) <= HANGUL_START + 11172:\n        # Get the jamo index within Hangul block\n        index = ord(last_char) - HANGUL_START\n        \n        # Decompose: index = choseong*588 + jungseong*28 + jongseong\n        jongseong = index % 28  # 0 means no final consonant (vowel-ending)\n        \n        has_batchim = jongseong != 0\n        \n        # Special case for \"으로/로\": ㄹ batchim (jongseong == 8) is treated as vowel\n        if particle == \"으로/로\" and jongseong == 8:\n            has_batchim = False\n    else:\n        # Not a Hangul syllable, assume no batchim (shouldn't happen based on spec)\n        has_batchim = False\n    \n    # Select the appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "UNCHANGED",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 995,
+        "output_tokens": 1154,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "UNCHANGED",
+  "final_correct": false,
+  "error": null
+}

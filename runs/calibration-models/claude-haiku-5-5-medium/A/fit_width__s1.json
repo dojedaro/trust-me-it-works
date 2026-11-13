@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Group each base character with its following zero-width characters into clusters, then keep whole clusters greedily within `width - 1` columns and append \"…\".",
+      "code": "import unicodedata\n\n\ndef _cw(ch):\n    if unicodedata.category(ch) in ('Mn', 'Me', 'Cf'):\n        return 0\n    if unicodedata.east_asian_width(ch) in ('W', 'F'):\n        return 2\n    return 1\n\n\ndef fit(text: str, width: int) -> str:\n    if sum(_cw(c) for c in text) <= width:\n        return text\n\n    budget = width - 1\n    clusters = []  # each entry: [string, width]\n    for ch in text:\n        w = _cw(ch)\n        if w == 0 and clusters:\n            clusters[-1][0] += ch\n        else:\n            clusters.append([ch, w])\n\n    out = []\n    used = 0\n    for s, w in clusters:\n        if used + w > budget:\n            break\n        out.append(s)\n        used += w\n    return ''.join(out) + '…'\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 425,
+        "output_tokens": 1245,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,66 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "D",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "tests",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target month and year, handle the day-of-month logic based on whether the original day was the last day of its month, and return the formatted result.",
+      "code": "from datetime import date\nimport calendar\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    year, month, day_of_month = map(int, day.split('-'))\n    \n    # Calculate the target month and year\n    total_months = year * 12 + month - 1 + n\n    target_year = total_months // 12\n    target_month = total_months % 12 + 1\n    \n    # Get the last day of the original month\n    last_day_of_original_month = calendar.monthrange(year, month)[1]\n    \n    # Get the last day of the target month\n    last_day_of_target_month = calendar.monthrange(target_year, target_month)[1]\n    \n    # Apply the billing rule\n    if day_of_month == last_day_of_original_month:\n        # Original day is last day of its month -> use last day of target month\n        target_day = last_day_of_target_month\n    else:\n        # Keep the same day, but cap at the last day of target month if needed\n        target_day = min(day_of_month, last_day_of_target_month)\n    \n    # Format and return the result\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "The reviewer wrote tests against your code.\n11/11 tests passed.",
+      "checker_details": {
+        "tests": "from solution import add_months\n\n\ndef test_examples():\n    assert add_months('2026-01-15', 1) == '2026-02-15'\n    assert add_months('2026-01-31', 1) == '2026-02-28'\n\n\ndef test_last_day_to_longer_month():\n    # Feb 28 is the last day of its month, so the result is the last day of March\n    assert add_months('2026-02-28', 1) == '2026-03-31'\n\n\ndef test_last_day_30_to_31():\n    assert add_months('2026-04-30', 1) == '2026-05-31'\n\n\ndef test_leap_last_day():\n    assert add_months('2024-02-29', 12) == '2025-02-28'\n    assert add_months('2024-02-29', 1) == '2024-03-31'\n\n\ndef test_feb28_leap_not_last():\n    assert add_months('2024-02-28', 12) == '2025-02-28'\n    assert add_months('2024-02-28', 1) == '2024-03-28'\n\n\ndef test_non_last_day_clamped():\n    assert add_months('2026-01-30', 1) == '2026-02-28'\n    assert add_months('2024-01-30', 1) == '2024-02-29'\n\n\ndef test_zero():\n    assert add_months('2026-03-15', 0) == '2026-03-15'\n    assert add_months('2026-02-28', 0) == '2026-02-28'\n\n\ndef test_negative():\n    assert add_months('2026-03-31', -1) == '2026-02-28'\n    assert add_months('2026-01-15', -1) == '2025-12-15'\n    assert add_months('2026-03-30', -1) == '2026-02-28'\n\n\ndef test_year_boundary():\n    assert add_months('2026-12-15', 1) == '2027-01-15'\n    assert add_months('2026-01-31', -2) == '2025-11-30'\n\n\ndef test_large():\n    assert add_months('2026-01-15', 24) == '2028-01-15'\n    assert add_months('2026-01-15', -25) == '2023-12-15'\n    assert add_months('2026-01-31', 25) == '2028-02-29'\n\n\ndef test_padding_small_year():\n    assert add_months('0500-01-31', 1) == '0500-02-28'\n",
+        "report": {
+          "passed": 11,
+          "total": 11,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 384,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 766,
+        "output_tokens": 724,
+        "truncated": 0
+      },
+      "checker_tests_truth": {
+        "passed": 11,
+        "total": 11,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      }
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

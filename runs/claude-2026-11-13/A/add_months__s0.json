@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target month/year, handle the special cases for month-end dates, and format the result.",
+      "code": "def add_months(day: str, n: int) -> str:\n    from datetime import datetime, timedelta\n    \n    # Parse the input date\n    year, month, date = map(int, day.split('-'))\n    \n    # Calculate the target month and year\n    total_months = year * 12 + month - 1 + n\n    target_year = total_months // 12\n    target_month = total_months % 12 + 1\n    \n    # Determine if the original day is the last day of its month\n    # by checking if adding 1 day changes the month\n    original = datetime(year, month, date)\n    next_day = original + timedelta(days=1)\n    is_last_day_of_month = next_day.month != month\n    \n    # Find the last day of the target month\n    if target_month == 12:\n        last_day_of_target = datetime(target_year + 1, 1, 1) - timedelta(days=1)\n    else:\n        last_day_of_target = datetime(target_year, target_month + 1, 1) - timedelta(days=1)\n    \n    last_day_num = last_day_of_target.day\n    \n    # Apply the billing rule\n    if is_last_day_of_month:\n        result_day = last_day_num\n    else:\n        result_day = min(date, last_day_num)\n    \n    # Format and return the result\n    return f\"{target_year:04d}-{target_month:02d}-{result_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 430,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

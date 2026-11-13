@@ -1,0 +1,47 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Match the weeks form and the day/time form with two anchored regexes, reject empty or fraction-bearing non-final components, then sum the components in seconds.",
+      "code": "import re\n\n_NUM = r'([0-9]+(?:[.,][0-9]+)?)'\n_WEEK_RE = re.compile(r'P' + _NUM + r'W')\n_DT_RE = re.compile(\n    r'P(?:' + _NUM + r'D)?'\n    r'(?:T(?=[0-9])(?:' + _NUM + r'H)?(?:' + _NUM + r'M)?(?:' + _NUM + r'S)?)?'\n)\n_INT_RE = re.compile(r'[0-9]+')\n\n\ndef parse_duration(text: str) -> float:\n    if not isinstance(text, str):\n        raise ValueError(\"duration must be a string\")\n\n    m = _WEEK_RE.fullmatch(text)\n    if m:\n        parts = [(m.group(1), 604800)]\n    else:\n        m = _DT_RE.fullmatch(text)\n        if not m:\n            raise ValueError(f\"invalid ISO 8601 duration: {text!r}\")\n        parts = []\n        for i, unit in zip(range(1, 5), (86400, 3600, 60, 1)):\n            val = m.group(i)\n            if val is not None:\n                parts.append((val, unit))\n        if not parts:\n            raise ValueError(f\"invalid ISO 8601 duration: {text!r}\")\n\n    for idx, (val, _) in enumerate(parts):\n        if idx < len(parts) - 1 and not _INT_RE.fullmatch(val):\n            raise ValueError(\"only the last component may have a fraction\")\n\n    total = 0.0\n    for val, unit in parts:\n        total += float(val.replace(',', '.')) * unit\n    return float(total)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 380,
+        "output_tokens": 2164,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

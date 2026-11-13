@@ -1,0 +1,47 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Walk through the points, stop at the first player to reach 4 points (no-ad scoring means no two-point lead is needed), and otherwise map each player's count of 0-3 to 0, 15, 30, 40.",
+      "code": "def game_score(points: str) -> str:\n    names = {0: \"0\", 1: \"15\", 2: \"30\", 3: \"40\"}\n    a = 0\n    b = 0\n    for p in points:\n        if p == \"A\":\n            a += 1\n        elif p == \"B\":\n            b += 1\n        else:\n            continue\n        if a >= 4:\n            return \"Game A\"\n        if b >= 4:\n            return \"Game B\"\n    return f\"{names[a]}-{names[b]}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 301,
+        "output_tokens": 574,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

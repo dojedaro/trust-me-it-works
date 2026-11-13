@@ -1,0 +1,57 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Build a helper function to read a 4-digit group, then split the number into groups (ones, 만, 억), apply the rules, and concatenate.",
+      "code": "def read_number(n: int) -> str:\n    if n == 0:\n        return '영'\n    \n    digits_map = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    place_names = ['', '십', '백', '천']\n    \n    def read_four_digits(num):\n        \"\"\"Read a group of up to 4 digits (0-9999)\"\"\"\n        if num == 0:\n            return ''\n        \n        result = ''\n        # Process from highest to lowest place value within the group\n        # positions: 0=ones, 1=tens, 2=hundreds, 3=thousands\n        for pos in range(3, -1, -1):\n            digit = (num // (10 ** pos)) % 10\n            if digit == 0:\n                continue\n            \n            # Don't read '1' before 천, 백, 십\n            if digit == 1 and pos > 0:\n                result += place_names[pos]\n            else:\n                result += digits_map[digit] + place_names[pos]\n        \n        return result\n    \n    # Split into groups of 4 digits from right to left\n    ones_group = n % 10000\n    man_group = (n // 10000) % 10000\n    eok_group = (n // 100000000) % 10000\n    \n    result = ''\n    \n    # Process 억 (hundred millions)\n    if eok_group > 0:\n        result += read_four_digits(eok_group) + '억'\n    \n    # Process 만 (ten thousands)\n    if man_group > 0:\n        if man_group == 1:\n            result += '만'\n        else:\n            result += read_four_digits(man_group) + '만'\n    \n    # Process ones group\n    if ones_group > 0:\n        result += read_four_digits(ones_group)\n    \n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "6/6 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 6,
+          "total": 6,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 315,
+        "output_tokens": 757,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

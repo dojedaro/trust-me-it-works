@@ -1,0 +1,47 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the amount string as a Decimal, apply rounding using ROUND_HALF_UP for the currency's decimal places, format with appropriate grouping and decimal places, and handle negative values correctly.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef format_amount(amount: str, currency: str) -> str:\n    # Define decimal places for each currency\n    currency_decimals = {\n        'KRW': 0,\n        'JPY': 0,\n        'USD': 2,\n        'EUR': 2,\n        'BHD': 3,\n        'KWD': 3,\n    }\n    \n    # Check if currency is known\n    if currency not in currency_decimals:\n        raise ValueError(f\"Unknown currency: {currency}\")\n    \n    decimals = currency_decimals[currency]\n    \n    # Parse the amount as Decimal for precise arithmetic\n    value = Decimal(amount)\n    \n    # Round to the appropriate number of decimal places (halves away from zero)\n    quantize_str = '0.' + '0' * decimals if decimals > 0 else '0'\n    rounded = value.quantize(Decimal(quantize_str), rounding=ROUND_HALF_UP)\n    \n    # Check if rounded value is zero (to avoid negative zero)\n    if rounded == 0:\n        rounded = Decimal(0)\n    \n    # Handle sign\n    is_negative = rounded < 0\n    abs_rounded = abs(rounded)\n    \n    # Format the number\n    if decimals == 0:\n        # No decimal places\n        integer_part = str(int(abs_rounded))\n    else:\n        # Convert to string and split into integer and decimal parts\n        parts = str(abs_rounded).split('.')\n        integer_part = parts[0]\n        decimal_part = parts[1] if len(parts) > 1 else '0' * decimals\n        # Pad decimal part to required length\n        decimal_part = decimal_part.ljust(decimals, '0')\n    \n    # Add comma grouping to integer part\n    integer_with_commas = ''\n    for i, digit in enumerate(reversed(integer_part)):\n        if i > 0 and i % 3 == 0:\n            integer_with_commas = ',' + integer_with_commas\n        integer_with_commas = digit + integer_with_commas\n    \n    # Construct the final result\n    if decimals == 0:\n        formatted_number = integer_with_commas\n    else:\n        formatted_number = integer_with_commas + '.' + decimal_part\n    \n    # Add sign if negative\n    if is_negative:\n        formatted_number = '-' + formatted_number\n    \n    return f\"{currency} {formatted_number}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 292,
+        "output_tokens": 685,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

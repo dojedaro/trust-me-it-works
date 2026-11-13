@@ -1,0 +1,71 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Break down the number into groups of 4 digits (ones, 만, 억), handle each group according to Sino-Korean rules, and join them with appropriate unit markers.",
+      "code": "def read_number(n: int) -> str:\n    if n == 0:\n        return '영'\n    \n    # Digit names\n    digits = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    \n    # Place values within a group of 4\n    places = ['', '십', '백', '천']\n    \n    def read_group(num):\n        \"\"\"Read a group of 4 digits (0-9999)\"\"\"\n        if num == 0:\n            return ''\n        \n        result = ''\n        for i in range(4):\n            digit = (num // (10 ** i)) % 10\n            if digit != 0:\n                # Add digit name, then place value (except for ones place)\n                if i == 0:  # ones place\n                    result = digits[digit] + result\n                else:\n                    result = digits[digit] + places[i] + result\n        \n        return result\n    \n    # Split into groups: ones (0-9999), 만 (10000-99999999), 억 (100000000+)\n    ones = n % 10000\n    mans = (n // 10000) % 10000\n    eoks = (n // 100000000) % 10000\n    \n    result = ''\n    \n    # Eok group (억)\n    if eoks > 0:\n        result += read_group(eoks) + '억'\n    \n    # Man group (만)\n    if mans > 0:\n        if mans == 1:\n            result += '만'\n        else:\n            result += read_group(mans) + '만'\n    \n    # Ones group\n    if ones > 0:\n        result += read_group(ones)\n    \n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 10, 'edge_cases': 10, 'spec_compliance': 10}. Weakest criterion: correctness. Problem: none",
+      "checker_details": {
+        "scores": {
+          "correctness": 10,
+          "edge_cases": 10,
+          "spec_compliance": 10
+        },
+        "weakest": "none"
+      },
+      "ground_truth": {
+        "passed": 2,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_empty_groups_disappear",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_man_alone_has_no_il",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_silent_one_inside_groups",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_small_numbers",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 315,
+        "output_tokens": 498,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 851,
+        "output_tokens": 468,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

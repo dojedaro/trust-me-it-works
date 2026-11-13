@@ -1,0 +1,47 @@
+{
+  "task_id": "merge_intervals",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Filter out empty intervals, sort the remaining copies by start, then sweep and merge any interval whose start is <= the current end (touching included).",
+      "code": "def merge_intervals(intervals: list) -> list[tuple[int, int]]:\n    valid = []\n    for item in intervals:\n        start, end = item[0], item[1]\n        if end > start:\n            valid.append((start, end))\n    valid.sort()\n    result = []\n    for start, end in valid:\n        if result and start <= result[-1][1]:\n            prev_start, prev_end = result[-1]\n            if end > prev_end:\n                result[-1] = (prev_start, end)\n        else:\n            result.append((start, end))\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 369,
+        "output_tokens": 233,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

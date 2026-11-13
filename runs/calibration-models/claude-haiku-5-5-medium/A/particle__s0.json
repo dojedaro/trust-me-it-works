@@ -1,0 +1,47 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Find the final syllable (the Hangul character or the Sino-Korean reading of the trailing digits), check its batchim, and pick the matching half of the particle pair.",
+      "code": "import re\n\n\n_DIGIT_READING = {1: '일', 2: '이', 3: '삼', 4: '사', 5: '오',\n                  6: '육', 7: '칠', 8: '팔', 9: '구'}\n_SMALL_UNIT = {1: '십', 2: '백', 3: '천'}\n_BIG_UNIT = {1: '만', 2: '억', 3: '조'}\n\n\ndef _last_syllable_of_number(digits: str) -> str:\n    value = int(digits)\n    if value == 0:\n        return '영'\n    s = str(value)\n    # position of lowest nonzero digit (0 = ones place)\n    p = 0\n    while s[-1 - p] == '0':\n        p += 1\n    d = int(s[-1 - p])\n    if p == 0:\n        return _DIGIT_READING[d]\n    if p % 4 == 0:\n        return _BIG_UNIT.get(p // 4, '조')\n    return _SMALL_UNIT[p % 4]\n\n\ndef _has_batchim(syllable: str) -> bool:\n    return (ord(syllable) - 0xAC00) % 28 != 0\n\n\ndef _has_rieul(syllable: str) -> bool:\n    return (ord(syllable) - 0xAC00) % 28 == 8\n\n\ndef attach_particle(word: str, particle: str) -> str:\n    m = re.search(r'\\d+$', word)\n    if m:\n        last = _last_syllable_of_number(m.group())\n    else:\n        last = word[-1]\n\n    before, after = particle.split('/')\n\n    if particle == '으로/로':\n        use_before = _has_batchim(last) and not _has_rieul(last)\n    else:\n        use_before = _has_batchim(last)\n\n    return word + (before if use_before else after)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 373,
+        "output_tokens": 3405,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

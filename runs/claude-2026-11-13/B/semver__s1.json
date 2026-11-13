@@ -1,0 +1,54 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse both versions into their core components (major.minor.patch) and pre-release identifiers, then compare them according to Semantic Versioning 2.0.0 rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse_version(v: str) -> tuple:\n        # Remove build metadata (everything after +)\n        v = v.split('+')[0]\n        \n        # Split into core version and pre-release\n        if '-' in v:\n            core, prerelease = v.split('-', 1)\n            prerelease_ids = prerelease.split('.')\n        else:\n            core = v\n            prerelease_ids = None\n        \n        # Parse core version (MAJOR.MINOR.PATCH)\n        parts = core.split('.')\n        major = int(parts[0])\n        minor = int(parts[1]) if len(parts) > 1 else 0\n        patch = int(parts[2]) if len(parts) > 2 else 0\n        \n        return (major, minor, patch, prerelease_ids)\n    \n    def compare_prerelease(pre_a, pre_b) -> int:\n        # If both have no pre-release, they're equal (in terms of pre-release)\n        if pre_a is None and pre_b is None:\n            return 0\n        # Version without pre-release has higher precedence\n        if pre_a is None:\n            return 1\n        if pre_b is None:\n            return -1\n        \n        # Both have pre-releases, compare identifiers\n        for i in range(max(len(pre_a), len(pre_b))):\n            if i >= len(pre_a):\n                # pre_a has fewer identifiers, so it has lower precedence\n                return -1\n            if i >= len(pre_b):\n                # pre_b has fewer identifiers, so pre_a has higher precedence\n                return 1\n            \n            id_a = pre_a[i]\n            id_b = pre_b[i]\n            \n            # Check if identifiers are numeric\n            is_numeric_a = id_a.isdigit()\n            is_numeric_b = id_b.isdigit()\n            \n            # Numeric identifiers are compared numerically\n            if is_numeric_a and is_numeric_b:\n                num_a = int(id_a)\n                num_b = int(id_b)\n                if num_a < num_b:\n                    return -1\n                elif num_a > num_b:\n                    return 1\n            # Numeric identifier has lower precedence than non-numeric\n            elif is_numeric_a:\n                return -1\n            elif is_numeric_b:\n                return 1\n            # Both are non-numeric, compare lexically (ASCII order)\n            else:\n                if id_a < id_b:\n                    return -1\n                elif id_a > id_b:\n                    return 1\n        \n        return 0\n    \n    major_a, minor_a, patch_a, pre_a = parse_version(a)\n    major_b, minor_b, patch_b, pre_b = parse_version(b)\n    \n    # Compare core version\n    if major_a != major_b:\n        return -1 if major_a < major_b else 1\n    if minor_a != minor_b:\n        return -1 if minor_a < minor_b else 1\n    if patch_a != patch_b:\n        return -1 if patch_a < patch_b else 1\n    \n    # Core versions are equal, compare pre-release\n    return compare_prerelease(pre_a, pre_b)\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 8, 'spec_compliance': 9}. Weakest criterion: edge_cases. Problem: edge_cases",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 8,
+          "spec_compliance": 9
+        },
+        "weakest": "edge_cases"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 334,
+        "output_tokens": 913,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1284,
+        "output_tokens": 590,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

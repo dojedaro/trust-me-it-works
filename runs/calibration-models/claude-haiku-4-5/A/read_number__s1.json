@@ -1,0 +1,47 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Break down the number into groups of 4 digits (ones, 만, 억), handle each group recursively, and apply the special rules for when coefficients of 1 are omitted and when all-zero groups are skipped.",
+      "code": "def read_number(n: int) -> str:\n    if n == 0:\n        return '영'\n    \n    digits = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    \n    def read_group(num):\n        \"\"\"Read a number 0-9999 without the group suffix\"\"\"\n        if num == 0:\n            return ''\n        \n        result = ''\n        \n        # 천 (thousands) - omit coefficient 1\n        thousands = num // 1000\n        if thousands > 0:\n            if thousands > 1:\n                result += digits[thousands]\n            result += '천'\n        \n        # 백 (hundreds) - omit coefficient 1\n        hundreds = (num % 1000) // 100\n        if hundreds > 0:\n            if hundreds > 1:\n                result += digits[hundreds]\n            result += '백'\n        \n        # 십 (tens) - omit coefficient 1\n        tens = (num % 100) // 10\n        if tens > 0:\n            if tens > 1:\n                result += digits[tens]\n            result += '십'\n        \n        # 일 (ones) - always include digit\n        ones = num % 10\n        if ones > 0:\n            result += digits[ones]\n        \n        return result\n    \n    # Split into groups: ones, 만 (10^4), 억 (10^8)\n    ones_group = n % 10000\n    man_group = (n // 10000) % 10000\n    eok_group = (n // 100000000) % 10000\n    \n    result = ''\n    \n    # 억 (hundred millions) - always keep its number\n    if eok_group > 0:\n        result += read_group(eok_group) + '억'\n    \n    # 만 (ten thousands) - if exactly 1, just read as 만\n    if man_group > 0:\n        if man_group == 1:\n            result += '만'\n        else:\n            result += read_group(man_group) + '만'\n    \n    # ones group\n    result += read_group(ones_group)\n    \n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 315,
+        "output_tokens": 1187,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

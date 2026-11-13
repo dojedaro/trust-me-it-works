@@ -1,0 +1,52 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the ISO 8601 duration string by splitting on 'P' and 'T', validating the format, and converting each component to seconds.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    # Split into date and time parts\n    if 'T' in text:\n        date_part, time_part = text.split('T', 1)\n        if not time_part:\n            raise ValueError(\"'T' must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = \"\"\n    \n    total_seconds = 0.0\n    \n    # Parse date part (weeks or days)\n    weeks = 0\n    days = 0\n    \n    if date_part:\n        if 'W' in date_part:\n            if 'D' in date_part:\n                raise ValueError(\"Cannot have both weeks and days\")\n            # Extract weeks\n            if date_part.count('W') != 1:\n                raise ValueError(\"Invalid date format\")\n            parts = date_part.split('W')\n            if parts[1] != '':\n                raise ValueError(\"Invalid date format\")\n            try:\n                weeks = int(parts[0])\n            except ValueError:\n                raise ValueError(\"Invalid week value\")\n        elif 'D' in date_part:\n            if date_part.count('D') != 1:\n                raise ValueError(\"Invalid date format\")\n            parts = date_part.split('D')\n            if parts[1] != '':\n                raise ValueError(\"Invalid date format\")\n            try:\n                days = int(parts[0])\n            except ValueError:\n                raise ValueError(\"Invalid day value\")\n        else:\n            if date_part:\n                raise ValueError(\"Invalid date format\")\n    \n    total_seconds += weeks * 7 * 86400\n    total_seconds += days * 86400\n    \n    # Parse time part (hours, minutes, seconds)\n    if time_part:\n        remaining = time_part\n        \n        # Parse hours\n        if 'H' in remaining:\n            parts = remaining.split('H', 1)\n            try:\n                total_seconds += int(parts[0]) * 3600\n            except ValueError:\n                raise ValueError(\"Invalid hour value\")\n            remaining = parts[1]\n        \n        # Parse minutes\n        if 'M' in remaining:\n            parts = remaining.split('M', 1)\n            try:\n                total_seconds += int(parts[0]) * 60\n            except ValueError:\n                raise ValueError(\"Invalid minute value\")\n            remaining = parts[1]\n        \n        # Parse seconds\n        if 'S' in remaining:\n            parts = remaining.split('S', 1)\n            if parts[1] != '':\n                raise ValueError(\"Invalid time format\")\n            # Handle both '.' and ',' as decimal separator\n            sec_str = parts[0].replace(',', '.')\n            try:\n                total_seconds += float(sec_str)\n            except ValueError:\n                raise ValueError(\"Invalid second value\")\n            remaining = \"\"\n        \n        # Check for invalid characters or components\n        if remaining:\n            raise ValueError(\"Invalid time format\")\n    \n    # Check that at least one component was present\n    if total_seconds == 0.0 and weeks == 0 and days == 0:\n        if not date_part and not time_part:\n            raise ValueError(\"At least one component must be present\")\n    \n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "ValueError: Invalid minute value"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 880,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

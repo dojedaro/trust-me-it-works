@@ -1,0 +1,57 @@
+{
+  "task_id": "merge_intervals",
+  "room": "spec",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Sort intervals by start position (filtering out empty ones), then iterate through and merge overlapping/touching intervals by tracking the current merged interval's end.",
+      "code": "def merge_intervals(intervals: list) -> list[tuple[int, int]]:\n    # Filter out empty intervals and convert to tuples\n    valid_intervals = [(start, end) for start, end in intervals if end > start]\n    \n    # Sort by start position\n    valid_intervals.sort()\n    \n    if not valid_intervals:\n        return []\n    \n    # Merge overlapping/touching intervals\n    merged = []\n    current_start, current_end = valid_intervals[0]\n    \n    for start, end in valid_intervals[1:]:\n        # If current interval overlaps or touches the next one, merge them\n        if start <= current_end:\n            current_end = max(current_end, end)\n        else:\n            # No overlap, save current and start a new one\n            merged.append((current_start, current_end))\n            current_start, current_end = start, end\n    \n    # Don't forget to add the last interval\n    merged.append((current_start, current_end))\n    \n    return merged\n",
+      "verdict": "FINAL",
+      "feedback": "5/5 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 5,
+          "total": 5,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 278,
+        "output_tokens": 291,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

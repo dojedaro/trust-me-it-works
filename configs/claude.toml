@@ -10,7 +10,7 @@ api_key_env = "ANTHROPIC_API_KEY"
 [roles.maker]          # writes the code
 provider = "anthropic"
 # Calibration on the 12 novel tasks: Claude Haiku 5.5 solved 100% first try at medium effort (92% at low),
-# leaving checkers nothing to catch. Haiku 4.5 (no thinking) solved 72%, close to gpt-oss-20b's 73%.
+# leaving checkers nothing to catch. Haiku 4.5 (no thinking) solved 67% (24 of 36 runs).
 model = "claude-haiku-4-5"
 
 [roles.checker]        # checks the code: a different, larger model

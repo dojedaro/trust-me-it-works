@@ -1,0 +1,47 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Determine the final sound of `word` (from its last Hangul syllable's batchim, or from the Sino-Korean reading of its trailing digits), then pick the particle form accordingly.",
+      "code": "def _digit_run_final(run):\n    # Batchim index in Hangul jongseong table: 0 none, 1 ㄱ, 4 ㄴ, 8 ㄹ, 16 ㅁ, 17 ㅂ, 21 ㅇ\n    n = int(run)\n    if n == 0:\n        return 21  # 영 ends in ㅇ\n    p = 0\n    for ch in reversed(run):\n        if ch != '0':\n            break\n        p += 1\n    # p = position (from the right) of the lowest nonzero digit\n    if p == 0:\n        digit = run[-1]\n        return {'0': 21, '1': 8, '2': 0, '3': 16, '4': 0,\n                '5': 0, '6': 1, '7': 8, '8': 8, '9': 0}[digit]\n    if p % 4 != 0:\n        # 십 (ㅂ), 백 (ㄱ), 천 (ㄴ)\n        return {1: 17, 2: 1, 3: 4}[p % 4]\n    g = p // 4\n    # 만 (ㄴ), 억 (ㄱ), 조 (none), 경 (ㅇ)\n    return {1: 4, 2: 1, 3: 0, 4: 21}.get(g, 0)\n\n\ndef attach_particle(word: str, particle: str) -> str:\n    # Find trailing digit run\n    end = len(word)\n    start = end\n    while start > 0 and '0' <= word[start - 1] <= '9':\n        start -= 1\n    if start < end:\n        idx = _digit_run_final(word[start:end])\n    else:\n        code = ord(word[-1]) - 0xAC00\n        idx = code % 28 if 0 <= code < 11172 else 0\n\n    has_batchim = idx != 0\n    is_rieul = idx == 8\n\n    if particle == '으로/로':\n        chosen = '으로' if (has_batchim and not is_rieul) else '로'\n    else:\n        consonant_form, vowel_form = particle.split('/')\n        chosen = consonant_form if has_batchim else vowel_form\n    return word + chosen\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 373,
+        "output_tokens": 4985,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

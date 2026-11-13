@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Measure each character's column width with `unicodedata`, return the text unchanged if it fits, otherwise append characters to a prefix until the next base character would exceed `width - 1` columns, then add \"…\".",
+      "code": "import unicodedata\n\n\ndef _char_width(ch: str) -> int:\n    cat = unicodedata.category(ch)\n    if cat in (\"Mn\", \"Me\", \"Cf\"):\n        return 0\n    if unicodedata.east_asian_width(ch) in (\"W\", \"F\"):\n        return 2\n    return 1\n\n\ndef fit(text: str, width: int) -> str:\n    widths = [_char_width(ch) for ch in text]\n    if sum(widths) <= width:\n        return text\n\n    budget = width - 1  # reserve one column for the ellipsis\n    out = []\n    cur = 0\n    for ch, w in zip(text, widths):\n        # Zero-width characters attach to the preceding accepted base\n        # character; once a base character is rejected we stop, so\n        # trailing zero-width characters are cut together with their base.\n        if w > 0 and cur + w > budget:\n            break\n        out.append(ch)\n        cur += w\n    return \"\".join(out) + \"…\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 425,
+        "output_tokens": 921,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

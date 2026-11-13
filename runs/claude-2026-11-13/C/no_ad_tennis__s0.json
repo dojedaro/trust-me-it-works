@@ -1,0 +1,54 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll implement the tennis scoring logic by tracking points for both players, converting raw points to tennis scores (0, 15, 30, 40), and handling the no-ad deuce rule where at 40-40, the next point wins.",
+      "code": "def game_score(points: str) -> str:\n    a_points = 0\n    b_points = 0\n    \n    for point in points:\n        # Check if game is already won\n        if a_points >= 4 and a_points > b_points:\n            return \"Game A\"\n        if b_points >= 4 and b_points > a_points:\n            return \"Game B\"\n        \n        # Award point to winner\n        if point == 'A':\n            a_points += 1\n        else:\n            b_points += 1\n    \n    # Check final game state\n    if a_points >= 4 and a_points > b_points:\n        return \"Game A\"\n    if b_points >= 4 and b_points > a_points:\n        return \"Game B\"\n    \n    # Convert points to tennis score\n    score_map = {0: '0', 1: '15', 2: '30', 3: '40'}\n    \n    # Handle deuce scenarios (both at 40 or beyond)\n    if a_points >= 3 and b_points >= 3:\n        if a_points == b_points:\n            return \"40-40\"\n        # At deuce, no-ad scoring: next point wins\n        # This shouldn't happen as we return Game A/B above\n    \n    a_score = score_map.get(a_points, '40')\n    b_score = score_map.get(b_points, '40')\n    \n    return f\"{a_score}-{b_score}\"\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 9, 'spec_compliance': 9}. Weakest criterion: correctness. Problem: Redundant advantage-style conditions and misleading dead-code comments; behavior is correct for no-ad scoring",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 9,
+          "spec_compliance": 9
+        },
+        "weakest": "Redundant advantage-style conditions and misleading dead-code comments; behavior is correct for no-ad scoring"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 251,
+        "output_tokens": 443,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 844,
+        "output_tokens": 621,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

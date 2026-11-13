@@ -1,0 +1,47 @@
+{
+  "task_id": "display_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Iterate over each character, classifying it via unicodedata.east_asian_width and unicodedata.category, summing 0, 1, or 2 columns accordingly.",
+      "code": "import unicodedata\n\n\ndef display_width(text: str) -> int:\n    total = 0\n    for ch in text:\n        category = unicodedata.category(ch)\n        if category in ('Mn', 'Me', 'Cf'):\n            continue\n        if unicodedata.east_asian_width(ch) in ('W', 'F'):\n            total += 2\n        else:\n            total += 1\n    return total\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 320,
+        "output_tokens": 191,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

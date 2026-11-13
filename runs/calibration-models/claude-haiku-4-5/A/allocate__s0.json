@@ -1,0 +1,52 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the allocation algorithm by calculating floor shares, determining remainders, distributing leftover cents to parts with largest fractional remainders (with ties going to earlier parts), and handling negative totals by negating the result.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if all(w == 0 for w in weights):\n        raise ValueError(\"Every weight is 0\")\n    \n    is_negative = total < 0\n    total = abs(total)\n    \n    n = len(weights)\n    \n    if total == 0:\n        return [0] * n\n    \n    # Calculate exact share for each part\n    weight_sum = sum(weights)\n    exact_shares = [total * w / weight_sum if weight_sum > 0 else 0 for w in weights]\n    \n    # Start with floor of each share\n    parts = [int(share) for share in exact_shares]\n    \n    # Calculate remainders\n    remainder = total - sum(parts)\n    \n    # Get fractional parts with their indices\n    fractional_parts = [(exact_shares[i] - int(exact_shares[i]), i) for i in range(n)]\n    \n    # Sort by fractional part (descending), then by index (ascending) for tie-breaking\n    fractional_parts.sort(key=lambda x: (-x[0], x[1]))\n    \n    # Distribute the remaining cents to parts with largest fractional remainders\n    for i in range(remainder):\n        idx = fractional_parts[i][1]\n        parts[idx] += 1\n    \n    # Handle negative total\n    if is_negative:\n        parts = [-p for p in parts]\n    \n    return parts\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 420,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

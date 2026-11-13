@@ -1,0 +1,54 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, calculate the target year and month by adding n months, handle day-of-month logic (last day rule and month length), and format back to the required string format.",
+      "code": "from datetime import date\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    year, month, day_of_month = map(int, day.split('-'))\n    \n    # Calculate new month and year\n    new_month = month + n\n    new_year = year\n    \n    # Normalize month and year\n    while new_month > 12:\n        new_month -= 12\n        new_year += 1\n    \n    while new_month < 1:\n        new_month += 12\n        new_year -= 1\n    \n    # Get the last day of the original month\n    if month == 12:\n        last_day_original = 31\n    else:\n        # Find last day of current month\n        if month in [1, 3, 5, 7, 8, 10, 12]:\n            last_day_original = 31\n        elif month in [4, 6, 9, 11]:\n            last_day_original = 30\n        else:  # February\n            if (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0):\n                last_day_original = 29\n            else:\n                last_day_original = 28\n    \n    # Check if original day was the last day of its month\n    is_last_day = (day_of_month == last_day_original)\n    \n    # Get the last day of the target month\n    if new_month in [1, 3, 5, 7, 8, 10, 12]:\n        last_day_target = 31\n    elif new_month in [4, 6, 9, 11]:\n        last_day_target = 30\n    else:  # February\n        if (new_year % 4 == 0 and new_year % 100 != 0) or (new_year % 400 == 0):\n            last_day_target = 29\n        else:\n            last_day_target = 28\n    \n    # Determine the day of the target month\n    if is_last_day:\n        new_day = last_day_target\n    else:\n        new_day = min(day_of_month, last_day_target)\n    \n    # Format and return the result\n    return f\"{new_year:04d}-{new_month:02d}-{new_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "Scores: {'correctness': 9, 'edge_cases': 8, 'spec_compliance': 9}. Weakest criterion: edge_cases. Problem: Month normalization uses O(n/12) while loops, which is slow for huge n; there is also no handling of results outside years 1-9999.",
+      "checker_details": {
+        "scores": {
+          "correctness": 9,
+          "edge_cases": 8,
+          "spec_compliance": 9
+        },
+        "weakest": "Month normalization uses O(n/12) while loops, which is slow for huge n; there is also no handling of results outside years 1-9999."
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 256,
+        "output_tokens": 646,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1056,
+        "output_tokens": 496,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

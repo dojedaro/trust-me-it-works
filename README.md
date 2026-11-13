@@ -10,9 +10,29 @@ This project measures how often that happens, and which kinds of checker actuall
 Every iteration of every run is checked against **hidden tests the models never see**, so we always
 know whether the checker was right.
 
-> **Status:** harness, sandbox and 24 tasks are done and tested; the first calibration run is below.
-> The full experiment (6 variants × 24 tasks × 3 samples) is running. Every number in this README
-> comes from saved run data in `runs/`.
+> **Status:** first full results below (12 novel tasks × 2 samples × 6 variants, Claude Haiku 4.5 maker,
+> Claude Sonnet 5.5 checker, $3.82 total). Every number comes from saved traces in `runs/`.
+
+## Results
+
+| Variant | Final correct | Checker approved wrong code | False alarms (rejected correct code) |
+|---|---|---|---|
+| A. Single pass | 58% (14/24) | 10 of 24 | 0 |
+| B. Self-check | 71% (17/24) | **4 of 17 (24%)** | 15 |
+| C. Cross-check (Sonnet scores) | **96% (23/24)** | 1 of 20 (5%) | 20 |
+| D. Devil's advocate (Sonnet writes tests) | 92% (22/24) | 1 of 23 (4%) | 8 |
+| E. Oracle (hidden-test failures shown) | 92% (22/24) | 0 of 22 | 0 |
+| F. Devil's advocate + disputes | 92% (22/24) | 2 of 24 (8%) | 9 |
+
+- **Self-checking approves wrong code 1 time in 4**; a different checker cuts that to about 1 in 20.
+- **The checker's quality decides everything:** only 2.6% of Sonnet 5.5's tests were wrong (19 of 726),
+  against 31% for gpt-oss-120b in the pilot.
+- **The maker never pushed back:** in variant F it saw 117 failing tests and disputed none, though 23
+  of the tests in that variant were themselves wrong. Disputes added cost and changed nothing.
+- **Picky reviewers still helped:** cross-checking rejected correct code 20 times, but revisions broke
+  working code only once.
+- With 24 runs per variant the 95% intervals are wide (C: 80–99%, D/E/F: 74–98%), so C vs. D/E/F is
+  not a real difference; A and B vs. the rest is.
 
 ## The experiment
 
@@ -43,8 +63,12 @@ Other metrics, all computed from saved traces:
 **Loop rule under test:** when the maker answers feedback with identical code, the loop stops instead
 of asking the checker the same question again (in the pilot, 8 of 38 revisions were unchanged).
 
-Models are open-weight models served on Groq's free tier (see [`configs/free.toml`](configs/free.toml)),
-so the whole study can be reproduced at no cost.
+Models: [`configs/claude.toml`](configs/claude.toml) (used for the results above) or the $0
+[`configs/free.toml`](configs/free.toml) (Groq free tier; its ~200k tokens/day limit makes a full run take days).
+
+**Choosing the maker.** First-try pass rate on the 12 novel tasks: gpt-oss-20b 72% (42/58), Claude Haiku 4.5
+67% (24/36), Claude Haiku 5.5 92% at low effort and 100% at medium. Haiku 5.5 left checkers nothing to catch,
+so Haiku 4.5 writes the code.
 
 ## The Trap Room
 
@@ -62,8 +86,8 @@ Single attempts by the maker (gpt-oss-20b), 5 per task:
 
 | Tier | First-try pass rate |
 |---|---|
-| Classic | **95%** (10 of 12 tasks solved every time) |
-| Novel | **73%** (2 tasks at 0%, 4 between 40% and 80%) |
+| Classic | **95%** (53 of 56 runs) |
+| Novel | **72%** (42 of 58 runs) |
 
 The pilot's maker solved every classic task on the first try, so the classic tier alone couldn't show
 whether a checker helps. The novel tier is where checkers have something to catch. The two 0% tasks

@@ -1,0 +1,47 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-5-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Compute each part's floor share of abs(total) using integer arithmetic, then hand the leftover cents to the largest remainders (ties to earlier parts), and negate if total is negative.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    sum_w = sum(weights)\n    if sum_w == 0:\n        raise ValueError(\"all weights are zero\")\n    a = abs(total)\n    base = [a * w // sum_w for w in weights]\n    rems = [a * w % sum_w for w in weights]\n    leftover = a - sum(base)\n    order = sorted(range(len(weights)), key=lambda i: (-rems[i], i))\n    for i in order[:leftover]:\n        base[i] += 1\n    if total < 0:\n        base = [-p for p in base]\n    return base\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 355,
+        "output_tokens": 660,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

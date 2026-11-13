@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version string into components (major.minor.patch, pre-release identifiers, and build metadata), then compare them according to Semantic Versioning 2.0.0 rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def parse_version(version: str):\n        # Split by '+' to remove build metadata\n        version_without_build = version.split('+')[0]\n        \n        # Split by '-' to separate core version and pre-release\n        if '-' in version_without_build:\n            core, prerelease = version_without_build.split('-', 1)\n            prerelease_parts = prerelease.split('.')\n        else:\n            core = version_without_build\n            prerelease_parts = None\n        \n        # Parse core version (MAJOR.MINOR.PATCH)\n        major, minor, patch = map(int, core.split('.'))\n        \n        return (major, minor, patch), prerelease_parts\n    \n    def parse_prerelease_identifier(identifier: str):\n        # Return (is_numeric, value) where numeric identifiers sort by int value,\n        # non-numeric by string value\n        if identifier.isdigit():\n            return (0, int(identifier))  # 0 means numeric, sorts lower than non-numeric\n        else:\n            return (1, identifier)  # 1 means non-numeric\n    \n    core_a, prerelease_a = parse_version(a)\n    core_b, prerelease_b = parse_version(b)\n    \n    # Compare core versions (MAJOR.MINOR.PATCH)\n    if core_a != core_b:\n        return -1 if core_a < core_b else 1\n    \n    # Core versions are equal, now compare pre-release\n    # A version without pre-release has higher precedence than one with pre-release\n    if prerelease_a is None and prerelease_b is None:\n        return 0\n    if prerelease_a is None:\n        return 1  # a has no pre-release, so a > b\n    if prerelease_b is None:\n        return -1  # b has no pre-release, so a < b\n    \n    # Both have pre-release identifiers, compare them\n    for i in range(max(len(prerelease_a), len(prerelease_b))):\n        if i >= len(prerelease_a):\n            # a has fewer identifiers, so a < b (fewer identifiers is lower precedence)\n            return -1\n        if i >= len(prerelease_b):\n            # b has fewer identifiers, so a > b\n            return 1\n        \n        id_a = parse_prerelease_identifier(prerelease_a[i])\n        id_b = parse_prerelease_identifier(prerelease_b[i])\n        \n        if id_a != id_b:\n            return -1 if id_a < id_b else 1\n    \n    return 0\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 334,
+        "output_tokens": 741,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

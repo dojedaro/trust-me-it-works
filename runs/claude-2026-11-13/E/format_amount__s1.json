@@ -1,0 +1,57 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "E",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "oracle",
+  "checker_model": null,
+  "max_iters": 5,
+  "sample": 1,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "I'll implement the format_amount function by parsing the amount, rounding it using the correct number of decimal places for each currency with \"halves away from zero\" rounding, then formatting it with comma grouping and the proper sign/decimal representation.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef format_amount(amount: str, currency: str) -> str:\n    # Define decimal places for each currency\n    currency_decimals = {\n        'KRW': 0,\n        'JPY': 0,\n        'USD': 2,\n        'EUR': 2,\n        'BHD': 3,\n        'KWD': 3,\n    }\n    \n    # Validate currency\n    if currency not in currency_decimals:\n        raise ValueError(f\"Unknown currency: {currency}\")\n    \n    decimals = currency_decimals[currency]\n    \n    # Parse amount as Decimal for precise arithmetic\n    decimal_amount = Decimal(amount)\n    \n    # Round using ROUND_HALF_UP (halves away from zero)\n    # Create quantizer with appropriate number of decimal places\n    if decimals == 0:\n        quantizer = Decimal('1')\n    else:\n        quantizer = Decimal(10) ** -decimals\n    \n    rounded = decimal_amount.quantize(quantizer, rounding=ROUND_HALF_UP)\n    \n    # Check if result rounds to zero - if so, ensure it's not negative\n    if rounded == 0:\n        rounded = Decimal('0')\n    \n    # Determine sign\n    is_negative = rounded < 0\n    abs_rounded = abs(rounded)\n    \n    # Convert to string and split into integer and decimal parts\n    rounded_str = str(abs_rounded)\n    \n    if '.' in rounded_str:\n        int_part, dec_part = rounded_str.split('.')\n    else:\n        int_part = rounded_str\n        dec_part = ''\n    \n    # Pad decimal part to required length\n    dec_part = dec_part.ljust(decimals, '0')\n    \n    # Group integer part in threes with commas\n    int_part_reversed = int_part[::-1]\n    grouped = ','.join(\n        int_part_reversed[i:i+3] for i in range(0, len(int_part_reversed), 3)\n    )\n    grouped = grouped[::-1]\n    \n    # Build result\n    if decimals == 0:\n        formatted_amount = grouped\n    else:\n        formatted_amount = f\"{grouped}.{dec_part}\"\n    \n    # Add sign\n    if is_negative:\n        formatted_amount = f\"-{formatted_amount}\"\n    \n    return f\"{currency} {formatted_amount}\"\n",
+      "verdict": "FINAL",
+      "feedback": "6/6 tests passed.",
+      "checker_details": {
+        "report": {
+          "passed": 6,
+          "total": 6,
+          "all_passed": true,
+          "timed_out": false,
+          "crashed": false,
+          "collection_error": null,
+          "failures": []
+        }
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 292,
+        "output_tokens": 672,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

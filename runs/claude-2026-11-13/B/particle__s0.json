@@ -1,0 +1,251 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "B",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-haiku-4-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the function by checking if the last character is a Hangul syllable or digit, determining the batchim status, and selecting the appropriate particle form.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"Attach the correct form of a Korean particle to a word.\"\"\"\n    \n    last_char = word[-1]\n    has_batchim = False\n    \n    # Check if last character is a Hangul syllable\n    if 'AC00' <= hex(ord(last_char))[2:].upper() <= 'D7A3':\n        # Hangul syllable\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        has_batchim = final_index != 0\n        \n        # Special case for \"으로/로\"\n        if particle == \"으로/로\":\n            if final_index == 8:  # ㄹ batchim\n                return word + \"로\"\n    else:\n        # Digit\n        digit_str = \"\"\n        i = len(word) - 1\n        while i >= 0 and word[i].isdigit():\n            digit_str = word[i] + digit_str\n            i -= 1\n        \n        # Korean pronunciation of numbers (Sino-Korean)\n        # Map last digit/number to how it's pronounced\n        korean_numbers = {\n            '0': ('공', False),  # no batchim for standalone 0\n            '1': ('일', False),\n            '2': ('이', False),\n            '3': ('삼', False),\n            '4': ('사', False),\n            '5': ('오', False),\n            '6': ('육', True),\n            '7': ('칠', True),\n            '8': ('팔', True),\n            '9': ('구', False),\n            '10': ('십', True),\n            '20': ('이십', True),\n            '30': ('삼십', True),\n            '40': ('사십', True),\n            '50': ('오십', True),\n            '60': ('육십', True),\n            '70': ('칠십', True),\n            '80': ('팔십', True),\n            '90': ('구십', True),\n            '100': ('백', True),\n            '1000': ('천', True),\n        }\n        \n        if digit_str in korean_numbers:\n            _, has_batchim = korean_numbers[digit_str]\n        else:\n            # For longer numbers, check last syllable\n            last_digit = digit_str[-1]\n            if last_digit in korean_numbers:\n                _, has_batchim = korean_numbers[last_digit]\n    \n    # Select appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 2, 'spec_compliance': 4}. Weakest criterion: edge_cases. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 2,
+          "spec_compliance": 4
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_round_numbers_are_read_as_a_whole",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 299,
+        "output_tokens": 1542,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1061,
+        "output_tokens": 509,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Fix the digit pronunciation logic - the current mapping is incomplete and incorrect for multi-digit numbers; I need to properly handle all digit combinations by reading them as complete Sino-Korean numbers.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"Attach the correct form of a Korean particle to a word.\"\"\"\n    \n    last_char = word[-1]\n    has_batchim = False\n    \n    # Check if last character is a Hangul syllable\n    if 'AC00' <= hex(ord(last_char))[2:].upper() <= 'D7A3':\n        # Hangul syllable\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        has_batchim = final_index != 0\n        \n        # Special case for \"으로/로\"\n        if particle == \"으로/로\":\n            if final_index == 8:  # ㄹ batchim\n                return word + \"로\"\n    else:\n        # Digit - extract all trailing digits\n        digit_str = \"\"\n        i = len(word) - 1\n        while i >= 0 and word[i].isdigit():\n            digit_str = word[i] + digit_str\n            i -= 1\n        \n        # Determine batchim based on how the number is pronounced\n        # For Sino-Korean numbers, check the final syllable pronunciation\n        has_batchim = _number_has_batchim(digit_str)\n    \n    # Select appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n\n\ndef _number_has_batchim(digit_str: str) -> bool:\n    \"\"\"Determine if a digit string ends with a batchim when read as Sino-Korean.\"\"\"\n    \n    # Map Sino-Korean number words to whether they have batchim\n    # Based on standard Sino-Korean pronunciation\n    syllable_batchim = {\n        '0': False,  # 공\n        '1': False,  # 일 (ends in ㄹ, but special rule applies)\n        '2': False,  # 이\n        '3': False,  # 삼 (ends in ㅁ)\n        '4': False,  # 사\n        '5': False,  # 오\n        '6': True,   # 육 (ends in ㄱ)\n        '7': True,   # 칠 (ends in ㄹ)\n        '8': True,   # 팔 (ends in ㄹ)\n        '9': False,  # 구\n    }\n    \n    # For multi-digit numbers, we need to consider the last complete \"word\"\n    # Process from right to left: ones, tens, hundreds, thousands, etc.\n    \n    if len(digit_str) == 1:\n        return syllable_batchim[digit_str]\n    \n    # Get the last digit\n    last_digit = digit_str[-1]\n    \n    # If last digit is 0, the last word is \"십/백/천/만\" etc., which have batchim\n    if last_digit == '0':\n        return True\n    \n    # Otherwise, last syllable is determined by the last digit\n    return syllable_batchim[last_digit]\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 2, 'spec_compliance': 4}. Weakest criterion: edge_cases. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 2,
+          "spec_compliance": 4
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1051,
+        "output_tokens": 844,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1182,
+        "output_tokens": 569,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 2,
+      "plan": "Fix the `_number_has_batchim` function to correctly identify which Sino-Korean numbers have batchim (1, 3, 6, 7, 8), and handle the special \"으로/로\" rule for ㄹ-ending numbers.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"Attach the correct form of a Korean particle to a word.\"\"\"\n    \n    last_char = word[-1]\n    has_batchim = False\n    \n    # Check if last character is a Hangul syllable\n    if 'AC00' <= hex(ord(last_char))[2:].upper() <= 'D7A3':\n        # Hangul syllable\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        has_batchim = final_index != 0\n        \n        # Special case for \"으로/로\"\n        if particle == \"으로/로\":\n            if final_index == 8:  # ㄹ batchim\n                return word + \"로\"\n    else:\n        # Digit - extract all trailing digits\n        digit_str = \"\"\n        i = len(word) - 1\n        while i >= 0 and word[i].isdigit():\n            digit_str = word[i] + digit_str\n            i -= 1\n        \n        # Determine batchim based on how the number is pronounced\n        has_batchim, has_rieul = _number_has_batchim(digit_str)\n        \n        # Special case for \"으로/로\" with ㄹ batchim\n        if particle == \"으로/로\" and has_rieul:\n            return word + \"로\"\n    \n    # Select appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n\n\ndef _number_has_batchim(digit_str: str) -> tuple:\n    \"\"\"Determine if a digit string ends with a batchim when read as Sino-Korean.\n    \n    Returns: (has_batchim, has_rieul_batchim)\n    \"\"\"\n    \n    # Map Sino-Korean number words to their batchim status\n    # Numbers with batchim: 1(일-ㄹ), 3(삼-ㅁ), 6(육-ㄱ), 7(칠-ㄹ), 8(팔-ㄹ)\n    has_batchim_digits = {'1', '3', '6', '7', '8'}\n    rieul_batchim_digits = {'1', '7', '8'}  # ㄹ batchim\n    \n    if len(digit_str) == 1:\n        last_digit = digit_str\n        has_batch = last_digit in has_batchim_digits\n        has_rieul = last_digit in rieul_batchim_digits\n        return has_batch, has_rieul\n    \n    # Get the last digit\n    last_digit = digit_str[-1]\n    \n    # If last digit is 0, the last word is \"십/백/천/만\" etc.\n    # 십(ㅂ), 백(ㄱ), 천(ㄴ), 만(ㄴ) - all have batchim, none with ㄹ\n    if last_digit == '0':\n        return True, False\n    \n    # Otherwise, last syllable is determined by the last digit\n    has_batch = last_digit in has_batchim_digits\n    has_rieul = last_digit in rieul_batchim_digits\n    return has_batch, has_rieul\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 5, 'edge_cases': 4, 'spec_compliance': 6}. Weakest criterion: edge_cases. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 5,
+          "edge_cases": 4,
+          "spec_compliance": 6
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1172,
+        "output_tokens": 1284,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1268,
+        "output_tokens": 776,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 3,
+      "plan": "I need to debug the correctness issues by testing the logic against known cases. The main issue is likely in the Hangul range check and the digit handling logic for Sino-Korean numbers.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"Attach the correct form of a Korean particle to a word.\"\"\"\n    \n    last_char = word[-1]\n    has_batchim = False\n    has_rieul = False\n    \n    # Check if last character is a Hangul syllable\n    if ord('가') <= ord(last_char) <= ord('힣'):\n        # Hangul syllable - calculate if it has a batchim\n        code = ord(last_char) - ord('가')\n        final_index = code % 28\n        has_batchim = final_index != 0\n        has_rieul = final_index == 8  # ㄹ is the 8th final consonant\n    else:\n        # Digit - extract all trailing digits and determine pronunciation\n        digit_str = \"\"\n        i = len(word) - 1\n        while i >= 0 and word[i].isdigit():\n            digit_str = word[i] + digit_str\n            i -= 1\n        \n        has_batchim, has_rieul = _number_has_batchim(digit_str)\n    \n    # Special case for \"으로/로\" with ㄹ batchim\n    if particle == \"으로/로\":\n        if has_rieul:\n            return word + \"로\"\n        elif has_batchim:\n            return word + \"으로\"\n        else:\n            return word + \"로\"\n    \n    # Select appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n\n\ndef _number_has_batchim(digit_str: str) -> tuple:\n    \"\"\"Determine if a digit string ends with a batchim when read as Sino-Korean.\n    \n    Returns: (has_batchim, has_rieul_batchim)\n    \"\"\"\n    \n    # Map Sino-Korean number words to their batchim status\n    # Numbers with batchim: 1(일-ㄹ), 3(삼-ㅁ), 6(육-ㄱ), 7(칠-ㄹ), 8(팔-ㄹ), 9(구-ㄱ)\n    has_batchim_map = {\n        '0': (True, False),   # 십, 백, 천, 만 - all have batchim (ㅂ, ㄱ, ㄴ, ㄴ)\n        '1': (True, True),    # 일 - ㄹ batchim\n        '2': (False, False),  # 이 - no batchim\n        '3': (True, False),   # 삼 - ㅁ batchim\n        '4': (False, False),  # 사 - no batchim\n        '5': (False, False),  # 오 - no batchim\n        '6': (True, False),   # 육 - ㄱ batchim\n        '7': (True, True),    # 칠 - ㄹ batchim\n        '8': (True, True),    # 팔 - ㄹ batchim\n        '9': (True, False),   # 구 - ㄱ batchim\n    }\n    \n    last_digit = digit_str[-1]\n    return has_batchim_map.get(last_digit, (False, False))\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 2, 'spec_compliance': 2}. Weakest criterion: edge_cases. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 2,
+          "spec_compliance": 2
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 6,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1258,
+        "output_tokens": 943,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1279,
+        "output_tokens": 522,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 4,
+      "plan": "Rewrite the digit handling logic to correctly determine the batchim of the complete number when read as Sino-Korean, accounting for place values (ones, tens, hundreds, thousands, etc.).",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"Attach the correct form of a Korean particle to a word.\"\"\"\n    \n    last_char = word[-1]\n    has_batchim = False\n    has_rieul = False\n    \n    # Check if last character is a Hangul syllable\n    if ord('가') <= ord(last_char) <= ord('힣'):\n        # Hangul syllable - calculate if it has a batchim\n        code = ord(last_char) - ord('가')\n        final_index = code % 28\n        has_batchim = final_index != 0\n        has_rieul = final_index == 8  # ㄹ is the 8th final consonant\n    else:\n        # Digit - extract all trailing digits and determine pronunciation\n        digit_str = \"\"\n        i = len(word) - 1\n        while i >= 0 and word[i].isdigit():\n            digit_str = word[i] + digit_str\n            i -= 1\n        \n        has_batchim, has_rieul = _number_has_batchim(digit_str)\n    \n    # Special case for \"으로/로\" with ㄹ batchim\n    if particle == \"으로/로\":\n        if has_rieul:\n            return word + \"로\"\n        elif has_batchim:\n            return word + \"으로\"\n        else:\n            return word + \"로\"\n    \n    # Select appropriate particle form\n    forms = particle.split('/')\n    if has_batchim:\n        return word + forms[0]\n    else:\n        return word + forms[1]\n\n\ndef _number_has_batchim(digit_str: str) -> tuple:\n    \"\"\"Determine if a digit string ends with a batchim when read as Sino-Korean.\n    \n    Returns: (has_batchim, has_rieul_batchim)\n    \"\"\"\n    \n    # Map single digits to their batchim status\n    # When read alone as Sino-Korean\n    digit_batchim = {\n        '0': (False, False),  # 영/공 - no batchim\n        '1': (True, True),    # 일 - ㄹ batchim\n        '2': (False, False),  # 이 - no batchim\n        '3': (True, False),   # 삼 - ㅁ batchim\n        '4': (False, False),  # 사 - no batchim\n        '5': (False, False),  # 오 - no batchim\n        '6': (True, False),   # 육 - ㄱ batchim\n        '7': (True, True),    # 칠 - ㄹ batchim\n        '8': (True, True),    # 팔 - ㄹ batchim\n        '9': (True, False),   # 구 - ㄱ batchim\n    }\n    \n    # Determine the pronunciation based on place value\n    # For numbers: we read from left to right with place values\n    # The key is what the number ends with phonetically\n    \n    length = len(digit_str)\n    \n    if length == 1:\n        return digit_batchim[digit_str[0]]\n    \n    # For multi-digit numbers, check the last non-zero digit and place value\n    # For example: 10 = \"십\" (ㅂ), 15 = \"십오\" (no batchim), 20 = \"이십\" (ㅂ)\n    \n    # Find the actual last pronounced element\n    last_digit = digit_str[-1]\n    \n    if last_digit == '0':\n        # Ends in 0 - we say the previous digit + place value word\n        # 10, 20, 30... = \"십\", \"이십\", \"삼십\" etc. - all end with ㅂ batchim from 십\n        if length == 2:\n            # 10-90: all end in \"십\" which has ㅂ batchim\n            return (True, False)\n        elif length == 3:\n            # 100-900: all end in \"백\" which has ㄱ batchim\n            return (True, False)\n        elif length == 4:\n            # 1000-9000: all end in \"천\" which has ㄴ batchim\n            return (True, False)\n        else:\n            # 10000+: ends in \"만\" which has ㄴ batchim\n            return (True, False)\n    else:\n        # Ends in non-zero digit\n        has_batch, has_rieul = digit_batchim[last_digit]\n        return (has_batch, has_rieul)\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 4, 'edge_cases': 3, 'spec_compliance': 5}. Weakest criterion: edge_cases. Problem: correctness",
+      "checker_details": {
+        "scores": {
+          "correctness": 4,
+          "edge_cases": 3,
+          "spec_compliance": 5
+        },
+        "weakest": "correctness"
+      },
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1269,
+        "output_tokens": 1506,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1588,
+        "output_tokens": 558,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": false,
+  "error": null
+}

@@ -1,0 +1,52 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the ISO 8601 duration string by first validating the format, then extracting week/day components and optional time components, converting each to seconds.",
+      "code": "def parse_duration(text: str) -> float:\n    if not text or not text.startswith('P'):\n        raise ValueError(\"Invalid duration format\")\n    \n    text = text[1:]  # Remove 'P'\n    \n    total_seconds = 0.0\n    has_component = False\n    \n    # Check for 'T' separator\n    if 'T' in text:\n        date_part, time_part = text.split('T', 1)\n        if not time_part:\n            raise ValueError(\"T must be followed by at least one time component\")\n    else:\n        date_part = text\n        time_part = \"\"\n    \n    # Parse date part (weeks or days)\n    if date_part:\n        if date_part.endswith('W'):\n            # Week format: P<n>W\n            week_str = date_part[:-1]\n            if not week_str or 'D' in date_part:\n                raise ValueError(\"Invalid duration format\")\n            try:\n                weeks = float(week_str.replace(',', '.'))\n                if weeks < 0:\n                    raise ValueError(\"Negative durations not allowed\")\n                total_seconds += weeks * 7 * 86400\n                has_component = True\n            except ValueError:\n                raise ValueError(\"Invalid duration format\")\n        elif date_part.endswith('D'):\n            # Day format: P<n>D\n            day_str = date_part[:-1]\n            if not day_str or 'W' in date_part:\n                raise ValueError(\"Invalid duration format\")\n            try:\n                days = float(day_str.replace(',', '.'))\n                if days < 0:\n                    raise ValueError(\"Negative durations not allowed\")\n                total_seconds += days * 86400\n                has_component = True\n            except ValueError:\n                raise ValueError(\"Invalid duration format\")\n        elif date_part:\n            # Has date part but doesn't end with W or D\n            raise ValueError(\"Invalid duration format\")\n    \n    # Parse time part (hours, minutes, seconds)\n    if time_part:\n        i = 0\n        time_components = {'H': 3600, 'M': 60, 'S': 1}\n        last_component_found = False\n        \n        while i < len(time_part):\n            # Find the next component letter\n            j = i\n            while j < len(time_part) and time_part[j] not in 'HMS':\n                j += 1\n            \n            if j == len(time_part):\n                # No more components, but we have remaining text\n                if i < len(time_part):\n                    raise ValueError(\"Invalid duration format\")\n                break\n            \n            component_letter = time_part[j]\n            value_str = time_part[i:j]\n            \n            if not value_str:\n                raise ValueError(\"Invalid duration format\")\n            \n            try:\n                value = float(value_str.replace(',', '.'))\n                if value < 0:\n                    raise ValueError(\"Negative durations not allowed\")\n                total_seconds += value * time_components[component_letter]\n                has_component = True\n            except ValueError:\n                raise ValueError(\"Invalid duration format\")\n            \n            i = j + 1\n    \n    if not has_component:\n        raise ValueError(\"At least one component must be present\")\n    \n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 4,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 297,
+        "output_tokens": 857,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

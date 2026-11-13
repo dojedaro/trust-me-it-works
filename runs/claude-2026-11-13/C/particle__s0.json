@@ -1,0 +1,262 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "C",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "score",
+  "checker_model": "claude-sonnet-5-5",
+  "max_iters": 5,
+  "sample": 0,
+  "stop_when_unchanged": true,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Sino-Korean digit pronunciations\n    sino_korean = {\n        '0': '영',\n        '1': '일',\n        '2': '이',\n        '3': '삼',\n        '4': '사',\n        '5': '오',\n        '6': '육',\n        '7': '칠',\n        '8': '팔',\n        '9': '구'\n    }\n    \n    # Hangul syllable range\n    HANGUL_START = 0xAC00\n    HANGUL_END = 0xD7A3\n    \n    # Determine the last character to check\n    last_char = word[-1]\n    \n    # Check if it's a digit\n    if last_char.isdigit():\n        # Get the pronunciation of the digit\n        last_sound = sino_korean[last_char]\n        # Check the final consonant of the pronunciation\n        has_batchim = has_final_consonant(last_sound)\n    else:\n        # It's a Hangul syllable\n        has_batchim = has_final_consonant(last_char)\n    \n    # Get the final consonant if it exists (for special case with ㄹ)\n    final_consonant = None\n    if not last_char.isdigit():\n        final_consonant = get_final_consonant(last_char)\n    \n    # Split the particle\n    if '/' in particle:\n        with_batchim, without_batchim = particle.split('/')\n    else:\n        with_batchim = without_batchim = particle\n    \n    # Special case for \"으로/로\": ㄹ is treated as vowel\n    if particle == \"으로/로\" and final_consonant == 'ㄹ':\n        return word + without_batchim\n    \n    # Select particle based on batchim\n    selected_particle = with_batchim if has_batchim else without_batchim\n    \n    return word + selected_particle\n\n\ndef has_final_consonant(char: str) -> bool:\n    \"\"\"Check if a Hangul syllable or word has a final consonant (batchim).\"\"\"\n    if not char:\n        return False\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        # Hangul syllable decomposition\n        code = ord(last_char) - 0xAC00\n        final = code % 28  # 0 means no batchim, 1-27 means there is a batchim\n        return final != 0\n    \n    return False\n\n\ndef get_final_consonant(char: str) -> str:\n    \"\"\"Get the final consonant of a Hangul syllable, or None if no batchim.\"\"\"\n    if not char:\n        return None\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        \n        if final_index == 0:\n            return None\n        \n        # List of final consonants in order\n        finals = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']\n        \n        return finals[final_index - 1]\n    \n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 4, 'edge_cases': 2, 'spec_compliance': 3}. Weakest criterion: edge_cases. Problem: The ㄹ-batchim check is wrong: the finals list lacks compound jongseong so ㄹ never matches for Hangul (서울 -> 서울으로, and 많 wrongly gets 로), and digits 1 (일) and 8 (팔) never get the ㄹ rule, so '1'/'8' with 으로/로 gives 으로 instead of 로.",
+      "checker_details": {
+        "scores": {
+          "correctness": 4,
+          "edge_cases": 2,
+          "spec_compliance": 3
+        },
+        "weakest": "The ㄹ-batchim check is wrong: the finals list lacks compound jongseong so ㄹ never matches for Hangul (서울 -> 서울으로, and 많 wrongly gets 로), and digits 1 (일) and 8 (팔) never get the ㄹ rule, so '1'/'8' with 으로/로 gives 으로 instead of 로."
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_rieul_takes_ro",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 299,
+        "output_tokens": 1152,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1622,
+        "output_tokens": 1149,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 1,
+      "plan": "Fix the finals list to include all 27 possible final consonants (jongseong) in order, and apply the ㄹ special rule to both Hangul syllables and digit pronunciations that end in ㄹ.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Sino-Korean digit pronunciations\n    sino_korean = {\n        '0': '영',\n        '1': '일',\n        '2': '이',\n        '3': '삼',\n        '4': '사',\n        '5': '오',\n        '6': '육',\n        '7': '칠',\n        '8': '팔',\n        '9': '구'\n    }\n    \n    # Determine the last character to check\n    last_char = word[-1]\n    \n    # Check if it's a digit\n    if last_char.isdigit():\n        # Get the pronunciation of the digit\n        last_sound = sino_korean[last_char]\n        # Check the final consonant of the pronunciation\n        has_batchim = has_final_consonant(last_sound)\n        final_consonant = get_final_consonant(last_sound)\n    else:\n        # It's a Hangul syllable\n        has_batchim = has_final_consonant(last_char)\n        final_consonant = get_final_consonant(last_char)\n    \n    # Split the particle\n    if '/' in particle:\n        with_batchim, without_batchim = particle.split('/')\n    else:\n        with_batchim = without_batchim = particle\n    \n    # Special case for \"으로/로\": ㄹ is treated as vowel\n    if particle == \"으로/로\" and final_consonant == 'ㄹ':\n        return word + without_batchim\n    \n    # Select particle based on batchim\n    selected_particle = with_batchim if has_batchim else without_batchim\n    \n    return word + selected_particle\n\n\ndef has_final_consonant(char: str) -> bool:\n    \"\"\"Check if a Hangul syllable or word has a final consonant (batchim).\"\"\"\n    if not char:\n        return False\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        # Hangul syllable decomposition\n        code = ord(last_char) - 0xAC00\n        final = code % 28  # 0 means no batchim, 1-27 means there is a batchim\n        return final != 0\n    \n    return False\n\n\ndef get_final_consonant(char: str) -> str:\n    \"\"\"Get the final consonant of a Hangul syllable, or None if no batchim.\"\"\"\n    if not char:\n        return None\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        \n        if final_index == 0:\n            return None\n        \n        # List of all 27 jongseong (final consonants) in order\n        finals = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ', 'ㄱ', 'ㄱ', 'ㄱ', 'ㄹ', 'ㄹ', 'ㄹ', 'ㅎ']\n        \n        return finals[final_index - 1]\n    \n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 2, 'spec_compliance': 3}. Weakest criterion: edge_cases. Problem: The jongseong table is wrong, so ㄹ is never detected (e.g. '서울' + '으로/로' gives '서울으로', '1' gives '1으로'); also only the last digit is read, so numbers ending in 조 (e.g. 10^12) are wrong.",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 2,
+          "spec_compliance": 3
+        },
+        "weakest": "The jongseong table is wrong, so ㄹ is never detected (e.g. '서울' + '으로/로' gives '서울으로', '1' gives '1으로'); also only the last digit is read, so numbers ending in 조 (e.g. 10^12) are wrong."
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_rieul_takes_ro",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1497,
+        "output_tokens": 1080,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 1614,
+        "output_tokens": 1225,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 2,
+      "plan": "Fix the jongseong table to use the correct 19 final consonants (not 27), handle multi-digit numbers properly by reading the entire number in Korean, and ensure \"을/를\" and \"으로/로\" particles work correctly.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Sino-Korean digit pronunciations\n    sino_korean = {\n        '0': '영',\n        '1': '일',\n        '2': '이',\n        '3': '삼',\n        '4': '사',\n        '5': '오',\n        '6': '육',\n        '7': '칠',\n        '8': '팔',\n        '9': '구'\n    }\n    \n    # Determine the last character to check\n    last_char = word[-1]\n    \n    # Check if it's a digit\n    if last_char.isdigit():\n        # Read the entire number as Sino-Korean\n        last_sound = read_number(word, sino_korean)\n        has_batchim = has_final_consonant(last_sound)\n        final_consonant = get_final_consonant(last_sound)\n    else:\n        # It's a Hangul syllable\n        has_batchim = has_final_consonant(last_char)\n        final_consonant = get_final_consonant(last_char)\n    \n    # Split the particle\n    if '/' in particle:\n        with_batchim, without_batchim = particle.split('/')\n    else:\n        with_batchim = without_batchim = particle\n    \n    # Special case for \"으로/로\": ㄹ is treated as vowel\n    if particle == \"으로/로\" and final_consonant == 'ㄹ':\n        return word + without_batchim\n    \n    # Select particle based on batchim\n    selected_particle = with_batchim if has_batchim else without_batchim\n    \n    return word + selected_particle\n\n\ndef read_number(word: str, sino_korean: dict) -> str:\n    \"\"\"Read a number string as Sino-Korean.\"\"\"\n    # Extract only the digit part\n    number_str = ''\n    for char in word:\n        if char.isdigit():\n            number_str += char\n    \n    if not number_str:\n        return word\n    \n    # Special case: just read the last digit if it's a simple number\n    # But handle complex numbers with place values (10, 100, 1000, etc.)\n    result = ''\n    n = len(number_str)\n    \n    for i, digit in enumerate(number_str):\n        if digit == '0':\n            # Skip leading zeros, but handle in middle of number\n            if i == 0 and n == 1:\n                result += sino_korean[digit]\n            elif i > 0 and number_str[i-1] != '0':\n                result += sino_korean[digit]\n        else:\n            result += sino_korean[digit]\n            # Add place value\n            remaining_digits = n - i - 1\n            if remaining_digits == 12:\n                result += '조'\n            elif remaining_digits == 8:\n                result += '억'\n            elif remaining_digits == 4:\n                result += '만'\n            elif remaining_digits == 3:\n                result += '천'\n            elif remaining_digits == 2:\n                result += '백'\n            elif remaining_digits == 1:\n                result += '십'\n    \n    return result if result else sino_korean['0']\n\n\ndef has_final_consonant(char: str) -> bool:\n    \"\"\"Check if a Hangul syllable or word has a final consonant (batchim).\"\"\"\n    if not char:\n        return False\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        # Hangul syllable decomposition\n        code = ord(last_char) - 0xAC00\n        final = code % 28  # 0 means no batchim, 1-27 means there is a batchim\n        return final != 0\n    \n    return False\n\n\ndef get_final_consonant(char: str) -> str:\n    \"\"\"Get the final consonant of a Hangul syllable, or None if no batchim.\"\"\"\n    if not char:\n        return None\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        \n        if final_index == 0:\n            return None\n        \n        # List of all 19 jongseong (final consonants) in order\n        finals = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']\n        \n        return finals[final_index - 1]\n    \n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 3, 'edge_cases': 3, 'spec_compliance': 3}. Weakest criterion: correctness. Problem: The jongseong table is wrong (includes ㄸ/ㅃ/ㅉ, omits clusters), so ㄹ is not detected: 으로/로 gives 으로 after ㄹ words like 길 and digits 1 and 8",
+      "checker_details": {
+        "scores": {
+          "correctness": 3,
+          "edge_cases": 3,
+          "spec_compliance": 3
+        },
+        "weakest": "The jongseong table is wrong (includes ㄸ/ㅃ/ㅉ, omits clusters), so ㄹ is not detected: 으로/로 gives 으로 after ㄹ words like 길 and digits 1 and 8"
+      },
+      "ground_truth": {
+        "passed": 2,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_rieul_takes_ro",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_round_numbers_are_read_as_a_whole",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "IndexError: list index out of range"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1469,
+        "output_tokens": 1399,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 2000,
+        "output_tokens": 1279,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 3,
+      "plan": "Fix the jongseong table to use the correct 19 final consonants (removing double consonants that don't appear as finals, and including the correct consonant clusters).",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Sino-Korean digit pronunciations\n    sino_korean = {\n        '0': '영',\n        '1': '일',\n        '2': '이',\n        '3': '삼',\n        '4': '사',\n        '5': '오',\n        '6': '육',\n        '7': '칠',\n        '8': '팔',\n        '9': '구'\n    }\n    \n    # Determine the last character to check\n    last_char = word[-1]\n    \n    # Check if it's a digit\n    if last_char.isdigit():\n        # Read the entire number as Sino-Korean\n        last_sound = read_number(word, sino_korean)\n        has_batchim = has_final_consonant(last_sound)\n        final_consonant = get_final_consonant(last_sound)\n    else:\n        # It's a Hangul syllable\n        has_batchim = has_final_consonant(last_char)\n        final_consonant = get_final_consonant(last_char)\n    \n    # Split the particle\n    if '/' in particle:\n        with_batchim, without_batchim = particle.split('/')\n    else:\n        with_batchim = without_batchim = particle\n    \n    # Special case for \"으로/로\": ㄹ is treated as vowel\n    if particle == \"으로/로\" and final_consonant == 'ㄹ':\n        return word + without_batchim\n    \n    # Select particle based on batchim\n    selected_particle = with_batchim if has_batchim else without_batchim\n    \n    return word + selected_particle\n\n\ndef read_number(word: str, sino_korean: dict) -> str:\n    \"\"\"Read a number string as Sino-Korean.\"\"\"\n    # Extract only the digit part\n    number_str = ''\n    for char in word:\n        if char.isdigit():\n            number_str += char\n    \n    if not number_str:\n        return word\n    \n    # Special case: just read the last digit if it's a simple number\n    # But handle complex numbers with place values (10, 100, 1000, etc.)\n    result = ''\n    n = len(number_str)\n    \n    for i, digit in enumerate(number_str):\n        if digit == '0':\n            # Skip leading zeros, but handle in middle of number\n            if i == 0 and n == 1:\n                result += sino_korean[digit]\n            elif i > 0 and number_str[i-1] != '0':\n                result += sino_korean[digit]\n        else:\n            result += sino_korean[digit]\n            # Add place value\n            remaining_digits = n - i - 1\n            if remaining_digits == 12:\n                result += '조'\n            elif remaining_digits == 8:\n                result += '억'\n            elif remaining_digits == 4:\n                result += '만'\n            elif remaining_digits == 3:\n                result += '천'\n            elif remaining_digits == 2:\n                result += '백'\n            elif remaining_digits == 1:\n                result += '십'\n    \n    return result if result else sino_korean['0']\n\n\ndef has_final_consonant(char: str) -> bool:\n    \"\"\"Check if a Hangul syllable or word has a final consonant (batchim).\"\"\"\n    if not char:\n        return False\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        # Hangul syllable decomposition\n        code = ord(last_char) - 0xAC00\n        final = code % 28  # 0 means no batchim, 1-27 means there is a batchim\n        return final != 0\n    \n    return False\n\n\ndef get_final_consonant(char: str) -> str:\n    \"\"\"Get the final consonant of a Hangul syllable, or None if no batchim.\"\"\"\n    if not char:\n        return None\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        \n        if final_index == 0:\n            return None\n        \n        # List of all 19 jongseong (final consonants) in Korean\n        # These are: ㄱ, ㄲ, ㄴ, ㄷ, ㄹ, ㄹㄱ, ㄹㅁ, ㄹㅂ, ㄹㅅ, ㄹㅆ, ㄹㅇ, ㅁ, ㅂ, ㅄ, ㅅ, ㅆ, ㅇ, ㅈ, ㅊ, ㅋ, ㅌ, ㅍ, ㅎ\n        finals = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㄹㄱ', 'ㄹㅁ', 'ㄹㅂ', 'ㄹㅅ', 'ㄹㅆ', 'ㄹㅇ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']\n        \n        return finals[final_index - 1]\n    \n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 4, 'edge_cases': 2, 'spec_compliance': 3}. Weakest criterion: edge_cases. Problem: The jongseong table omits ㄳ, ㄵ, ㄶ so ㄹ is never detected correctly. '서울' and '8' with 으로/로 give 으로 instead of 로. Large numbers are also misread (e.g. 100000 reads as 일 instead of 십만).",
+      "checker_details": {
+        "scores": {
+          "correctness": 4,
+          "edge_cases": 2,
+          "spec_compliance": 3
+        },
+        "weakest": "The jongseong table omits ㄳ, ㄵ, ㄶ so ㄹ is never detected correctly. '서울' and '8' with 으로/로 give 으로 instead of 로. Large numbers are also misread (e.g. 100000 reads as 일 instead of 십만)."
+      },
+      "ground_truth": {
+        "passed": 4,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_rieul_takes_ro",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1780,
+        "output_tokens": 1585,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 2205,
+        "output_tokens": 1329,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    },
+    {
+      "index": 4,
+      "plan": "Fix the jongseong (final consonant) table to include all 19 Korean final consonants in the correct order, and fix the number reading logic to handle large numbers correctly.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Sino-Korean digit pronunciations\n    sino_korean = {\n        '0': '영',\n        '1': '일',\n        '2': '이',\n        '3': '삼',\n        '4': '사',\n        '5': '오',\n        '6': '육',\n        '7': '칠',\n        '8': '팔',\n        '9': '구'\n    }\n    \n    # Determine the last character to check\n    last_char = word[-1]\n    \n    # Check if it's a digit\n    if last_char.isdigit():\n        # Read the entire number as Sino-Korean\n        last_sound = read_number(word, sino_korean)\n        has_batchim = has_final_consonant(last_sound)\n        final_consonant = get_final_consonant(last_sound)\n    else:\n        # It's a Hangul syllable\n        has_batchim = has_final_consonant(last_char)\n        final_consonant = get_final_consonant(last_char)\n    \n    # Split the particle\n    if '/' in particle:\n        with_batchim, without_batchim = particle.split('/')\n    else:\n        with_batchim = without_batchim = particle\n    \n    # Special case for \"으로/로\": ㄹ is treated as vowel\n    if particle == \"으로/로\" and final_consonant == 'ㄹ':\n        return word + without_batchim\n    \n    # Select particle based on batchim\n    selected_particle = with_batchim if has_batchim else without_batchim\n    \n    return word + selected_particle\n\n\ndef read_number(word: str, sino_korean: dict) -> str:\n    \"\"\"Read a number string as Sino-Korean.\"\"\"\n    # Extract only the digit part\n    number_str = ''\n    for char in word:\n        if char.isdigit():\n            number_str += char\n    \n    if not number_str:\n        return word\n    \n    # Special case: 0 alone\n    if number_str == '0':\n        return sino_korean['0']\n    \n    # Remove leading zeros\n    number_str = number_str.lstrip('0') or '0'\n    \n    if number_str == '0':\n        return sino_korean['0']\n    \n    result = ''\n    n = len(number_str)\n    \n    for i, digit in enumerate(number_str):\n        if digit == '0':\n            # Skip zeros in the middle unless followed by more non-zero digits\n            continue\n        else:\n            result += sino_korean[digit]\n            # Add place value\n            remaining_digits = n - i - 1\n            if remaining_digits == 12:\n                result += '조'\n            elif remaining_digits == 8:\n                result += '억'\n            elif remaining_digits == 4:\n                result += '만'\n            elif remaining_digits == 3:\n                result += '천'\n            elif remaining_digits == 2:\n                result += '백'\n            elif remaining_digits == 1:\n                result += '십'\n    \n    return result if result else sino_korean['0']\n\n\ndef has_final_consonant(char: str) -> bool:\n    \"\"\"Check if a Hangul syllable or word has a final consonant (batchim).\"\"\"\n    if not char:\n        return False\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        # Hangul syllable decomposition\n        code = ord(last_char) - 0xAC00\n        final = code % 28  # 0 means no batchim, 1-27 means there is a batchim\n        return final != 0\n    \n    return False\n\n\ndef get_final_consonant(char: str) -> str:\n    \"\"\"Get the final consonant of a Hangul syllable, or None if no batchim.\"\"\"\n    if not char:\n        return None\n    \n    last_char = char[-1]\n    \n    # Check if it's a Hangul syllable\n    if '\\uAC00' <= last_char <= '\\uD7A3':\n        code = ord(last_char) - 0xAC00\n        final_index = code % 28\n        \n        if final_index == 0:\n            return None\n        \n        # List of all 19 jongseong (final consonants) in Korean\n        # Order: ㄱ, ㄲ, ㄳ, ㄴ, ㄵ, ㄶ, ㄷ, ㄹ, ㄺ, ㄻ, ㄼ, ㄽ, ㄾ, ㄿ, ㅀ, ㅁ, ㅂ, ㅄ, ㅅ, ㅆ, ㅇ, ㅈ, ㅉ, ㅊ, ㅋ, ㅌ, ㅍ, ㅎ\n        finals = ['ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']\n        \n        return finals[final_index - 1]\n    \n    return None\n",
+      "verdict": "ITERATING",
+      "feedback": "Scores: {'correctness': 5, 'edge_cases': 3, 'spec_compliance': 5}. Weakest criterion: edge_cases. Problem: Number reading omits 만/억/조 markers when that group's last digit is zero (e.g. 100000 -> '일' instead of '십만'), so particles are wrong for many large numbers",
+      "checker_details": {
+        "scores": {
+          "correctness": 5,
+          "edge_cases": 3,
+          "spec_compliance": 5
+        },
+        "weakest": "Number reading omits 만/억/조 markers when that group's last digit is zero (e.g. 100000 -> '일' instead of '십만'), so particles are wrong for many large numbers"
+      },
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 1999,
+        "output_tokens": 1611,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 1,
+        "input_tokens": 2230,
+        "output_tokens": 1412,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "CAP_REACHED",
+  "final_correct": true,
+  "error": null
+}

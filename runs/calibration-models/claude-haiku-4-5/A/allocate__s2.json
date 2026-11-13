@@ -1,0 +1,52 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "claude-haiku-4-5",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the allocation algorithm by first handling the zero-weight case, then computing floor shares and fractional remainders, distributing leftover cents to parts with largest remainders (with ties going to earlier parts), and finally applying negation if total is negative.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if all(w == 0 for w in weights):\n        raise ValueError(\"Every weight is 0\")\n    \n    # Work with absolute value\n    abs_total = abs(total)\n    \n    # Calculate total weight\n    total_weight = sum(weights)\n    \n    if total_weight == 0:\n        raise ValueError(\"Every weight is 0\")\n    \n    # Calculate exact shares and floor values\n    parts = []\n    remainders = []\n    leftover = abs_total\n    \n    for i, weight in enumerate(weights):\n        exact_share = (abs_total * weight) / total_weight\n        floor_share = int(exact_share)\n        fractional = exact_share - floor_share\n        \n        parts.append(floor_share)\n        remainders.append((fractional, i))  # (fractional remainder, original index)\n        leftover -= floor_share\n    \n    # Distribute leftover cents to parts with largest fractional remainders\n    # Sort by fractional remainder (descending), then by index (ascending) for ties\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n    \n    # Give one cent each to the top `leftover` parts\n    for j in range(leftover):\n        idx = remainders[j][1]\n        parts[idx] += 1\n    \n    # Apply negation if total was negative\n    if total < 0:\n        parts = [-p for p in parts]\n    \n    return parts\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 439,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}
