@@ -1,0 +1,60 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Write a parser that validates the format, extracts numeric components, ensures at most one decimal part appears in the last component, and sums the seconds.",
+      "code": "import re\n\ndef parse_duration(text: str) -> float:\n    \"\"\"\n    Convert an ISO 8601 duration string (weeks or days+time) into seconds.\n    \n    Acceptable forms:\n        * P<n>W                       # weeks only\n        * P<n>D[T<time components>]   # days with optional time part\n    where <time components> are optional H, M, S, but at least one must be present.\n    The last component written may contain a decimal fraction using \".\" or \",\".\n    Any other form, including years or months, raises ValueError.\n    \"\"\"\n    if not text or text[0] != 'P':\n        raise ValueError(\"Duration must start with 'P'\")\n    \n    # Strip the leading 'P'\n    tail = text[1:]\n    \n    # Patterns for the numeric part (allow optional decimal)\n    num = r'(\\d+(?:[.,]\\d+)?)'\n    \n    # Helper to parse a component if present\n    def _parse_component(t: str, letter: str):\n        if t.startswith(letter):\n            t = t[1:]\n            # match number\n            m = re.match(num, t)\n            if not m:\n                raise ValueError(f\"Expected number before '{letter}'\")\n            value = m.group(1)\n            rest = t[m.end():]\n            return float(value.replace(',', '.')), rest\n        return None, t\n    \n    total_seconds = 0.0\n    used = False\n    \n    # Weeks only: P<n>W\n    if tail.endswith('W') and re.fullmatch(r'\\d+[.,]?\\d*W', text):\n        weeks_part = tail[:-1]\n        weeks = float(weeks_part.replace(',', '.'))\n        total_seconds = weeks * 7 * 86400\n        used = True\n    else:\n        # Days\n        days, tail = _parse_component(tail, 'D')\n        if days is not None:\n            total_seconds += days * 86400\n            used = True\n        \n        # Optional time part\n        if tail.startswith('T'):\n            tail = tail[1:]\n            # At least one time component must follow\n            if not tail:\n                raise ValueError(\"T must be followed by at least one time component\")\n            \n            # Parse hours, minutes, seconds in order\n            for letter, multiplier in (('H', 3600), ('M', 60), ('S', 1)):\n                val, tail = _parse_component(tail, letter)\n                if val is not None:\n                    total_seconds += val * multiplier\n                    used = True\n            if tail:\n                # Any remaining characters are invalid\n                raise ValueError(f\"Invalid trailing characters: '{tail}'\")\n        else:\n            if tail:\n                # If there is trailing text other than 'T', it's invalid\n                raise ValueError(f\"Unexpected trailing text: '{tail}'\")\n    \n    if not used:\n        raise ValueError(\"No duration component found\")\n    \n    # Ensure that only the last component may contain a decimal\n    # Find all numeric parts in the string\n    parts = re.findall(r'\\d+[.,]?\\d*', text)\n    if parts:\n        # Replace the last numeric part with a marker\n        last = parts[-1]\n        # Count how many numeric parts contain a decimal\n        dec_count = sum(1 for p in parts if ('.' in p or ',' in p))\n        if dec_count > 1:\n            raise ValueError(\"Only the last component may be fractional\")\n    \n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 2,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_basic",
+            "message": "ValueError: Invalid trailing characters: '1H30M'"
+          },
+          {
+            "name": "test_fractions",
+            "message": "ValueError: Invalid trailing characters: '0.5S'"
+          },
+          {
+            "name": "test_minutes_are_not_months",
+            "message": "ValueError: Invalid trailing characters: '1M'"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 333,
+        "output_tokens": 900,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

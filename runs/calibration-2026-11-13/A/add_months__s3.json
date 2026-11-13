@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement add_months by parsing the date, computing target year/month, determining if original day is last day of month, and adjusting the day appropriately.",
+      "code": "import datetime\nimport calendar\n\ndef add_months(day: str, n: int) -> str:\n    # Parse input date\n    y, m, d = map(int, day.split('-'))\n    # Compute target month and year\n    total_month = m + n\n    target_year = y + (total_month - 1) // 12\n    target_month = ((total_month - 1) % 12) + 1\n\n    # Determine last day of original month\n    orig_last_day = calendar.monthrange(y, m)[1]\n    # Determine last day of target month\n    target_last_day = calendar.monthrange(target_year, target_month)[1]\n\n    # If original date is the last day of its month, keep that for target\n    if d == orig_last_day:\n        target_day = target_last_day\n    else:\n        target_day = min(d, target_last_day)\n\n    return f\"{target_year:04d}-{target_month:02d}-{target_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 303,
+        "output_tokens": 270,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

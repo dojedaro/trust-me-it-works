@@ -1,0 +1,47 @@
+{
+  "task_id": "leaderboard",
+  "room": "spec",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "create a new list sorted by score descending while preserving input order by using Python’s stable sorted.",
+      "code": "def leaderboard(players: list[dict]) -> list[dict]:\n    \"\"\"Return players sorted by score descending without modifying the input list.\"\"\"\n    return sorted(players, key=lambda p: p[\"score\"], reverse=True)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 252,
+        "output_tokens": 94,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

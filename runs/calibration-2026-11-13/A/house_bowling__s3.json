@@ -1,0 +1,47 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Iterate through rolls, compute score for each of the 10 frames, handling the house rule that the 10th frame has no bonus rolls and only uses existing rolls for its score.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    \"\"\"\n    Compute the score of a bowling game under a house rule that the 10th\n    frame never receives bonus rolls.\n    \n    Parameters\n    ----------\n    rolls : list[int]\n        List of pins knocked down in each roll of a complete game.\n    \n    Returns\n    -------\n    int\n        Total score for the game.\n    \"\"\"\n    score = 0\n    i = 0  # current roll index\n    for frame in range(1, 11):\n        # Frame 10 is handled specially\n        if frame == 10:\n            # If the first roll is a strike, only that roll counts\n            if rolls[i] == 10:\n                score += 10\n                # No bonus rolls are granted by the house rule\n            else:\n                # Two rolls are always present for frame 10\n                second = rolls[i + 1]\n                frame_sum = rolls[i] + second\n                if frame_sum == 10:  # spare in frame 10\n                    score += 10  # no extra roll to count as bonus\n                else:\n                    score += frame_sum\n            break\n        # Frames 1-9\n        first = rolls[i]\n        if first == 10:  # strike\n            # Score 10 plus next two rolls (if they exist)\n            bonus1 = rolls[i + 1] if i + 1 < len(rolls) else 0\n            bonus2 = rolls[i + 2] if i + 2 < len(rolls) else 0\n            score += 10 + bonus1 + bonus2\n            i += 1\n        else:\n            second = rolls[i + 1]\n            frame_sum = first + second\n            if frame_sum == 10:  # spare\n                bonus = rolls[i + 2] if i + 2 < len(rolls) else 0\n                score += 10 + bonus\n            else:\n                score += frame_sum\n            i += 2\n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 372,
+        "output_tokens": 525,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

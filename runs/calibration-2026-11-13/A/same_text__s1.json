@@ -1,0 +1,47 @@
+{
+  "task_id": "same_text",
+  "room": "text",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Normalize both strings to NFC form, casefold them, and compare equality",
+      "code": "import unicodedata\n\ndef same_text(a: str, b: str) -> bool:\n    \"\"\"\n    Return True if two strings are equal when ignoring case and\n    Unicode normalization differences. Accents themselves are\n    significant, e.g., 'e' != 'é'.\n    \"\"\"\n    # Normalize to NFC (composed form) and apply casefold for case insensitivity\n    norm_a = unicodedata.normalize('NFC', a).casefold()\n    norm_b = unicodedata.normalize('NFC', b).casefold()\n    return norm_a == norm_b\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 252,
+        "output_tokens": 249,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "split_bill",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert total to cents, compute base share and remainder, distribute extra cent to first remainder people, format shares as two‑decimal strings in descending order.",
+      "code": "def split_bill(total: str, n: int) -> list[str]:\n    # Convert the string amount to integer cents\n    dollars, cents = total.split('.')\n    total_cents = int(dollars) * 100 + int(cents)\n\n    # Base share for each person in cents\n    base = total_cents // n\n    # Number of people who get one cent more\n    remainder = total_cents % n\n\n    # Build the list of shares in cents\n    shares_cents = [base + 1 if i < remainder else base for i in range(n)]\n\n    # Convert to formatted string with two decimal places, larger shares first\n    shares = [f\"{c // 100}.{c % 100:02d}\" for c in sorted(shares_cents, reverse=True)]\n    return shares\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 260,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

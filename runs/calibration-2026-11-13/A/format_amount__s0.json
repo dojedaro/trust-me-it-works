@@ -1,0 +1,47 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement formatting with custom rounding away from zero and grouping.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP, getcontext\nfrom typing import Dict\n\ndef format_amount(amount: str, currency: str) -> str:\n    # Currency decimal places mapping\n    decimals_map: Dict[str, int] = {\n        'KRW': 0, 'JPY': 0,\n        'USD': 2, 'EUR': 2,\n        'BHD': 3, 'KWD': 3\n    }\n    if currency not in decimals_map:\n        raise ValueError(f\"Unknown currency: {currency}\")\n\n    # Ensure enough precision for operations\n    getcontext().prec = max(len(amount.replace('-', '').replace('.', '')) + 5, 28)\n\n    d = Decimal(amount)\n    sign = -1 if d < 0 else 1\n    abs_d = abs(d)\n\n    # Prepare quantization exponent\n    exp_str = '1' if decimals_map[currency] == 0 else f\"1.{''.ljust(decimals_map[currency], '0')}\"\n    exponent = Decimal(exp_str)\n\n    # Round halves away from zero: use ROUND_HALF_UP on absolute value\n    rounded_abs = abs_d.quantize(exponent, rounding=ROUND_HALF_UP)\n\n    # If rounded to zero, always positive\n    if rounded_abs == 0:\n        sign = 1\n\n    # Convert to string with required decimal places\n    rounded_str = f\"{rounded_abs:.{decimals_map[currency]}f}\"\n\n    # Insert commas in integer part\n    if '.' in rounded_str:\n        int_part, frac_part = rounded_str.split('.')\n    else:\n        int_part, frac_part = rounded_str, ''\n    int_part_with_commas = ''\n    while int_part:\n        int_part, last3 = int_part[:-3], int_part[-3:]\n        int_part_with_commas = (last3 + (',' + int_part_with_commas if int_part_with_commas else '')) \n    int_part_with_commas = int_part_with_commas or '0'\n    if decimals_map[currency] > 0:\n        formatted = f\"{int_part_with_commas}.{frac_part}\"\n    else:\n        formatted = int_part_with_commas\n\n    # Add sign if negative\n    if sign == -1:\n        formatted = '-' + formatted\n\n    return f\"{currency} {formatted}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 327,
+        "output_tokens": 843,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

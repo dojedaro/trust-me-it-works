@@ -10,8 +10,9 @@ This project measures how often that happens, and which kinds of checker actuall
 Every iteration of every run is checked against **hidden tests the models never see**, so we always
 know whether the checker was right.
 
-> **Status:** the harness, sandbox and the first 12 tasks are done and tested. Real model runs are next.
-> No results are reported yet; every number in this README will come from saved run data.
+> **Status:** harness, sandbox and 24 tasks are done and tested; the first calibration run is below.
+> The full experiment (6 variants × 24 tasks × 3 samples) is running. Every number in this README
+> comes from saved run data in `runs/`.
 
 ## The experiment
 
@@ -24,16 +25,52 @@ The same small model writes the code in every variant. Only the checker changes:
 | **C. Cross-check** | a different, larger model scores the code | Does a second opinion help? |
 | **D. Devil's advocate** | a different model writes tests to break the code, and they run | Can AI hunt bugs better than it can grade them? |
 | **E. Oracle** | hidden-test failures are shown to the maker | Upper bound with perfect feedback |
+| **F. Devil's advocate with disputes** | as D, but the maker may dispute a failing test and the checker rules on it | Do disputes cut false alarms, or let the maker argue away real bugs? |
 
 The key number is the **false FINAL rate**: how often a checker approved code that fails the hidden tests.
+Every rate is reported with a 95% Wilson interval over 3 samples per task, because a single run per
+task is noise: in the pilot, the same prompt to the same model at temperature 0 gave different results.
+
+Other metrics, all computed from saved traces:
+
+- **False alarms:** the checker rejected code that already passed every hidden test.
+- **Broke working code:** the first attempt was correct and the final one isn't.
+- **Wrong checker tests:** for test-writing checkers (D, F), each test is also run against our correct
+  reference solution; a test that fails it is itself wrong. In the pilot, **23 of 75 (31%)** of the
+  bug hunter's tests were wrong. Recorded for analysis, never shown to the models.
+- **Withdrawn correct tests (F):** disputes that talked the checker out of a test that was right.
+
+**Loop rule under test:** when the maker answers feedback with identical code, the loop stops instead
+of asking the checker the same question again (in the pilot, 8 of 38 revisions were unchanged).
 
 Models are open-weight models served on Groq's free tier (see [`configs/free.toml`](configs/free.toml)),
 so the whole study can be reproduced at no cost.
 
 ## The Trap Room
 
-Original tasks, written for this project so the models can't have memorized them. Each looks easy and
-hides one well-known trap:
+24 original tasks in 6 rooms, in two tiers:
+
+- **Classic (12):** each hides one well-known trap, such as bowling's 10th frame or the A-2-3-4-5 straight.
+- **Novel (12):** familiar problems with a changed rule or an easy-to-miss requirement, so the model's
+  prior points the wrong way. Examples: bowling with no 10th-frame bonus, no-ad tennis, adding months
+  with a sticky end of month, Korean particles after numbers (10을, 1000000000000를), ISO durations where
+  `PT1M` is a minute and `P1M` is invalid, and SemVer precedence.
+
+### Calibration: does the model fall for the traps?
+
+Single attempts by the maker (gpt-oss-20b), 5 per task:
+
+| Tier | First-try pass rate |
+|---|---|
+| Classic | **95%** (10 of 12 tasks solved every time) |
+| Novel | **73%** (2 tasks at 0%, 4 between 40% and 80%) |
+
+The pilot's maker solved every classic task on the first try, so the classic tier alone couldn't show
+whether a checker helps. The novel tier is where checkers have something to catch. The two 0% tasks
+were checked by hand to make sure they're fair: the spec states the rule, and the model misses it (for
+example it writes "서울으로" although the spec says ㄹ takes 로).
+
+Classic-tier traps:
 
 | Room | Tasks | Trap examples |
 |---|---|---|

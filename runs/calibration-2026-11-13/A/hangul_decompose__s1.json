@@ -1,0 +1,47 @@
+{
+  "task_id": "hangul_decompose",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Define the compatibility jamo arrays, compute initial, vowel, final indices for precomposed Hangul syllables, and replace each syllable with its decomposed jamo while leaving other characters unchanged.",
+      "code": "# solution.py\ndef decompose(text: str) -> str:\n    \"\"\"\n    Replace every precomposed Hangul syllable in `text` with its constituent\n    compatibility jamo (initial, vowel, final if present). All other\n    characters are copied unchanged.\n    \"\"\"\n    # Compatibility Jamo tables\n    INITIALS = [\n        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',\n        'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n\n    VOWELS = [\n        'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ',\n        'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'\n    ]\n\n    FINALS = [\n        '',   'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ',\n        'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ',\n        'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n\n    # Unicode range for precomposed Hangul syllables\n    FIRST_SYLLABLE = 0xAC00\n    LAST_SYLLABLE = 0xD7A3\n\n    result_parts = []\n\n    for ch in text:\n        code = ord(ch)\n        if FIRST_SYLLABLE <= code <= LAST_SYLLABLE:\n            # Compute indices\n            s = code - FIRST_SYLLABLE\n            init_idx = s // (21 * 28)\n            vow_idx = (s // 28) % 21\n            fin_idx = s % 28\n\n            result_parts.append(INITIALS[init_idx])\n            result_parts.append(VOWELS[vow_idx])\n            if fin_idx:  # non-zero means there is a final consonant\n                result_parts.append(FINALS[fin_idx])\n        else:\n            result_parts.append(ch)\n\n    return ''.join(result_parts)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 1019,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

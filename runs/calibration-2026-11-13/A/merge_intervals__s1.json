@@ -1,0 +1,47 @@
+{
+  "task_id": "merge_intervals",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement merge_intervals by filtering empty intervals, sorting by start, then merging overlapping or touching intervals.",
+      "code": "def merge_intervals(intervals: list) -> list[tuple[int, int]]:\n    \"\"\"\n    Return the union of a list of half-open integer intervals.\n\n    Parameters\n    ----------\n    intervals : list\n        Iterable of intervals, each represented as a pair (start, end) of integers.\n        Intervals may be lists or tuples and may be in any order.\n        Intervals where end <= start are considered empty and ignored.\n\n    Returns\n    -------\n    list[tuple[int, int]]\n        A list of sorted, non-overlapping, non-touching intervals that\n        represent the union of the input intervals.\n    \"\"\"\n    # Filter out empty intervals and convert to tuples\n    cleaned = [(int(start), int(end))\n               for start, end in intervals\n               if end > start]\n\n    if not cleaned:\n        return []\n\n    # Sort by start value\n    cleaned.sort(key=lambda x: x[0])\n\n    merged = [cleaned[0]]\n    for current in cleaned[1:]:\n        last_start, last_end = merged[-1]\n        cur_start, cur_end = current\n\n        # If the current interval starts before or at the end of the last interval,\n        # they overlap or touch. Merge them.\n        if cur_start <= last_end:\n            merged[-1] = (last_start, max(last_end, cur_end))\n        else:\n            merged.append((cur_start, cur_end))\n\n    return merged\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 324,
+        "output_tokens": 338,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

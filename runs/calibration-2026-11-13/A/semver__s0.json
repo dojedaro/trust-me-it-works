@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the two version strings, compare core parts numerically, then compare pre-release parts following the rules, ignoring build metadata, and return -1, 0, or 1 accordingly.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    def split_parts(v: str):\n        # ignore build metadata\n        v = v.split('+', 1)[0]\n        if '-' in v:\n            core, pre = v.split('-', 1)\n            pre_ids = pre.split('.')\n        else:\n            core = v\n            pre_ids = []\n        major, minor, patch = map(int, core.split('.'))\n        return (major, minor, patch, pre_ids)\n\n    def compare_identifiers(id1: str, id2: str) -> int:\n        is_num1 = id1.isdigit()\n        is_num2 = id2.isdigit()\n        if is_num1 and is_num2:\n            n1, n2 = int(id1), int(id2)\n            return (n1 > n2) - (n1 < n2)\n        if is_num1 and not is_num2:\n            return -1\n        if not is_num1 and is_num2:\n            return 1\n        return (id1 > id2) - (id1 < id2)\n\n    m1, mi1, p1, pre1 = split_parts(a)\n    m2, mi2, p2, pre2 = split_parts(b)\n\n    # compare core\n    for x, y in ((m1, m2), (mi1, mi2), (p1, p2)):\n        if x != y:\n            return (x > y) - (x < y)\n\n    # core equal, handle pre-release\n    if not pre1 and not pre2:\n        return 0\n    if not pre1:\n        return 1  # a has no pre-release, so higher\n    if not pre2:\n        return -1\n\n    # compare each identifier\n    for id1, id2 in zip(pre1, pre2):\n        cmp = compare_identifiers(id1, id2)\n        if cmp:\n            return cmp\n\n    # all compared equal, shorter list is lower\n    return (len(pre1) > len(pre2)) - (len(pre1) < len(pre2))\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 362,
+        "output_tokens": 523,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Compute the target year/month, adjust the day according to the billing rule, and return the new date string.",
+      "code": "import calendar\nfrom datetime import datetime\n\ndef add_months(day: str, n: int) -> str:\n    \"\"\"Move a date by n calendar months, respecting the billing rule.\"\"\"\n    # Parse the input date\n    y, m, d = map(int, day.split('-'))\n\n    # Determine if original date is the last day of its month\n    last_day_orig = calendar.monthrange(y, m)[1]\n    is_last_day = (d == last_day_orig)\n\n    # Compute target year and month\n    total_months = m + n - 1          # zero‑based month count\n    new_year = y + total_months // 12\n    new_month = (total_months % 12) + 1\n\n    # Last day of the target month\n    last_day_target = calendar.monthrange(new_year, new_month)[1]\n\n    # Decide the new day\n    if is_last_day:\n        new_day = last_day_target\n    else:\n        new_day = min(d, last_day_target)\n\n    # Format back to \"YYYY-MM-DD\"\n    return f\"{new_year:04d}-{new_month:02d}-{new_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 303,
+        "output_tokens": 407,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

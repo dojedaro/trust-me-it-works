@@ -1,0 +1,47 @@
+{
+  "task_id": "straight",
+  "room": "games",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert ranks to indices, check for straight including Ace-low, and return the highest rank or None.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the highest card rank of a straight or None if not a straight.\"\"\"\n    # Map ranks to numerical indices (0-12)\n    rank_order = \"23456789TJQKA\"\n    idx = {r: i for i, r in enumerate(rank_order)}\n\n    # If duplicates exist, cannot be a straight\n    if len(set(ranks)) != 5:\n        return None\n\n    # Special case: Ace-low straight A-2-3-4-5\n    if set(ranks) == {\"A\", \"2\", \"3\", \"4\", \"5\"}:\n        return \"5\"\n\n    # Convert ranks to numeric indices and sort\n    indices = sorted(idx[r] for r in ranks)\n\n    # Check for consecutive sequence\n    if indices[-1] - indices[0] == 4 and len(set(indices)) == 5:\n        # Highest card is the last in sorted indices\n        return rank_order[indices[-1]]\n    return None\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 267,
+        "output_tokens": 412,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

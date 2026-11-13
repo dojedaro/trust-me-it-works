@@ -1,0 +1,47 @@
+{
+  "task_id": "dedupe",
+  "room": "spec",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Iterate over the input list and add items to the result list only if no equal item has appeared before, using an auxiliary list to track seen items for equality comparison.",
+      "code": "def dedupe(items: list) -> list:\n    \"\"\"Return a new list with duplicates removed, keeping first occurrences and original order.\"\"\"\n    result = []\n    seen = []\n    for item in items:\n        for s in seen:\n            if item == s:\n                break\n        else:\n            seen.append(item)\n            result.append(item)\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 254,
+        "output_tokens": 199,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

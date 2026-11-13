@@ -1,0 +1,47 @@
+{
+  "task_id": "straight",
+  "room": "games",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Map each rank to an integer, check for 5 consecutive values or the special A-2-3-4-5 case, and return the highest rank character or None.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the rank of the highest card in a straight or None.\"\"\"\n    if len(ranks) != 5:\n        return None\n\n    # Map ranks to numeric values (Ace high = 14, Ace low = 1)\n    rank_values = {\"2\": 2, \"3\": 3, \"4\": 4, \"5\": 5,\n                   \"6\": 6, \"7\": 7, \"8\": 8, \"9\": 9,\n                   \"T\": 10, \"J\": 11, \"Q\": 12, \"K\": 13, \"A\": 14}\n    values = [rank_values[r] for r in ranks]\n\n    # Check for standard straight (Ace high)\n    vals_sorted = sorted(set(values))\n    if len(vals_sorted) == 5:\n        if vals_sorted[4] - vals_sorted[0] == 4:\n            return next(r for r in ranks if rank_values[r] == vals_sorted[4])\n\n    # Check for Ace-low straight (A,2,3,4,5)\n    if set(values) == {14, 2, 3, 4, 5}:\n        return \"5\"\n\n    return None\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 267,
+        "output_tokens": 345,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "dedupe",
+  "room": "spec",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement dedupe by iterating through items, keeping a list of seen items and appending only those not equal to any already seen.",
+      "code": "def dedupe(items: list) -> list:\n    \"\"\"\n    Return a new list containing the first occurrence of each element in `items`.\n    Two elements are considered duplicates if they compare equal with ==.\n    The original order is preserved.\n\n    Parameters\n    ----------\n    items : list\n        List of elements, which may be of any type (including unhashable ones).\n\n    Returns\n    -------\n    list\n        New list with duplicates removed, preserving order.\n    \"\"\"\n    seen = []\n    result = []\n\n    for item in items:\n        # Check if item equals any element already seen\n        is_duplicate = False\n        for s in seen:\n            if s == item:\n                is_duplicate = True\n                break\n        if not is_duplicate:\n            seen.append(item)\n            result.append(item)\n\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 254,
+        "output_tokens": 273,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

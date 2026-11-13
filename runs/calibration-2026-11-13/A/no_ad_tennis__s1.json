@@ -1,0 +1,47 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `game_score` that tracks points, applies no‑ad rule, and returns the current score or game result.",
+      "code": "def game_score(points: str) -> str:\n    # score values in order of points gained\n    score_order = [0, 15, 30, 40]\n    # mapping from numeric score to string representation\n    score_map = {0: \"0\", 15: \"15\", 30: \"30\", 40: \"40\"}\n\n    a_pts = 0\n    b_pts = 0\n    a_score = 0\n    b_score = 0\n\n    for p in points:\n        if p == 'A':\n            a_pts += 1\n        elif p == 'B':\n            b_pts += 1\n        else:\n            # ignore invalid characters\n            continue\n\n        # Determine if someone has won the game\n        if a_pts >= 4 or b_pts >= 4:\n            # Normal tennis scoring: need 2 points lead after at least 4 points\n            if abs(a_pts - b_pts) >= 2:\n                return \"Game A\" if a_pts > b_pts else \"Game B\"\n            # No‑ad rule: at 40‑40 (i.e. both at least 3 points) next point decides\n            if a_pts >= 3 and b_pts >= 3 and a_pts == b_pts:\n                continue  # still tied, wait for next point\n            if a_pts >= 3 and b_pts >= 3 and a_pts != b_pts:\n                return \"Game A\" if a_pts > b_pts else \"Game B\"\n\n        # Update score strings only up to 40\n        if a_pts <= 3:\n            a_score = score_order[a_pts]\n        else:\n            a_score = 40\n\n        if b_pts <= 3:\n            b_score = score_order[b_pts]\n        else:\n            b_score = 40\n\n    # No winner yet – return current score\n    return f\"{score_map[a_score]}-{score_map[b_score]}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 298,
+        "output_tokens": 451,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

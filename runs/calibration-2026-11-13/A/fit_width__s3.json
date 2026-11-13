@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Compute column width per character, group base characters with following zero-width marks, then find longest prefix that fits with ellipsis if needed.",
+      "code": "import unicodedata\n\ndef _char_width(ch: str) -> int:\n    \"\"\"Return the column width of a single Unicode character.\"\"\"\n    cat = unicodedata.category(ch)\n    if cat in (\"Mn\", \"Me\", \"Cf\"):      # combining or format characters\n        return 0\n    # East Asian Width: Wide or Fullwidth count as 2 columns\n    if unicodedata.east_asian_width(ch) in (\"W\", \"F\"):\n        return 2\n    return 1\n\ndef fit(text: str, width: int) -> str:\n    \"\"\"Return a string that fits in `width` terminal columns with an ellipsis if truncated.\"\"\"\n    # Full width of the original text\n    full_width = sum(_char_width(ch) for ch in text)\n    if full_width <= width:\n        return text\n\n    # Build groups: (start_index, group_width)\n    groups = []\n    group_start = 0\n    group_width = 0\n    for i, ch in enumerate(text):\n        cat = unicodedata.category(ch)\n        if cat in (\"Mn\", \"Me\", \"Cf\"):      # zero-width, attach to previous group\n            group_width += _char_width(ch)   # zero anyway\n            continue\n        # New base character starts a new group\n        if group_width > 0:\n            groups.append((group_start, group_width))\n        group_start = i\n        group_width = _char_width(ch)\n    if group_width > 0:\n        groups.append((group_start, group_width))\n\n    # Find longest prefix that allows an ellipsis (1 column)\n    cumulative = 0\n    cut_index = len(text)\n    for start, gwidth in groups:\n        if cumulative + gwidth + 1 > width:   # +1 for ellipsis\n            cut_index = start\n            break\n        cumulative += gwidth\n    else:\n        # All groups fit with ellipsis, but we already handled full fit above\n        cut_index = len(text)\n\n    # Construct result\n    result = text[:cut_index] + \"…\"\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 354,
+        "output_tokens": 932,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "merge_intervals",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Filter out empty intervals, sort by start, merge overlapping or touching intervals into a list of disjoint tuples.",
+      "code": "def merge_intervals(intervals: list) -> list[tuple[int, int]]:\n    \"\"\"\n    Return the union of half-open intervals in `intervals`.\n    Each interval is a pair (start, end) with start <= end.\n    Empty intervals (end <= start) are ignored.\n    The result is a sorted list of disjoint, non-touching intervals.\n    \"\"\"\n    # Convert all to tuples, filter out empty intervals, and sort by start\n    cleaned = sorted(\n        ((int(a), int(b)) for a, b in intervals if int(b) > int(a)),\n        key=lambda x: x[0]\n    )\n\n    merged = []\n    for start, end in cleaned:\n        if not merged:\n            merged.append([start, end])\n            continue\n\n        last_start, last_end = merged[-1]\n        # If intervals overlap or touch, merge them\n        if start <= last_end:\n            if end > last_end:\n                merged[-1][1] = end\n        else:\n            merged.append([start, end])\n\n    # Convert back to tuples\n    return [tuple(interval) for interval in merged]\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 324,
+        "output_tokens": 282,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

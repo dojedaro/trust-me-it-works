@@ -1,0 +1,47 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement a function that iterates through the rolls, counting frames and calculating scores with the house rule that the 10th frame does not grant extra rolls or bonuses.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    idx = 0          # current roll index\n    frame = 0        # current frame number (0-9)\n\n    while frame < 9:  # frames 1-9\n        if rolls[idx] == 10:          # strike\n            score += 10\n            # bonus: next two rolls (if they exist)\n            if idx + 1 < len(rolls):\n                score += rolls[idx + 1]\n            if idx + 2 < len(rolls):\n                score += rolls[idx + 2]\n            idx += 1\n        else:                         # not a strike\n            first = rolls[idx]\n            second = rolls[idx + 1] if idx + 1 < len(rolls) else 0\n            frame_sum = first + second\n            score += frame_sum\n            if frame_sum == 10:       # spare\n                if idx + 2 < len(rolls):\n                    score += rolls[idx + 2]\n            idx += 2\n        frame += 1\n\n    # 10th frame\n    # If the first roll is a strike, the frame consists of that single roll only\n    if rolls[idx] == 10:\n        score += 10\n        idx += 1\n    else:\n        # There are at least two rolls left\n        first = rolls[idx]\n        second = rolls[idx + 1] if idx + 1 < len(rolls) else 0\n        score += first + second\n\n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 372,
+        "output_tokens": 443,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,68 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `parse_duration` using a regular expression that captures optional weeks, days, hours, minutes, seconds with an optional decimal on the final component, validate the input, and compute the total seconds.",
+      "code": "import re\n\ndef parse_duration(text: str) -> float:\n    \"\"\"\n    Convert an ISO 8601 duration string (weeks or days+time) to seconds.\n    Accepts only uppercase letters; weeks alone, or days with optional time part.\n    Raises ValueError on invalid format or unsupported units.\n    \"\"\"\n    # Regular expression for supported formats:\n    #   P[n]W\n    #   P[n]D[optional time part]\n    # Time part: T[n]H[n]M[n]S\n    # Only the last component may contain a decimal separator ('.' or ',').\n    # All numbers are non-negative integers; decimal part is optional.\n    #\n    # The regex captures each component separately. We use named groups for clarity.\n    pattern = re.compile(\n        r\"\"\"\n        ^P\n        (?:\n            (?P<weeks>\\d+)[W]                                       # weeks only\n            |\n            (?P<days>\\d+)[D]\n            (?:\n                T\n                (?:\n                    (?P<hours>\\d+)[H]\n                    (?P<minutes>\\d+)[M]\n                    (?P<seconds>\\d+(?:[.,]\\d+)?)[S]\n                |\n                    (?P<hours_only>\\d+)[H]\n                    (?P<minutes_only>\\d+)[M]\n                |\n                    (?P<hours_only>\\d+)[H]\n                    (?P<seconds_only>\\d+(?:[.,]\\d+)?)[S]\n                |\n                    (?P<minutes_only>\\d+)[M]\n                    (?P<seconds_only>\\d+(?:[.,]\\d+)?)[S]\n                |\n                    (?P<hours_only>\\d+)[H]\n                |\n                    (?P<minutes_only>\\d+)[M]\n                |\n                    (?P<seconds_only>\\d+(?:[.,]\\d+)?)[S]\n                |\n                    (?P<hours>\\d+)[H]\n                |\n                    (?P<minutes>\\d+)[M]\n                |\n                    (?P<seconds>\\d+(?:[.,]\\d+)?)[S]\n            )?\n        )\n        $\n        \"\"\",\n        re.VERBOSE\n    )\n\n    m = pattern.match(text)\n    if not m:\n        raise ValueError(f\"Invalid ISO 8601 duration: {text!r}\")\n\n    # Helper to convert matched string to float, handling ',' as decimal separator\n    def to_float(val: str | None) -> float:\n        if val is None:\n            return 0.0\n        return float(val.replace(',', '.'))\n\n    # Compute total seconds\n    total = 0.0\n    if m.group('weeks'):\n        total += int(m.group('weeks')) * 7 * 86400\n    else:\n        # days\n        if m.group('days'):\n            total += int(m.group('days')) * 86400\n        # hours\n        if m.group('hours'):\n            total += to_float(m.group('hours')) * 3600\n        elif m.group('hours_only'):\n            total += int(m.group('hours_only')) * 3600\n        # minutes\n        if m.group('minutes'):\n            total += to_float(m.group('minutes')) * 60\n        elif m.group('minutes_only'):\n            total += int(m.group('minutes_only')) * 60\n        # seconds\n        if m.group('seconds'):\n            total += to_float(m.group('seconds'))\n        elif m.group('seconds_only'):\n            total += to_float(m.group('seconds_only'))\n\n    # Ensure at least one component was present\n    if total == 0.0:\n        raise ValueError(f\"No duration components found in {text!r}\")\n\n    return total\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 0,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_basic",
+            "message": "PatternError: redefinition of group name 'hours_only' as group 8; was group 6 at position 480 (line 17, column 25)"
+          },
+          {
+            "name": "test_empty_forms_are_invalid",
+            "message": "PatternError: redefinition of group name 'hours_only' as group 8; was group 6 at position 480 (line 17, column 25)"
+          },
+          {
+            "name": "test_fractions",
+            "message": "PatternError: redefinition of group name 'hours_only' as group 8; was group 6 at position 480 (line 17, column 25)"
+          },
+          {
+            "name": "test_minutes_are_not_months",
+            "message": "PatternError: redefinition of group name 'hours_only' as group 8; was group 6 at position 480 (line 17, column 25)"
+          },
+          {
+            "name": "test_weeks_do_not_combine_and_case_matters",
+            "message": "PatternError: redefinition of group name 'hours_only' as group 8; was group 6 at position 480 (line 17, column 25)"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 333,
+        "output_tokens": 886,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement format_amount with Decimal rounding, grouping, and currency validation.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP, getcontext\n\ndef format_amount(amount: str, currency: str) -> str:\n    \"\"\"\n    Format a decimal amount for the given currency.\n\n    Parameters\n    ----------\n    amount : str\n        Decimal number as a string, e.g. \"1234.5\".\n    currency : str\n        Currency code, e.g. \"USD\", \"KRW\".\n\n    Returns\n    -------\n    str\n        Formatted string \"<CODE> <number>\" with grouping and rounding.\n\n    Raises\n    ------\n    ValueError\n        If currency is unknown.\n    \"\"\"\n    # Currency decimal places map\n    decimal_places = {\n        'KRW': 0,\n        'JPY': 0,\n        'USD': 2,\n        'EUR': 2,\n        'BHD': 3,\n        'KWD': 3\n    }\n\n    if currency not in decimal_places:\n        raise ValueError(f\"Unknown currency: {currency}\")\n\n    places = decimal_places[currency]\n    quant = Decimal('1.' + '0' * places) if places else Decimal('1')\n\n    # Ensure Decimal context has enough precision\n    getcontext().prec = max(len(amount.replace('-', '').replace('.', '')), 50)\n\n    d = Decimal(amount)\n    d_rounded = d.quantize(quant, rounding=ROUND_HALF_UP)\n\n    # A result that rounds to zero is never negative\n    if d_rounded == 0:\n        sign = ''\n    else:\n        sign = '-' if d_rounded < 0 else ''\n\n    # Work with absolute value for formatting\n    abs_val = abs(d_rounded)\n\n    # Split integer and fractional parts\n    int_part, _, frac_part = f\"{abs_val:.{places}f}\".partition('.')\n\n    # Group integer part in thousands\n    int_groups = []\n    while int_part:\n        int_groups.insert(0, int_part[-3:])\n        int_part = int_part[:-3]\n    grouped_int = ','.join(int_groups)\n\n    # Build fractional part\n    if places:\n        formatted = f\"{sign}{grouped_int}.{frac_part}\"\n    else:\n        formatted = f\"{sign}{grouped_int}\"\n\n    return f\"{currency} {formatted}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 327,
+        "output_tokens": 574,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,52 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Create a mapping of currency to decimals, parse the amount as Decimal, round with ROUND_HALF_UP, format integer part with commas, attach decimal part if required, ensure zero is not negative.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef format_amount(amount: str, currency: str) -> str:\n    \"\"\"Format a decimal amount according to currency rules.\"\"\"\n    # Mapping of currency codes to their decimal precision\n    decimals_map = {\n        \"KRW\": 0,\n        \"JPY\": 0,\n        \"USD\": 2,\n        \"EUR\": 2,\n        \"BHD\": 3,\n        \"KWD\": 3,\n    }\n\n    if currency not in decimals_map:\n        raise ValueError(f\"Unknown currency: {currency}\")\n\n    # Determine required decimal places\n    places = decimals_map[currency]\n    quantize_exp = Decimal(f\"1e-{places}\")  # e.g. Decimal('1e-2') for 2 decimals\n\n    # Convert input string to Decimal\n    dec_amount = Decimal(amount)\n\n    # Round halves away from zero\n    rounded = dec_amount.quantize(quantize_exp, rounding=ROUND_HALF_UP)\n\n    # Ensure zero is not negative\n    if rounded.is_zero():\n        rounded = abs(rounded)\n\n    # Split integer and fractional parts\n    int_part = int(rounded.to_integral_value())\n    frac_part = abs(rounded - int(rounded))\n\n    # Format integer part with commas\n    int_str = f\"{int_part:,}\"\n\n    # Format fractional part\n    if places > 0:\n        # frac_part already has correct rounding, format without leading '0.'\n        frac_str = f\"{frac_part:.{places}f}\".split('.')[1]\n        return f\"{currency} {int_str}.{frac_str}\"\n    else:\n        return f\"{currency} {int_str}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_halves_round_away_from_zero_exactly",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 327,
+        "output_tokens": 596,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

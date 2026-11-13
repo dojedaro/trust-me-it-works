@@ -1,0 +1,47 @@
+{
+  "task_id": "straight",
+  "room": "games",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Map ranks to numeric values, handle Ace low straight, check for 5 consecutive values, return highest rank string or None.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"\n    Return the rank of the highest card in a straight if the hand is a straight,\n    otherwise return None.\n    \"\"\"\n    # Ordered mapping of ranks to numeric values\n    rank_order = '23456789TJQKA'\n    rank_to_val = {r: i for i, r in enumerate(rank_order)}\n    # Convert ranks to numeric values\n    values = sorted(rank_to_val[r] for r in ranks)\n    # Remove duplicates: a straight cannot have duplicate ranks\n    if len(set(values)) != 5:\n        return None\n    # Check normal consecutive sequence\n    if all(values[i] + 1 == values[i+1] for i in range(4)):\n        return rank_order[values[-1]]\n    # Check Ace-low straight (A,2,3,4,5)\n    # In numeric terms: values == [0,1,2,3,12] where 12 is Ace\n    if values == [0, 1, 2, 3, 12]:\n        return '5'\n    return None\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 267,
+        "output_tokens": 326,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement a function that simulates a tennis game with no‑ad scoring, returning the current score or the winner.",
+      "code": "def game_score(points: str) -> str:\n    \"\"\"Return the current tennis score for a one‑game match with no‑ad rule.\n\n    Args:\n        points: A string where each character is 'A' or 'B', representing who\n                won the point, in chronological order.\n\n    Returns:\n        The score formatted as 'A-B' using 0, 15, 30, 40, or 'Game A'/'Game B'\n        once a player has won.  An empty input yields '0-0'.\n    \"\"\"\n    # Numeric points: 0, 1, 2, 3 (representing 0,15,30,40)\n    score_map = {0: \"0\", 1: \"15\", 2: \"30\", 3: \"40\"}\n\n    a_points, b_points = 0, 0\n\n    for p in points:\n        if p == 'A':\n            a_points += 1\n        elif p == 'B':\n            b_points += 1\n        else:\n            # ignore any invalid characters\n            continue\n\n        # Check for a winner\n        # 1. Normal win: 4 points with a 2‑point lead\n        if a_points >= 4 and a_points - b_points >= 2:\n            return \"Game A\"\n        if b_points >= 4 and b_points - a_points >= 2:\n            return \"Game B\"\n\n        # 2. No‑ad win at 40‑40 (3‑3), next point wins\n        if a_points == 4 and b_points == 3:\n            return \"Game A\"\n        if b_points == 4 and a_points == 3:\n            return \"Game B\"\n\n    # After all points processed and no winner yet, return current score\n    # Clamp to maximum of 3 for display (40)\n    a_display = score_map[min(a_points, 3)]\n    b_display = score_map[min(b_points, 3)]\n    return f\"{a_display}-{b_display}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 298,
+        "output_tokens": 618,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "leaderboard",
+  "room": "spec",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Use Python's stable sorted function to order by negative score while preserving input order for ties.",
+      "code": "def leaderboard(players: list[dict]) -> list[dict]:\n    \"\"\"\n    Return a new list of player dictionaries sorted by descending 'score'.\n    Players with equal scores keep their relative input order.\n    The original list is not modified.\n    \"\"\"\n    # sorted is stable in CPython, so ties retain input order\n    return sorted(players, key=lambda p: -p['score'])\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 252,
+        "output_tokens": 157,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

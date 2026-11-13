@@ -1,0 +1,47 @@
+{
+  "task_id": "round_money",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the string with Decimal, quantize to two decimal places using ROUND_HALF_UP, then return the formatted string, ensuring negative zeros are converted to positive zero.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef round_money(amount: str) -> str:\n    \"\"\"\n    Rounds a decimal amount represented as a string to two decimal places.\n    Half values round away from zero. Negative zero is converted to positive zero.\n    \"\"\"\n    # Convert to Decimal for accurate rounding\n    value = Decimal(amount)\n\n    # Quantize to two decimal places with rounding half away from zero\n    rounded = value.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)\n\n    # If the result is zero (positive or negative), return \"0.00\"\n    if rounded.is_zero():\n        return \"0.00\"\n\n    # Convert to string with two fixed decimal places\n    return format(rounded, 'f')\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 260,
+        "output_tokens": 657,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

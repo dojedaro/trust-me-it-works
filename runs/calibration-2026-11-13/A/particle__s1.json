@@ -1,0 +1,64 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement a helper to decide if a Hangul character ends with batchim, handle the special \"으로/로\" rule, map single digits to Sino-Korean words, and return the word with the correct particle form.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"\n    Attach the appropriate Korean particle form to a word.\n    Supports particles: \"은/는\", \"이/가\", \"을/를\", \"과/와\", \"으로/로\".\n    \"\"\"\n\n    # Map particles to (with_batchim, without_batchim)\n    particles = {\n        \"은/는\": (\"은\", \"는\"),\n        \"이/가\": (\"이\", \"가\"),\n        \"을/를\": (\"을\", \"를\"),\n        \"과/와\": (\"과\", \"와\"),\n        \"으로/로\": (\"으로\", \"로\"),\n    }\n\n    # Map a single digit to its Sino‑Korean word\n    digit_to_word = {\n        \"0\": \"영\",\n        \"1\": \"일\",\n        \"2\": \"이\",\n        \"3\": \"삼\",\n        \"4\": \"사\",\n        \"5\": \"오\",\n        \"6\": \"육\",\n        \"7\": \"칠\",\n        \"8\": \"팔\",\n        \"9\": \"구\",\n    }\n\n    def has_batchim(char: str) -> bool:\n        \"\"\"Return True if a Hangul syllable ends with a batchim (consonant).\"\"\"\n        code = ord(char)\n        if 0xAC00 <= code <= 0xD7A3:  # Hangul syllable block\n            return (code - 0xAC00) % 28 != 0\n        # Not a Hangul syllable – treat as no batchim\n        return False\n\n    # If the word is a single digit, map it to its Sino‑Korean representation\n    if len(word) == 1 and word in digit_to_word:\n        base_word = digit_to_word[word]\n    else:\n        base_word = word\n\n    # Determine whether the base word has a batchim\n    batchim = has_batchim(base_word[-1])\n\n    # Special rule for \"으로/로\": words ending with ㄹ are treated as having no batchim\n    if particle == \"으로/로\" and batchim:\n        last_char = base_word[-1]\n        # Unicode calculations: if last consonant is ㄹ (index 5)\n        code = ord(last_char)\n        if 0xAC00 <= code <= 0xD7A3:\n            last_consonant_idx = (code - 0xAC00) % 28\n            if last_consonant_idx == 5:  # ㄹ\n                batchim = False\n\n    chosen = particles[particle][0] if batchim else particles[particle][1]\n    return word + chosen\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_rieul_takes_ro",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_round_numbers_are_read_as_a_whole",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 337,
+        "output_tokens": 1234,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

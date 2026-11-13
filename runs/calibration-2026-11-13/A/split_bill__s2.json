@@ -1,0 +1,47 @@
+{
+  "task_id": "split_bill",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert the total to cents, distribute the remainder, format shares with two decimal places in descending order.",
+      "code": "def split_bill(total: str, n: int) -> list[str]:\n    \"\"\"\n    Split a bill represented as a string with two decimal places into n shares.\n    \n    The shares are returned as strings with two decimal places. The distribution\n    ensures that:\n    * The sum of the shares equals the total.\n    * No two shares differ by more than 0.01.\n    * Larger shares appear before smaller ones.\n    \n    Args:\n        total (str): Total amount as a decimal string, e.g., \"100.00\".\n        n (int): Number of people (n >= 1).\n    \n    Returns:\n        list[str]: List of share strings sorted in descending order.\n    \"\"\"\n    # Convert total to integer number of cents\n    dollars, cents = total.split('.')\n    total_cents = int(dollars) * 100 + int(cents)\n\n    base_share = total_cents // n          # smallest share in cents\n    remainder = total_cents % n            # number of people who get an extra cent\n\n    shares = []\n\n    # First 'remainder' people get one extra cent\n    for _ in range(remainder):\n        share_cents = base_share + 1\n        shares.append(f\"{share_cents // 100}.{share_cents % 100:02d}\")\n\n    # Remaining people get the base share\n    for _ in range(n - remainder):\n        share_cents = base_share\n        shares.append(f\"{share_cents // 100}.{share_cents % 100:02d}\")\n\n    # The order already guarantees larger shares first\n    return shares\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 410,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse each version into numeric parts and optional pre-release list, then compare according to SemVer rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    \"\"\"Compare two semantic version strings.\n\n    Returns:\n        -1 if a < b\n         0 if a == b\n         1 if a > b\n    \"\"\"\n    def split_version(v: str):\n        # Separate build metadata\n        main_and_meta = v.split('+', 1)[0]\n        # Separate pre-release\n        core, sep, pre = main_and_meta.partition('-')\n        major, minor, patch = map(int, core.split('.'))\n        pre_ids = pre.split('.') if sep else []\n        return major, minor, patch, pre_ids\n\n    def compare_identifiers(a_ids, b_ids):\n        # Compare pre-release identifiers\n        for ai, bi in zip(a_ids, b_ids):\n            ai_num = ai.isdigit()\n            bi_num = bi.isdigit()\n            if ai_num and bi_num:\n                # numeric comparison\n                a_val, b_val = int(ai), int(bi)\n                if a_val < b_val:\n                    return -1\n                if a_val > b_val:\n                    return 1\n            elif ai_num and not bi_num:\n                return -1  # numeric < non-numeric\n            elif not ai_num and bi_num:\n                return 1   # non-numeric > numeric\n            else:\n                # ASCII comparison\n                if ai < bi:\n                    return -1\n                if ai > bi:\n                    return 1\n        # All matched so far; longer list is greater\n        if len(a_ids) < len(b_ids):\n            return -1\n        if len(a_ids) > len(b_ids):\n            return 1\n        return 0\n\n    a_major, a_minor, a_patch, a_pre = split_version(a)\n    b_major, b_minor, b_patch, b_pre = split_version(b)\n\n    # Compare core versions\n    if a_major != b_major:\n        return -1 if a_major < b_major else 1\n    if a_minor != b_minor:\n        return -1 if a_minor < b_minor else 1\n    if a_patch != b_patch:\n        return -1 if a_patch < b_patch else 1\n\n    # Core equal; handle pre-release presence\n    if not a_pre and not b_pre:\n        return 0\n    if not a_pre:\n        return 1  # a has no pre-release, higher\n    if not b_pre:\n        return -1  # b has no pre-release, higher\n\n    # Both have pre-release; compare identifiers\n    return compare_identifiers(a_pre, b_pre)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 362,
+        "output_tokens": 587,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

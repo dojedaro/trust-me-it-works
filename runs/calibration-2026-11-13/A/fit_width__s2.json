@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Write a function that groups characters with following zero‑width ones, computes widths, then builds the longest prefix that fits with an ellipsis if needed.",
+      "code": "import unicodedata\n\ndef _char_width(ch: str) -> int:\n    \"\"\"Return terminal column width of a single codepoint.\"\"\"\n    # Zero‑width characters (formatting, combining marks) take 0\n    cat = unicodedata.category(ch)\n    if cat[0] == 'M' or cat == 'Cf':\n        return 0\n    # Wide or Fullwidth characters take 2\n    eaw = unicodedata.east_asian_width(ch)\n    if eaw in ('W', 'F'):\n        return 2\n    # Everything else takes 1\n    return 1\n\ndef fit(text: str, width: int) -> str:\n    if width < 1:\n        raise ValueError(\"width must be >= 1\")\n\n    # Split text into \"runes\": base char plus any following zero‑width chars\n    runes = []\n    i = 0\n    n = len(text)\n    while i < n:\n        base = text[i]\n        j = i + 1\n        # Collect zero‑width chars that immediately follow the base\n        while j < n and unicodedata.category(text[j]) in ('Cf', 'Mn', 'Me'):\n            j += 1\n        runes.append(text[i:j])\n        i = j\n\n    # Pre‑compute widths per rune\n    rune_widths = [_char_width(r[0]) for r in runes]\n\n    # Total width without ellipsis\n    total = sum(rune_widths)\n    if total <= width:\n        return text\n\n    ellipsis = '…'\n    ellipsis_width = 1  # defined as 1 column\n\n    # Build prefix\n    cur = 0\n    prefix_parts = []\n    for r, w in zip(runes, rune_widths):\n        if cur + w + ellipsis_width > width:\n            # cannot add this rune; stop here\n            break\n        prefix_parts.append(r)\n        cur += w\n\n    return ''.join(prefix_parts) + ellipsis\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 354,
+        "output_tokens": 535,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

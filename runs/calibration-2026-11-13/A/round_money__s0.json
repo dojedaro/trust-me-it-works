@@ -1,0 +1,47 @@
+{
+  "task_id": "round_money",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert the input string to a Decimal, quantize it to two decimal places with ROUND_HALF_UP, then return the result as a string ensuring \"-0.00\" is replaced by \"0.00\".",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef round_money(amount: str) -> str:\n    d = Decimal(amount)\n    rounded = d.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)\n    # Convert to string with exactly two decimal places\n    result = format(rounded, 'f')\n    # Replace negative zero with positive zero\n    if result == '-0.00':\n        result = '0.00'\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 260,
+        "output_tokens": 399,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

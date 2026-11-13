@@ -1,0 +1,64 @@
+{
+  "task_id": "hangul_decompose",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement decompose using Unicode formulas for Hangul syllables, mapping components to compatibility jamo characters and leaving other characters unchanged.",
+      "code": "# solution.py\ndef decompose(text: str) -> str:\n    \"\"\"\n    Replace every precomposed Hangul syllable in `text` with its\n    constituent compatibility jamo characters.\n    \"\"\"\n    # Hangul Syllable constants\n    S_BASE = 0xAC00\n    S_END = 0xD7A3\n    L_COUNT = 19  # initial consonants\n    V_COUNT = 21  # vowels\n    T_COUNT = 28  # final consonants (including empty)\n    N_COUNT = V_COUNT * T_COUNT\n\n    # Compatibility Jamo ranges\n    L_BASE = 0x3131  # ㄱ\n    V_BASE = 0x3141  # ㅏ\n    T_BASE = 0x3131  # ㄱ (used for final consonants starting at 0x3131)\n\n    result = []\n\n    for ch in text:\n        code = ord(ch)\n        if S_BASE <= code <= S_END:\n            s_index = code - S_BASE\n            l_index = s_index // N_COUNT\n            v_index = (s_index % N_COUNT) // T_COUNT\n            t_index = s_index % T_COUNT\n\n            # Map to compatibility jamo\n            l_char = chr(L_BASE + l_index)\n            v_char = chr(V_BASE + v_index)\n            result.append(l_char)\n            result.append(v_char)\n            if t_index != 0:\n                # For final consonants, T_BASE + (t_index - 1) gives the jamo\n                t_char = chr(T_BASE + (t_index - 1))\n                result.append(t_char)\n        else:\n            # Non-syllable character: copy as is\n            result.append(ch)\n\n    return ''.join(result)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_compound_final_consonant",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_compound_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_first_and_last_syllables",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_word",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 460,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

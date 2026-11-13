@@ -1,0 +1,47 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `game_score` by tracking points, determining win conditions per no‑ad rules, and formatting the score string.",
+      "code": "def game_score(points: str) -> str:\n    # point counters for A and B\n    a, b = 0, 0\n\n    # mapping for display scores\n    score_map = {0: \"0\", 1: \"15\", 2: \"30\", 3: \"40\"}\n\n    for p in points:\n        if p == 'A':\n            a += 1\n        elif p == 'B':\n            b += 1\n        else:\n            # ignore any unexpected characters\n            continue\n\n        # Determine if the game has been won\n        # Regular win condition (at least 4 points and at least 2 ahead)\n        if (a >= 4 or b >= 4):\n            if abs(a - b) >= 2:\n                return f\"Game {'A' if a > b else 'B'}\"\n            # No‑ad special case: deuce (both have 3) and one gets the next point\n            if a == 4 and b == 3:\n                return \"Game A\"\n            if b == 4 and a == 3:\n                return \"Game B\"\n\n    # If no winner yet, produce current score string\n    # Cap the displayed points at 3 (40)\n    display_a = score_map.get(min(a, 3), \"40\")\n    display_b = score_map.get(min(b, 3), \"40\")\n    return f\"{display_a}-{display_b}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 298,
+        "output_tokens": 1011,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

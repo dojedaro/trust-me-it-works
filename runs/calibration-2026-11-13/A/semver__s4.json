@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the versions into major, minor, patch, pre-release list, compare according to SemVer rules, return -1,0,1.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    \"\"\"Compare two Semantic Versioning 2.0.0 strings.\n\n    Returns -1 if a < b, 0 if a == b, 1 if a > b.\n    \"\"\"\n    def split_parts(v: str):\n        # Remove build metadata\n        v, *_ = v.split(\"+\", 1)\n        # Separate pre-release\n        if \"-\" in v:\n            core, pre = v.split(\"-\", 1)\n            pre_ids = pre.split(\".\")\n        else:\n            core = v\n            pre_ids = []\n        major, minor, patch = map(int, core.split(\".\"))\n        return major, minor, patch, pre_ids\n\n    def compare_ids(a_ids, b_ids):\n        \"\"\"Compare two pre-release identifier lists.\n        Returns -1,0,1 according to SemVer rules.\"\"\"\n        for a_id, b_id in zip(a_ids, b_ids):\n            a_isnum = a_id.isdigit()\n            b_isnum = b_id.isdigit()\n            if a_isnum and b_isnum:\n                a_num = int(a_id)\n                b_num = int(b_id)\n                if a_num < b_num:\n                    return -1\n                if a_num > b_num:\n                    return 1\n            elif a_isnum and not b_isnum:\n                return -1\n            elif not a_isnum and b_isnum:\n                return 1\n            else:\n                if a_id < b_id:\n                    return -1\n                if a_id > b_id:\n                    return 1\n        # All compared identifiers are equal so far\n        if len(a_ids) < len(b_ids):\n            return -1\n        if len(a_ids) > len(b_ids):\n            return 1\n        return 0\n\n    a_major, a_minor, a_patch, a_pre = split_parts(a)\n    b_major, b_minor, b_patch, b_pre = split_parts(b)\n\n    # Compare core version numbers\n    if a_major != b_major:\n        return -1 if a_major < b_major else 1\n    if a_minor != b_minor:\n        return -1 if a_minor < b_minor else 1\n    if a_patch != b_patch:\n        return -1 if a_patch < b_patch else 1\n\n    # At this point core versions are equal\n    if not a_pre and not b_pre:\n        return 0\n    if not a_pre:\n        return 1  # a has no pre-release => higher\n    if not b_pre:\n        return -1  # b has no pre-release => higher\n\n    return compare_ids(a_pre, b_pre)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 362,
+        "output_tokens": 611,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

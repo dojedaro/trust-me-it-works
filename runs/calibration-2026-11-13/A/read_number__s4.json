@@ -1,0 +1,72 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement conversion of integer to Sino-Korean string following the specified rules.",
+      "code": "# solution.py\ndef read_number(n: int) -> str:\n    \"\"\"Return the Korean reading of n (0 <= n < 10**12).\"\"\"\n    if n == 0:\n        return \"영\"\n\n    digits = [\"이\", \"이\", \"삼\", \"사\", \"오\", \"육\", \"칠\", \"팔\", \"구\"]  # index 1-9\n    # Place values for a 4-digit group\n    unit_pos = [\"천\", \"백\", \"십\", \"\"]\n\n    # Units for groups of 4 digits (from lowest to highest)\n    group_units = [\"\", \"만\", \"억\"]\n\n    # Split n into groups of 4 digits\n    groups = []\n    temp = n\n    while temp:\n        groups.append(temp % 10000)\n        temp //= 10000\n    # groups[0] is lowest, groups[-1] highest\n    parts = []\n    for idx, grp in enumerate(groups):\n        if grp == 0:\n            continue\n        grp_str = []\n        for i, unit in enumerate(unit_pos):\n            digit = grp // (10 ** (3 - i)) % 10\n            if digit == 0:\n                continue\n            if digit == 1 and unit:  # suppress leading 1 before 천/백/십\n                grp_str.append(unit)\n            else:\n                grp_str.append(digits[digit] + unit)\n        part = \"\".join(grp_str)\n        if group_units[idx]:\n            part += group_units[idx]\n        parts.append(part)\n    # Reverse to get highest group first\n    return \"\".join(reversed(parts))\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 0,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_empty_groups_disappear",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_eok_keeps_il",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_largest",
+            "message": "IndexError: list index out of range"
+          },
+          {
+            "name": "test_man_alone_has_no_il",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_silent_one_inside_groups",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_small_numbers",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 328,
+        "output_tokens": 378,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

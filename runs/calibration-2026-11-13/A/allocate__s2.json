@@ -1,0 +1,52 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the allocation logic handling zero weights, rounding, remainder distribution, and negative totals.",
+      "code": "import math\nfrom typing import List\n\ndef allocate(total: int, weights: List[int]) -> List[int]:\n    \"\"\"\n    Split `total` cents into parts proportional to `weights`.\n\n    Args:\n        total: Integer number of cents (can be negative).\n        weights: List of non‑negative integer weights.\n\n    Returns:\n        List of integer parts summing to `total`, preserving order.\n\n    Raises:\n        ValueError: If all weights are zero.\n    \"\"\"\n    if not weights:\n        raise ValueError(\"weights list must not be empty\")\n\n    # Sum of weights; if zero, all weights are zero\n    weight_sum = sum(weights)\n    if weight_sum == 0:\n        raise ValueError(\"cannot allocate when all weights are zero\")\n\n    abs_total = abs(total)\n\n    # Compute raw shares and remainders\n    floors = []\n    remainders = []\n    for w in weights:\n        exact = abs_total * w / weight_sum\n        floor_val = math.floor(exact)\n        floors.append(int(floor_val))\n        remainders.append(exact - floor_val)\n\n    # Distribute remaining cents based on largest remainders\n    leftover = abs_total - sum(floors)\n    # Create indices sorted by remainder descending, index ascending for ties\n    indices = sorted(range(len(weights)), key=lambda i: (-remainders[i], i))\n    for idx in indices[:leftover]:\n        floors[idx] += 1\n\n    # Negate if the original total was negative\n    if total < 0:\n        return [-x for x in floors]\n    return floors\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 318,
+        "output_tokens": 450,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

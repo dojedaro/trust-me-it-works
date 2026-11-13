@@ -1,0 +1,47 @@
+{
+  "task_id": "palindrome",
+  "room": "text",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Normalize the string to lowercase, strip accents, keep only alphanumeric characters, then compare to its reverse.",
+      "code": "import unicodedata\n\ndef is_palindrome(text: str) -> bool:\n    \"\"\"\n    Return True if `text` reads the same forwards and backwards when considering only letters\n    and digits, ignoring case and accents. The empty string is a palindrome.\n    \"\"\"\n    # Normalize to decompose accents, then filter out combining characters\n    normalized = unicodedata.normalize('NFKD', text)\n    stripped = ''.join(\n        c for c in normalized\n        if unicodedata.category(c)[0] != 'M'  # remove marks (accents)\n    )\n    # Keep only alphanumeric and convert to lowercase\n    cleaned = ''.join(c.lower() for c in stripped if c.isalnum())\n    return cleaned == cleaned[::-1]\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 225,
+        "output_tokens": 225,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

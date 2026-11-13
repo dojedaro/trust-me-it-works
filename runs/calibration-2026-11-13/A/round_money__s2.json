@@ -1,0 +1,47 @@
+{
+  "task_id": "round_money",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Create a Decimal from the string, apply half‑away‑from‑zero rounding by rounding the absolute value with ROUND_HALF_UP to two decimals, reapply the sign, and strip a negative zero.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef round_money(amount: str) -> str:\n    # Convert to Decimal\n    d = Decimal(amount)\n\n    # Determine sign and work with absolute value\n    sign = '-' if d.is_signed() else ''\n    abs_d = d.copy_abs()\n\n    # Round to two decimal places with half‑away‑from‑zero\n    rounded = abs_d.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)\n\n    # Reapply sign\n    if sign and rounded == 0:\n        # Avoid negative zero\n        result = '0.00'\n    else:\n        result = f'{sign}{rounded:.2f}'\n\n    return result\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 260,
+        "output_tokens": 277,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

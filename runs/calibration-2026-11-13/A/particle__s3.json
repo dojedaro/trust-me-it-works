@@ -1,0 +1,56 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Compute if the final character (Hangul or Sino-Korean digit reading) ends with a batchim; then choose the appropriate particle form.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"\n    Attach the correct Korean particle form to `word`.\n\n    Parameters\n    ----------\n    word : str\n        A Hangul syllable or a string of digits.\n    particle : str\n        One of the particle forms: \"은/는\", \"이/가\", \"을/를\", \"과/와\", \"으로/로\".\n\n    Returns\n    -------\n    str\n        `word` followed by the appropriate particle.\n    \"\"\"\n    # Mapping for digits 0-9 and 10\n    digit_to_korean = {\n        '0': '영',\n        '1': '일',\n        '2': '이',\n        '3': '삼',\n        '4': '사',\n        '5': '오',\n        '6': '육',\n        '7': '칠',\n        '8': '팔',\n        '9': '구',\n        '10': '십',\n    }\n\n    # Determine if the word ends with a batchim\n    def has_batchim(s: str) -> bool:\n        \"\"\"Return True if the last Hangul syllable ends with a consonant.\"\"\"\n        if not s:\n            return False\n        ch = s[-1]\n        code = ord(ch)\n        # Hangul syllable range\n        if 0xAC00 <= code <= 0xD7A3:\n            # Jongseong offset\n            jong = (code - 0xAC00) % 28\n            return jong != 0\n        # For digits, use the last digit's Korean reading\n        if ch.isdigit():\n            # For multi‑digit numbers we use the last digit's reading\n            last_korean = digit_to_korean.get(ch, '')\n            # If the reading is empty, treat as no batchim\n            if not last_korean:\n                return False\n            # Last character of the reading\n            last_char = last_korean[-1]\n            # If last_char is a Hangul syllable, compute its jongseong\n            c = ord(last_char)\n            if 0xAC00 <= c <= 0xD7A3:\n                jong = (c - 0xAC00) % 28\n                return jong != 0\n        return False\n\n    # Special rule for \"으로/로\": words ending with ㄹ use \"로\"\n    def is_ro_case(s: str) -> bool:\n        if not s:\n            return False\n        ch = s[-1]\n        code = ord(ch)\n        if 0xAC00 <= code <= 0xD7A3:\n            # Get the final consonant\n            jong = (code - 0xAC00) % 28\n            # 0xAC00 + ... + ㄹ (index 8) => jong == 8\n            return jong == 8\n        return False\n\n    # Decide which particle form to use\n    batchim = has_batchim(word)\n    first, second = particle.split('/')\n    if particle == \"으로/로\":\n        if is_ro_case(word):\n            chosen = second  # 로\n        else:\n            chosen = first if batchim else second\n    else:\n        chosen = first if batchim else second\n\n    return word + chosen\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 337,
+        "output_tokens": 1121,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

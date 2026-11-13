@@ -1,0 +1,47 @@
+{
+  "task_id": "initials_search",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement matching by comparing each query character with the corresponding word character using Hangul decomposition, handling empty query and returning False if the query is longer than the word.",
+      "code": "def matches_initials(query: str, word: str) -> bool:\n    \"\"\"\n    Return True if `query` matches the beginning of `word` by initial consonants.\n    \"\"\"\n    if not query:\n        return True\n\n    # Unicode constants\n    HANGUL_SYLLABLE_START = 0xAC00\n    HANGUL_SYLLABLE_END   = 0xD7A3\n    JAMO_INITIALS = [\n        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ',\n        'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ',\n        'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n\n    if len(query) > len(word):\n        return False\n\n    for q_char, w_char in zip(query, word):\n        # Exact match\n        if q_char == w_char:\n            continue\n\n        # Check if q_char is a compatibility jamo initial\n        if q_char in JAMO_INITIALS:\n            code = ord(w_char)\n            if HANGUL_SYLLABLE_START <= code <= HANGUL_SYLLABLE_END:\n                # Decompose syllable to get initial consonant index\n                syllable_index = code - HANGUL_SYLLABLE_START\n                initial_index = syllable_index // (21 * 28)\n                if JAMO_INITIALS[initial_index] == q_char:\n                    continue\n\n        # No match for this pair\n        return False\n\n    return True\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 313,
+        "output_tokens": 514,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

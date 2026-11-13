@@ -1,0 +1,47 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "split the number into groups of four digits, process each group with Korean place names, handle special rules for leading ones and zero groups, and concatenate the results with appropriate units.",
+      "code": "def read_number(n: int) -> str:\n    if n == 0:\n        return '영'\n\n    digits = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']\n    places = ['', '십', '백', '천']  # index 0 unused for ones\n    units = ['', '만', '억']  # groups of four digits\n\n    # split into groups of four digits\n    groups = []\n    while n:\n        groups.append(n % 10000)\n        n //= 10000\n    groups = groups[::-1]  # most significant group first\n\n    result_parts = []\n    for idx, group in enumerate(groups):\n        if group == 0:\n            continue  # skip all-zero group\n        unit = units[len(groups) - idx - 1]\n        if group == 1 and unit == '만':\n            # special case: just \"만\"\n            result_parts.append('만')\n            continue\n\n        part = []\n        for i in range(4):  # i: 0 thousands,1 hundreds,2 tens,3 ones\n            digit = (group // (10 ** (3 - i))) % 10\n            if digit == 0:\n                continue\n            if digit != 1 or i == 3:  # skip \"일\" before 천,백,십\n                part.append(digits[digit])\n            part.append(places[3 - i])\n        result_parts.append(''.join(part) + unit)\n\n    return ''.join(result_parts)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 328,
+        "output_tokens": 784,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

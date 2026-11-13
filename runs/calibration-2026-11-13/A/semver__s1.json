@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `compare_versions` that parses each version string into major, minor, patch, and optional pre-release parts; compare numerically, then pre-release identifiers per the Semantic Versioning spec, ignoring build metadata.",
+      "code": "import re\nfrom typing import List, Tuple\n\ndef _parse_version(v: str) -> Tuple[int, int, int, List[str]]:\n    \"\"\"\n    Parse a Semantic Version string into its components.\n    Returns (major, minor, patch, pre_release_list).\n    Build metadata is ignored.\n    \"\"\"\n    # Split out build metadata\n    core, *_ = v.split('+', 1)\n    # Split pre-release\n    parts = core.split('-', 1)\n    num_part = parts[0]\n    pre = parts[1] if len(parts) > 1 else ''\n    major, minor, patch = map(int, num_part.split('.'))\n    pre_list = pre.split('.') if pre else []\n    return major, minor, patch, pre_list\n\ndef _compare_identifiers(a: str, b: str) -> int:\n    \"\"\"\n    Compare two pre-release identifiers according to SemVer rules.\n    Return -1 if a < b, 0 if equal, 1 if a > b.\n    \"\"\"\n    a_is_num = a.isdigit()\n    b_is_num = b.isdigit()\n    if a_is_num and b_is_num:\n        a_val = int(a)\n        b_val = int(b)\n        return (a_val > b_val) - (a_val < b_val)\n    if a_is_num and not b_is_num:\n        return -1\n    if not a_is_num and b_is_num:\n        return 1\n    # both non-numeric: compare ASCII\n    return (a > b) - (a < b)\n\ndef compare_versions(a: str, b: str) -> int:\n    \"\"\"\n    Compare two Semantic Version strings.\n    Return -1 if a < b, 0 if a == b, 1 if a > b.\n    \"\"\"\n    a_major, a_minor, a_patch, a_pre = _parse_version(a)\n    b_major, b_minor, b_patch, b_pre = _parse_version(b)\n\n    # Numeric comparison\n    for av, bv in ((a_major, b_major), (a_minor, b_minor), (a_patch, b_patch)):\n        if av != bv:\n            return (av > bv) - (av < bv)\n\n    # At this point major/minor/patch are equal\n    # Handle pre-release presence\n    if not a_pre and not b_pre:\n        return 0\n    if not a_pre:\n        return 1  # a has no pre-release, so higher\n    if not b_pre:\n        return -1  # b has no pre-release, so higher\n\n    # Compare pre-release identifiers\n    for a_id, b_id in zip(a_pre, b_pre):\n        cmp = _compare_identifiers(a_id, b_id)\n        if cmp != 0:\n            return cmp\n    # All compared identifiers equal; longer pre-release is higher\n    return (len(a_pre) > len(b_pre)) - (len(a_pre) < len(b_pre))\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 362,
+        "output_tokens": 697,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

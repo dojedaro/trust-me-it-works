@@ -1,0 +1,64 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Use a regular expression to capture optional week, day, and time components, validate that no year/month or invalid parts appear, enforce the rule that only the last component may contain a decimal fraction, then convert to seconds.",
+      "code": "import re\nfrom typing import Optional\n\n# Regular expression for ISO 8601 duration with only weeks, days, hours, minutes, seconds\n# Components may be missing; a 'T' introduces time components.\n# The last component may contain a decimal fraction.\n_DURATION_RE = re.compile(\n    r\"\"\"\n    ^\n    P\n    (?:\n        (?P<weeks>\\d+)[W]               # weeks\n        |\n        (?P<days>\\d+)[D]                # days\n    )?\n    (?:T\n        (?:\n            (?P<hours>\\d+)[H]           # hours\n            |\n            (?P<minutes>\\d+)[M]         # minutes\n            |\n            (?P<seconds>\\d+(\\.|,)\\d+)[S]   # seconds with fraction\n        )?\n        (?:\\s*\n            (?:                          # optional other time components\n                (?P<hours2>\\d+)[H]|\n                (?P<minutes2>\\d+)[M]|\n                (?P<seconds2>\\d+(\\.|,)\\d+)[S]\n            )*\n        )\n    )?\n    $\n    \"\"\",\n    re.VERBOSE | re.IGNORECASE\n)\n\ndef _parse_number(value: str, allow_fraction: bool) -> float:\n    \"\"\"Parse a numeric string, optionally allowing a decimal fraction.\"\"\"\n    if allow_fraction:\n        # replace comma with dot for decimal\n        value = value.replace(',', '.')\n        try:\n            return float(value)\n        except ValueError:\n            raise ValueError(f\"Invalid number: {value}\")\n    else:\n        try:\n            return float(int(value))  # ensure no fraction\n        except ValueError:\n            raise ValueError(f\"Invalid integer: {value}\")\n\ndef parse_duration(text: str) -> float:\n    \"\"\"\n    Convert an ISO 8601 duration string to a number of seconds.\n\n    Only weeks, days, hours, minutes and seconds are allowed.  Years and months\n    (and any other unexpected component) raise ValueError.\n    \"\"\"\n    m = _DURATION_RE.fullmatch(text.strip())\n    if not m:\n        raise ValueError(f\"Invalid ISO 8601 duration: {text!r}\")\n\n    # Determine which components are present\n    weeks = m.group('weeks')\n    days = m.group('days')\n    hours = m.group('hours')\n    minutes = m.group('minutes')\n    seconds = m.group('seconds')\n\n    # Collect all component groups in order\n    parts = []\n    if weeks:\n        parts.append(('weeks', weeks, False))\n    if days:\n        parts.append(('days', days, False))\n    if hours:\n        parts.append(('hours', hours, False))\n    if minutes:\n        parts.append(('minutes', minutes, False))\n    if seconds:\n        parts.append(('seconds', seconds, True))\n\n    # Ensure at least one component\n    if not parts:\n        raise ValueError(\"Duration must contain at least one component\")\n\n    # Validate that only the last component may contain a fraction\n    for i, (name, value, allow_frac) in enumerate(parts):\n        if not allow_frac and ('.' in value or ',' in value):\n            raise ValueError(f\"Component {name} cannot contain a fraction: {value!r}\")\n\n    # Convert to seconds\n    total_seconds = 0.0\n    for name, value, _ in parts:\n        if name == 'weeks':\n            total_seconds += _parse_number(value, False) * 7 * 86400\n        elif name == 'days':\n            total_seconds += _parse_number(value, False) * 86400\n        elif name == 'hours':\n            total_seconds += _parse_number(value, False) * 3600\n        elif name == 'minutes':\n            total_seconds += _parse_number(value, False) * 60\n        elif name == 'seconds':\n            total_seconds += _parse_number(value, True)\n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 1,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_basic",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_empty_forms_are_invalid",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_fractions",
+            "message": "ValueError: Invalid ISO 8601 duration: 'PT1.5M'"
+          },
+          {
+            "name": "test_weeks_do_not_combine_and_case_matters",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 333,
+        "output_tokens": 903,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

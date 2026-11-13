@@ -1,0 +1,56 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement read_number by processing each 4‑digit group, handling units, and concatenating results per spec.",
+      "code": "# solution.py\ndef read_number(n: int) -> str:\n    # Mapping of digits to Sino‑Korean Hangul\n    digits = [\"영\", \"일\", \"이\", \"삼\", \"사\", \"오\", \"육\", \"칠\", \"팔\", \"구\"]\n    # Units for positions within a 4‑digit group\n    units = [\"\", \"십\", \"백\", \"천\"]\n    # Units for groups of four digits (from lowest)\n    group_units = [\"\", \"만\", \"억\"]\n    \n    if n == 0:\n        return digits[0]\n    \n    # Split number into groups of 4 digits from least significant\n    groups = []\n    temp = n\n    while temp:\n        groups.append(temp % 10000)\n        temp //= 10000\n    # groups[0] = units, groups[1] = 만, groups[2] = 억, etc.\n    \n    result_parts = []\n    for idx, grp in enumerate(groups):\n        if grp == 0:\n            continue  # skip zero group\n        part = []\n        # process each digit in the group\n        for pos in range(4):  # pos 0: units, 1:십, 2:백, 3:천\n            digit = (grp // (10 ** pos)) % 10\n            if digit == 0:\n                continue\n            # skip reading '일' before non‑one units, except for 억 group where we keep it\n            if digit == 1 and pos != 0:\n                # For group index 0 (units), skip '일'\n                if idx == 0:\n                    part.append(units[pos])\n                else:\n                    part.append(digits[digit] + units[pos])\n            else:\n                part.append(digits[digit] + units[pos])\n        # Combine digits within the group\n        part_str = \"\".join(reversed(part))  # because we processed from units up\n        # Append group unit if not the units group\n        if idx > 0:\n            # Special rule: if group value is exactly 1, skip the digit for 만\n            if grp == 1 and idx == 1:\n                part_str = group_units[idx]\n            else:\n                part_str += group_units[idx]\n        result_parts.append(part_str)\n    \n    # Combine from highest group to lowest\n    return \"\".join(reversed(result_parts))\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 4,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_empty_groups_disappear",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_silent_one_inside_groups",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 328,
+        "output_tokens": 551,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

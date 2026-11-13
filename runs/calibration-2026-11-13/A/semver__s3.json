@@ -1,0 +1,47 @@
+{
+  "task_id": "semver",
+  "room": "spec",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse version strings into components and compare them according to Semantic Versioning rules.",
+      "code": "def compare_versions(a: str, b: str) -> int:\n    \"\"\"\n    Compare two semantic version strings a and b.\n    Return -1 if a < b, 0 if equal, 1 if a > b.\n    \"\"\"\n    def parse(v: str):\n        \"\"\"Return (major, minor, patch, pre_release_list) where pre_release_list is list of identifiers.\"\"\"\n        # remove build metadata\n        if '+' in v:\n            v, _ = v.split('+', 1)\n        # split pre-release\n        if '-' in v:\n            core, pre = v.split('-', 1)\n            pre_ids = pre.split('.')\n        else:\n            core = v\n            pre_ids = []\n        major, minor, patch = map(int, core.split('.'))\n        return major, minor, patch, pre_ids\n\n    def cmp_ident(a_id: str, b_id: str) -> int:\n        \"\"\"Compare two pre-release identifiers.\"\"\"\n        a_num = a_id.isdigit()\n        b_num = b_id.isdigit()\n        if a_num and b_num:\n            a_int = int(a_id)\n            b_int = int(b_id)\n            return (a_int > b_int) - (a_int < b_int)\n        if a_num and not b_num:\n            return -1\n        if not a_num and b_num:\n            return 1\n        # both non-numeric\n        return (a_id > b_id) - (a_id < b_id)\n\n    a_m, a_mi, a_p, a_pre = parse(a)\n    b_m, b_mi, b_p, b_pre = parse(b)\n\n    # compare core numeric parts\n    for a_val, b_val in ((a_m, b_m), (a_mi, b_mi), (a_p, b_p)):\n        if a_val != b_val:\n            return 1 if a_val > b_val else -1\n\n    # at this point numeric parts equal\n    if not a_pre and not b_pre:\n        return 0\n    if not a_pre:\n        # a has no pre-release, higher precedence\n        return 1\n    if not b_pre:\n        return -1\n\n    # compare pre-release identifiers\n    for a_id, b_id in zip(a_pre, b_pre):\n        comp = cmp_ident(a_id, b_id)\n        if comp != 0:\n            return comp\n    # all compared identifiers equal; longer pre-release is higher\n    if len(a_pre) == len(b_pre):\n        return 0\n    return 1 if len(a_pre) > len(b_pre) else -1\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 362,
+        "output_tokens": 586,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

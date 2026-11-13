@@ -1,0 +1,47 @@
+{
+  "task_id": "initials_search",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `matches_initials` by iterating over query and word, comparing characters directly or via Hangul initial consonant extraction.",
+      "code": "# solution.py\ndef matches_initials(query: str, word: str) -> bool:\n    \"\"\"\n    Return True if `query` matches the beginning of `word` by initial consonants.\n\n    Parameters\n    ----------\n    query : str\n        Search query consisting of Hangul compatibility jamo or full characters.\n    word : str\n        Target word to compare against.\n\n    Returns\n    -------\n    bool\n        True if query matches the start of word, otherwise False.\n    \"\"\"\n    if not query:\n        return True\n\n    # List of initial consonants in order (Hangul compatibility jamo)\n    INITIALS = [\n        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',\n        'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n\n    # Helper to get initial consonant of a Hangul syllable\n    def initial_consonant(ch: str) -> str | None:\n        code = ord(ch)\n        if 0xAC00 <= code <= 0xD7A3:\n            idx = (code - 0xAC00) // (21 * 28)  # 21 vowels, 28 finals\n            return INITIALS[idx]\n        return None\n\n    # Compare position by position\n    for q_char, w_char in zip(query, word):\n        if q_char == w_char:\n            continue\n        init = initial_consonant(w_char)\n        if init is not None and q_char == init:\n            continue\n        return False\n\n    # If query is longer than word, no match\n    return len(query) <= len(word)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 313,
+        "output_tokens": 576,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

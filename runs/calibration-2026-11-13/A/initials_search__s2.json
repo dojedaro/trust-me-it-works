@@ -1,0 +1,47 @@
+{
+  "task_id": "initials_search",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `matches_initials` that decomposes Hangul syllables to initial consonants, compares with query characters, and returns a Boolean result.",
+      "code": "def matches_initials(query: str, word: str) -> bool:\n    \"\"\"Return True if `query` matches the beginning of `word` using initial consonants.\n\n    The comparison is performed position‑by‑position. A query character matches a\n    word character when:\n      * the characters are identical, OR\n      * the query character is a Hangul Compatibility Jamo consonant and the\n        word character is a Hangul syllable whose initial consonant equals\n        that Jamo.\n    An empty query matches any word. If the query is longer than the word,\n    the function returns False.\n    \"\"\"\n\n    # Mapping from Hangul Compatibility Jamo consonants to their\n    # corresponding initial consonant (L) indices in a syllable.\n    # The order matches the order in the Unicode Hangul Compatibility Jamo\n    # block for consonants (U+3131 to U+314E).\n    compat_consonants = [\n        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ',\n        'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ',\n        'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n    l_index_map = {c: i for i, c in enumerate(compat_consonants)}\n\n    # Unicode constants for Hangul\n    SBASE = 0xAC00   # first Hangul syllable\n    LBASE = 0x1100   # first Hangul choseong (Jamo) block\n    NCOUNT = 21      # number of jungseong (vowel) possibilities\n    TCOUNT = 28      # number of jongseong (final consonant) possibilities\n    NCOUNT_T = NCOUNT * TCOUNT\n\n    # Helper: get the initial consonant Jamo from a syllable character\n    def initial_from_syllable(ch: str) -> str | None:\n        code = ord(ch)\n        if not (SBASE <= code < SBASE + 11172):  # 11172 = 19 * 21 * 28\n            return None\n        index = code - SBASE\n        l_index = index // NCOUNT_T\n        return compat_consonants[l_index]\n\n    if not query:\n        return True\n    if len(query) > len(word):\n        return False\n\n    for qc, wc in zip(query, word):\n        if qc == wc:\n            continue\n        # Check if query char is a compatibility consonant\n        if qc in l_index_map:\n            ic = initial_from_syllable(wc)\n            if ic == qc:\n                continue\n        # No match\n        return False\n\n    return True\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 313,
+        "output_tokens": 870,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

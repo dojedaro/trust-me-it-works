@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Build the text in units of a base character followed by any subsequent zero‑width characters, then add units until the next would exceed the width minus one for the ellipsis; return the built string or the original if it already fits.",
+      "code": "import unicodedata\n\ndef fit(text: str, width: int) -> str:\n    if width < 1:\n        raise ValueError(\"width must be >= 1\")\n\n    # Helper to compute display width of a single codepoint\n    def char_width(ch: str) -> int:\n        cat = unicodedata.category(ch)\n        if cat in ('Mn', 'Me'):          # Combining marks\n            return 0\n        if cat == 'Cf':                  # Format characters (e.g., ZWJ)\n            return 0\n        eaw = unicodedata.east_asian_width(ch)\n        if eaw in ('W', 'F'):            # Wide or Fullwidth\n            return 2\n        return 1\n\n    # Split into units: base char + following zero‑width characters\n    units = []\n    i = 0\n    n = len(text)\n    while i < n:\n        base = text[i]\n        unit = [base]\n        i += 1\n        # Append any following zero‑width characters\n        while i < n and unicodedata.category(text[i]) == 'Cf':\n            unit.append(text[i])\n            i += 1\n        units.append(''.join(unit))\n\n    # Compute total width of original text\n    total_width = sum(char_width(ch) for ch in text)\n    if total_width <= width:\n        return text\n\n    # Build prefix with ellipsis\n    prefix_parts = []\n    cur_width = 0\n    for unit in units:\n        unit_width = sum(char_width(ch) for ch in unit)\n        # Check if adding this unit + ellipsis exceeds width\n        if cur_width + unit_width + 1 > width:\n            break\n        prefix_parts.append(unit)\n        cur_width += unit_width\n\n    return ''.join(prefix_parts) + '…'\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 354,
+        "output_tokens": 749,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

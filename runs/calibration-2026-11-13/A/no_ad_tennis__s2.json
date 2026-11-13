@@ -1,0 +1,47 @@
+{
+  "task_id": "no_ad_tennis",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement a simple scoring function that tracks points for each player, updates the score accordingly, handles the no‑ad rule at deuce, and stops processing once the game is won.",
+      "code": "def game_score(points: str) -> str:\n    # mapping from raw point count to tennis score string\n    score_map = {0: '0', 1: '15', 2: '30', 3: '40'}\n\n    a, b = 0, 0  # point counters for A and B\n\n    for p in points:\n        # ignore any points after a game has been won\n        if a >= 4 or b >= 4:\n            break\n\n        if p == 'A':\n            a += 1\n        elif p == 'B':\n            b += 1\n        else:\n            # ignore invalid characters\n            continue\n\n        # Check for game win after each point\n        if a >= 4 or b >= 4:\n            break\n\n    # Determine the result after processing\n    if a >= 4 or b >= 4:\n        winner = 'A' if a > b else 'B'\n        return f'Game {winner}'\n\n    # No one has won yet; determine current score\n    # Special case: deuce (40-40)\n    if a == 3 and b == 3:\n        return '40-40'\n\n    return f'{score_map.get(a, \"0\")}-{score_map.get(b, \"0\")}'\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 298,
+        "output_tokens": 329,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

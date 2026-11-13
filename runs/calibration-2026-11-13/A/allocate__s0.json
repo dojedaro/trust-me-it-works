@@ -1,0 +1,47 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Compute floor shares using integer arithmetic, distribute the remaining cents according to remainders and sign the result if total is negative.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    \"\"\"\n    Split `total` cents into parts proportional to `weights`.\n\n    Each part starts as the floor of its share of abs(total).\n    Remaining cents are distributed one by one to the parts with\n    the largest fractional remainders, ties broken by earlier\n    position. For a negative `total`, the allocation is done on\n    abs(total) and each part is negated.\n\n    Raises ValueError if all weights are zero.\n    \"\"\"\n    if not weights:\n        raise ValueError(\"Weights list must not be empty\")\n\n    if total == 0:\n        return [0] * len(weights)\n\n    abs_total = abs(total)\n    sum_w = sum(weights)\n    if sum_w == 0:\n        raise ValueError(\"All weights are zero\")\n\n    # Initial floor allocation and remainders\n    floors = []\n    remainders = []  # (remainder, index)\n    for idx, w in enumerate(weights):\n        # floor share\n        floor = (abs_total * w) // sum_w\n        floors.append(floor)\n        # remainder of the share expressed in units of sum_w\n        remainder = (abs_total * w) % sum_w\n        remainders.append((remainder, idx))\n\n    allocated = sum(floors)\n    leftover = abs_total - allocated\n\n    # Distribute leftover cents to highest remainders, ties to earlier index\n    if leftover > 0:\n        remainders.sort(key=lambda x: (-x[0], x[1]))\n        for _, idx in remainders[:leftover]:\n            floors[idx] += 1\n\n    # Apply sign if total was negative\n    if total < 0:\n        return [-x for x in floors]\n    return floors\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 318,
+        "output_tokens": 554,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

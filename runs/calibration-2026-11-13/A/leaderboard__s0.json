@@ -1,0 +1,47 @@
+{
+  "task_id": "leaderboard",
+  "room": "spec",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Define leaderboard that returns a new list sorted by score descending, preserving input order for ties.",
+      "code": "def leaderboard(players: list[dict]) -> list[dict]:\n    \"\"\"\n    Return a new list of player dictionaries ordered by their 'score'\n    in descending order. If two players have the same score, the\n    original relative order is preserved (stable sort).\n\n    Parameters\n    ----------\n    players : list[dict]\n        List of player dictionaries, each containing at least a 'score' key.\n\n    Returns\n    -------\n    list[dict]\n        A new list sorted by score descending.\n    \"\"\"\n    # Use sorted with key on 'score', reverse=True; Python's sort is stable,\n    # so ties preserve original order.\n    return sorted(players, key=lambda p: p['score'], reverse=True)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 252,
+        "output_tokens": 214,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

@@ -1,0 +1,56 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Compute whether the last Hangul syllable of `word` (or the pronunciation of a numeric string) ends in a consonant and then attach the appropriate form of the given particle.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    \"\"\"\n    Attach the correct Korean particle form to `word`.\n\n    Parameters\n    ----------\n    word : str\n        A string ending in a Hangul syllable or in digits.\n    particle : str\n        One of the particle forms: \"은/는\", \"이/가\", \"을/를\",\n        \"과/와\" or \"으로/로\".\n\n    Returns\n    -------\n    str\n        The word followed by the correct particle form.\n    \"\"\"\n    # Map single digit to its Korean reading (simplified).\n    DIGIT_READINGS = {\n        '0': '영', '1': '일', '2': '이', '3': '삼',\n        '4': '사', '5': '오', '6': '육', '7': '칠',\n        '8': '팔', '9': '구'\n    }\n\n    # Helper to determine if a Hangul syllable ends with a batchim (consonant)\n    def has_batchim(ch: str) -> bool:\n        cp = ord(ch)\n        if 0xAC00 <= cp <= 0xD7A3:          # Hangul Syllables\n            offset = cp - 0xAC00\n            # Final consonant index (0 means no final consonant)\n            return (offset % 28) != 0\n        return False\n\n    # Helper to check if a Hangul syllable ends with the specific consonant ㄹ\n    def ends_with_leel(ch: str) -> bool:\n        cp = ord(ch)\n        if 0xAC00 <= cp <= 0xD7A3:\n            offset = cp - 0xAC00\n            return (offset % 28) == 8  # index of ㄹ\n        return False\n\n    # Determine the last relevant character for the rule\n    if word.isdigit():\n        # Use the pronunciation of the last digit\n        last_digit = word[-1]\n        last_char = DIGIT_READINGS.get(last_digit, '')\n    else:\n        last_char = word[-1]\n\n    # Split particle into consonant and vowel form\n    cons_form, vow_form = particle.split('/')\n\n    # Decide which form to use\n    use_consonant = False\n    if has_batchim(last_char):\n        use_consonant = True\n    # Special rule for \"으로/로\": if ends with ㄹ, treat as vowel\n    if particle == \"으로/로\" and ends_with_leel(last_char):\n        use_consonant = False\n\n    chosen_form = cons_form if use_consonant else vow_form\n    return word + chosen_form\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_jo_ends_in_a_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 337,
+        "output_tokens": 1280,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

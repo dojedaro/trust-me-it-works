@@ -1,0 +1,60 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Use regular expressions to extract optional weeks, days, and time components, validate the format and presence of at least one component, then calculate and return the total seconds as a float.",
+      "code": "import re\n\ndef parse_duration(text: str) -> float:\n    \"\"\"\n    Convert an ISO 8601 duration string (weeks or days with optional time) to seconds.\n    Supported formats (uppercase only):\n        - \"P<n>W\"\n        - \"P<n>D[T<n>H[n]M[n]S]\"\n    At least one component must be present.\n    Numbers are non-negative integers, except the last written component may have a decimal fraction.\n    Any other format (including years, months, lowercase, missing 'T' before time, etc.) raises ValueError.\n    \"\"\"\n    # Regular expression for the allowed formats\n    # Groups: weeks, days, time_part, hours, minutes, seconds\n    pattern = re.compile(\n        r'''\n        ^P                                   # starts with 'P'\n        (?:(?P<weeks>\\d+(?:[.,]\\d+)?)W)?     # optional weeks\n        (?:(?P<days>\\d+(?:[.,]\\d+)?)D)?      # optional days\n        (?:T                                 # optional time part\n            (?:(?P<hours>\\d+(?:[.,]\\d+)?)H)? # optional hours\n            (?:(?P<minutes>\\d+(?:[.,]\\d+)?)M)? # optional minutes\n            (?:(?P<seconds>\\d+(?:[.,]\\d+)?)S)? # optional seconds\n        )?                                   # end of time part\n        $                                     # end of string\n        ''',\n        re.VERBOSE\n    )\n\n    match = pattern.match(text)\n    if not match:\n        raise ValueError(f\"Invalid duration format: {text!r}\")\n\n    # Ensure at least one component is present\n    if not any(match.group(name) for name in ('weeks', 'days', 'hours', 'minutes', 'seconds')):\n        raise ValueError(f\"No components found in duration: {text!r}\")\n\n    # Ensure 'T' is present if any time component is used\n    # Since regex guarantees this, we don't need an extra check\n\n    def _to_float(value: str) -> float:\n        return float(value.replace(',', '.'))\n\n    total_seconds = 0.0\n    if match.group('weeks'):\n        total_seconds += _to_float(match.group('weeks')) * 7 * 86400\n    if match.group('days'):\n        total_seconds += _to_float(match.group('days')) * 86400\n    if match.group('hours'):\n        total_seconds += _to_float(match.group('hours')) * 3600\n    if match.group('minutes'):\n        total_seconds += _to_float(match.group('minutes')) * 60\n    if match.group('seconds'):\n        total_seconds += _to_float(match.group('seconds'))\n\n    return total_seconds\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 2,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_empty_forms_are_invalid",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_fractions",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_weeks_do_not_combine_and_case_matters",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 333,
+        "output_tokens": 661,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

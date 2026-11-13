@@ -1,0 +1,47 @@
+{
+  "task_id": "add_months",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse the input date, compute the new month and year accounting for negative offsets, determine the correct day respecting month length and billing rule, and output the formatted result.",
+      "code": "import calendar\nfrom datetime import date\n\ndef add_months(day: str, n: int) -> str:\n    # Parse the input date\n    y, m, d = map(int, day.split('-'))\n    # Compute new month and year\n    total_month = m - 1 + n  # zero-based month index\n    new_year = y + total_month // 12\n    new_month = total_month % 12 + 1\n    # Days in target month\n    _, last_day = calendar.monthrange(new_year, new_month)\n    # Determine if original date was last day of its month\n    _, last_orig_day = calendar.monthrange(y, m)\n    if d == last_orig_day:\n        new_day = last_day\n    else:\n        new_day = min(d, last_day)\n    return f\"{new_year:04d}-{new_month:02d}-{new_day:02d}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 303,
+        "output_tokens": 269,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

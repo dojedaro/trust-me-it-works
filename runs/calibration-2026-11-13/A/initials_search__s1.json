@@ -1,0 +1,47 @@
+{
+  "task_id": "initials_search",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement matching logic by mapping consonant Jamo to their indices in Hangul initial consonants, then compare each query character to the word's corresponding character or its initial consonant.",
+      "code": "def matches_initials(query: str, word: str) -> bool:\n    \"\"\"Return True if query matches the beginning of word using Hangul initials.\"\"\"\n    if not query:\n        return True\n\n    # Hangul syllable range and constants\n    HANGUL_BASE = 0xAC00\n    INITIAL_COUNT = 19\n    VOWEL_COUNT = 21\n    FINAL_COUNT = 28\n\n    # Map from compatibility Jamo (consonant) to its index in the initial consonant table\n    jamo_to_index = {\n        '\\u3131': 0,  # ㄱ\n        '\\u3132': 1,  # ㄲ\n        '\\u3134': 2,  # ㄴ\n        '\\u3137': 3,  # ㄷ\n        '\\u3138': 4,  # ㄸ\n        '\\u3139': 5,  # ㄹ\n        '\\u3141': 6,  # ㅁ\n        '\\u3142': 7,  # ㅂ\n        '\\u3143': 8,  # ㅃ\n        '\\u3145': 9,  # ㅅ\n        '\\u3146': 10, # ㅆ\n        '\\u3147': 11, # ㅇ\n        '\\u3148': 12, # ㅈ\n        '\\u3149': 13, # ㅉ\n        '\\u314A': 14, # ㅊ\n        '\\u314B': 15, # ㅋ\n        '\\u314C': 16, # ㅌ\n        '\\u314D': 17, # ㅍ\n        '\\u314E': 18, # ㅎ\n    }\n\n    # Inverse mapping from index to compatibility Jamo for quick lookup\n    index_to_jamo = {v: k for k, v in jamo_to_index.items()}\n\n    for i, q_char in enumerate(query):\n        if i >= len(word):\n            return False\n\n        w_char = word[i]\n\n        if q_char == w_char:\n            continue\n\n        # Check if query char is a consonant Jamo\n        if q_char in jamo_to_index:\n            # Check if word char is a Hangul syllable\n            w_ord = ord(w_char)\n            if HANGUL_BASE <= w_ord < HANGUL_BASE + INITIAL_COUNT * VOWEL_COUNT * FINAL_COUNT:\n                initial_index = (w_ord - HANGUL_BASE) // (VOWEL_COUNT * FINAL_COUNT)\n                if index_to_jamo[initial_index] == q_char:\n                    continue\n\n        # No match\n        return False\n\n    return True\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 313,
+        "output_tokens": 1024,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

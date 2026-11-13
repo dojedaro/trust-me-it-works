@@ -1,0 +1,47 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the proportional allocation with remainder distribution using integer arithmetic to avoid floating point errors.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    \"\"\"\n    Split an integer amount `total` into parts proportional to `weights`.\n\n    Each part is initially the floor of its share of abs(total).  Remaining cents\n    are distributed one by one to the parts with the largest fractional remainders.\n    Ties are broken by the earlier part.  If `total` is negative the result is\n    negated.  An empty or all-zero `weights` raises ValueError.\n    \"\"\"\n    # Absolute total to work with positive numbers\n    abs_total = abs(total)\n\n    # Basic sanity checks\n    if not weights:\n        raise ValueError(\"Weights list cannot be empty\")\n    weight_sum = sum(weights)\n    if weight_sum == 0:\n        raise ValueError(\"Sum of weights must be non‑zero\")\n\n    # Compute initial floors and remainders\n    parts = []\n    remainders = []\n    for idx, w in enumerate(weights):\n        # exact share numerator (no division yet)\n        share_num = abs_total * w\n        floor = share_num // weight_sum\n        # remainder numerator: share_num % weight_sum\n        remainder = share_num % weight_sum\n        parts.append(floor)\n        remainders.append((remainder, idx))\n\n    # Number of cents left to distribute\n    distributed = sum(parts)\n    remaining = abs_total - distributed\n\n    if remaining:\n        # Sort by remainder descending, then index ascending\n        remainders.sort(key=lambda x: (-x[0], x[1]))\n        for i in range(remaining):\n            idx = remainders[i][1]\n            parts[idx] += 1\n\n    # Negate if original total was negative\n    if total < 0:\n        parts = [-p for p in parts]\n\n    return parts\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 318,
+        "output_tokens": 645,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

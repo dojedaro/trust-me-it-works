@@ -1,0 +1,60 @@
+{
+  "task_id": "duration",
+  "room": "time",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Use regular expressions to parse the allowed ISO 8601 duration formats, convert components to seconds, and raise ValueError for any invalid patterns.",
+      "code": "import re\nfrom typing import Optional\n\n# Regex for allowed durations:\n#   P[n]W\n#   P[n]D[T[n]H[n]M[n]S]   (T with at least one time component)\n# Numbers are non‑negative integers; the last component may contain a decimal fraction\n#   ('.' or ',').  The decimal separator is replaced by '.' for parsing.\n_DAYS = 86400\n_WEEKS = 7 * _DAYS\n\n# Pattern components\nNUM = r'\\d+(?:[.,]\\d+)?'\nWEEK = rf'P(?P<weeks>{NUM})W'\nDAY = rf'P(?P<days>{NUM})'\nTIME = rf'(?:T(?:(?P<hours>{NUM})H)?(?:(?P<minutes>{NUM})M)?(?:(?P<seconds>{NUM})S)?)'\nPATTERN = rf'^(?:(?P<weeks>{NUM})W|P(?P<days>{NUM}){TIME})$'\n\n# Precompile\n_RE = re.compile(PATTERN)\n\ndef parse_duration(text: str) -> float:\n    \"\"\"\n    Convert an ISO 8601 duration (weeks or days with optional time) into seconds.\n\n    Raises:\n        ValueError: if the text does not conform to the allowed pattern or contains\n                    unsupported components (years, months, etc.).\n    \"\"\"\n    if not isinstance(text, str):\n        raise ValueError(\"Duration must be a string\")\n\n    m = _RE.fullmatch(text)\n    if not m:\n        raise ValueError(f\"Invalid duration format: {text!r}\")\n\n    # If weeks component matched\n    weeks = m.group('weeks')\n    if weeks is not None:\n        # ensure no other components present\n        if m.group('days') or m.group('hours') or m.group('minutes') or m.group('seconds'):\n            raise ValueError(f\"Unsupported components in duration: {text!r}\")\n        try:\n            w = float(weeks.replace(',', '.'))\n        except ValueError:\n            raise ValueError(f\"Invalid number for weeks: {weeks!r}\")\n        return w * _WEEKS\n\n    # Otherwise we have days (mandatory)\n    days = m.group('days')\n    if days is None:\n        raise ValueError(f\"Invalid duration format: {text!r}\")\n\n    try:\n        d = float(days.replace(',', '.'))\n    except ValueError:\n        raise ValueError(f\"Invalid number for days: {days!r}\")\n\n    total = d * _DAYS\n\n    # Parse time components if present\n    h = m.group('hours')\n    if h is not None:\n        total += float(h.replace(',', '.')) * 3600\n    m_min = m.group('minutes')\n    if m_min is not None:\n        total += float(m_min.replace(',', '.')) * 60\n    s = m.group('seconds')\n    if s is not None:\n        total += float(s.replace(',', '.'))\n\n    # Ensure that a 'T' was followed by at least one time component\n    if text.endswith('T'):\n        raise ValueError(f\"Time part 'T' must be followed by a component: {text!r}\")\n\n    return total\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 2,
+        "total": 5,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_basic",
+            "message": "ValueError: Invalid duration format: 'PT1H30M'"
+          },
+          {
+            "name": "test_fractions",
+            "message": "ValueError: Invalid duration format: 'PT0.5S'"
+          },
+          {
+            "name": "test_minutes_are_not_months",
+            "message": "ValueError: Invalid duration format: 'PT1M'"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 333,
+        "output_tokens": 759,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

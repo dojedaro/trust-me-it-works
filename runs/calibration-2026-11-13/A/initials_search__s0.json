@@ -1,0 +1,47 @@
+{
+  "task_id": "initials_search",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Build a mapping from compatibility Jamo initials to indices, then compare each query character to the corresponding word character or its initial consonant.",
+      "code": "def matches_initials(query: str, word: str) -> bool:\n    # Mapping of Hangul Compatibility Jamo initial consonants\n    jamo_initials = [\n        \"\\u3131\",  # ㄱ\n        \"\\u3132\",  # ㄲ\n        \"\\u3134\",  # ㄴ\n        \"\\u3137\",  # ㄷ\n        \"\\u3138\",  # ㄸ\n        \"\\u3139\",  # ㄹ\n        \"\\u3141\",  # ㅁ\n        \"\\u3142\",  # ㅂ\n        \"\\u3143\",  # ㅃ\n        \"\\u3145\",  # ㅅ\n        \"\\u3146\",  # ㅆ\n        \"\\u3147\",  # ㅇ\n        \"\\u3148\",  # ㅈ\n        \"\\u3149\",  # ㅉ\n        \"\\u314A\",  # ㅊ\n        \"\\u314B\",  # ㅋ\n        \"\\u314C\",  # ㅌ\n        \"\\u314D\",  # ㅍ\n        \"\\u314E\",  # ㅎ\n    ]\n    # Create a set for quick lookup\n    jamo_set = set(jamo_initials)\n\n    # Unicode range for precomposed Hangul syllables\n    HANGUL_START = 0xAC00\n    HANGUL_END = 0xD7A3\n    INITIAL_CONSONANT_COUNT = 19\n    VOWEL_COUNT = 21\n    FINAL_CONSONANT_COUNT = 28\n\n    # Helper to get initial consonant index of a Hangul syllable\n    def initial_consonant_index(ch: str) -> int | None:\n        code = ord(ch)\n        if HANGUL_START <= code <= HANGUL_END:\n            return (code - HANGUL_START) // (VOWEL_COUNT * FINAL_CONSONANT_COUNT)\n        return None\n\n    # Empty query matches everything\n    if not query:\n        return True\n\n    # Iterate over query and word\n    for qc, wc in zip(query, word):\n        if qc == wc:\n            continue\n        # If query char is an initial consonant and word char is a Hangul syllable\n        if qc in jamo_set:\n            idx = initial_consonant_index(wc)\n            if idx is not None and qc == jamo_initials[idx]:\n                continue\n        # No match\n        return False\n\n    # If query is longer than word, no match\n    return len(query) <= len(word)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 313,
+        "output_tokens": 945,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

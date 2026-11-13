@@ -1,0 +1,47 @@
+{
+  "task_id": "split_bill",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse total into integer cents, distribute evenly with at most 1 cent difference, then format back to strings with two decimals.",
+      "code": "def split_bill(total: str, n: int) -> list[str]:\n    # Convert total string to integer cents\n    dollars, cents = total.split('.')\n    total_cents = int(dollars) * 100 + int(cents)\n\n    # Base share in cents and how many people get an extra cent\n    base = total_cents // n\n    remainder = total_cents % n\n\n    shares = []\n    # First 'remainder' people get base+1 cent\n    for i in range(remainder):\n        share_cents = base + 1\n        shares.append(f\"{share_cents // 100}.{share_cents % 100:02d}\")\n    # Remaining people get base cents\n    for i in range(n - remainder):\n        share_cents = base\n        shares.append(f\"{share_cents // 100}.{share_cents % 100:02d}\")\n\n    return shares\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 288,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

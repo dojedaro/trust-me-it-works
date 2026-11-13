@@ -1,0 +1,47 @@
+{
+  "task_id": "fit_width",
+  "room": "text",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement a width‑aware prefix generator that keeps zero‑width characters attached to their base and truncates with an ellipsis when necessary.",
+      "code": "import unicodedata\n\ndef fit(text: str, width: int) -> str:\n    \"\"\"Return `text` truncated to fit in `width` terminal columns.\n    \n    Wide (W) or Fullwidth (F) characters take 2 columns.\n    Combining marks (Mn/Me) and format characters (Cf) take 0 columns.\n    Other characters take 1 column.\n    If truncation is needed, append the ellipsis character '…' (1 column).\n    \"\"\"\n    # Helper to compute column width of a single character\n    def char_width(ch: str) -> int:\n        ea = unicodedata.east_asian_width(ch)\n        if ea in (\"W\", \"F\"):\n            return 2\n        return 1\n\n    # Build grapheme-like clusters: base char + following zero‑width characters\n    clusters = []\n    i = 0\n    n = len(text)\n    while i < n:\n        ch = text[i]\n        # Determine if this is a base character (not combining or Cf)\n        cat = unicodedata.category(ch)\n        if cat in (\"Mn\", \"Me\", \"Cf\"):\n            # This should be attached to previous cluster; skip\n            i += 1\n            continue\n        # Start new cluster\n        cluster_chars = [ch]\n        i += 1\n        # Attach following zero‑width characters\n        while i < n:\n            nxt = text[i]\n            nxt_cat = unicodedata.category(nxt)\n            if nxt_cat in (\"Mn\", \"Me\", \"Cf\"):\n                cluster_chars.append(nxt)\n                i += 1\n            else:\n                break\n        clusters.append((\"\".join(cluster_chars), char_width(ch)))\n    \n    # Compute total width\n    total = sum(w for _, w in clusters)\n    if total <= width:\n        return text\n\n    # Need truncation: reserve 1 column for ellipsis\n    available = width - 1\n    prefix = []\n    curr = 0\n    for cluster, w in clusters:\n        if curr + w > available:\n            break\n        prefix.append(cluster)\n        curr += w\n\n    return \"\".join(prefix) + \"…\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 5,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 354,
+        "output_tokens": 675,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

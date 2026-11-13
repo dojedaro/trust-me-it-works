@@ -1,0 +1,47 @@
+{
+  "task_id": "read_number",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement `read_number` according to Sino‑Korean reading rules using only the standard library.",
+      "code": "# solution.py\ndef read_number(n: int) -> str:\n    \"\"\"Return the Sino‑Korean reading of an integer n (0 <= n < 10**12) in Hangul without spaces.\"\"\"\n    if n == 0:\n        return \"영\"\n\n    # Digit names\n    digits = [\"영\", \"일\", \"이\", \"삼\", \"사\", \"오\", \"육\", \"칠\", \"팔\", \"구\"]\n    # Place names within a 4‑digit group: thousand, hundred, ten\n    places = [\"천\", \"백\", \"십\"]\n    # Units for groups of four digits: (none, 만, 억)\n    units = [\"\", \"만\", \"억\"]\n\n    # Split number into groups of 4 digits from the right\n    groups = []\n    temp = n\n    while temp:\n        groups.append(temp % 10000)\n        temp //= 10000\n    # groups[0] is lowest (ones), groups[1] is 만, groups[2] is 억\n\n    # Build the reading from highest group to lowest\n    parts = []\n    for idx in range(len(groups) - 1, -1, -1):\n        group = groups[idx]\n        if group == 0:\n            continue  # skip zero group and its unit\n\n        # Read the 4‑digit group\n        group_parts = []\n        for i in range(4):  # thousands to ones\n            d = (group // (10 ** (3 - i))) % 10\n            if d == 0:\n                continue\n            if i < 3:  # thousands, hundreds, tens\n                if not (d == 1 and i < 3):  # omit '일' before 천/백/십\n                    group_parts.append(digits[d])\n                group_parts.append(places[i])\n            else:  # ones\n                group_parts.append(digits[d])\n\n        # Attach unit\n        if idx == 1:  # 만\n            if group == 1:\n                parts.append(units[idx])\n                continue\n        if idx > 0:\n            parts.append(\"\".join(group_parts) + units[idx])\n        else:\n            parts.append(\"\".join(group_parts))\n\n    return \"\".join(parts)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 328,
+        "output_tokens": 899,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

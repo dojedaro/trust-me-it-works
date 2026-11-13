@@ -1,0 +1,47 @@
+{
+  "task_id": "format_amount",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Map currencies to decimal places, round the amount with half‑up rounding, format integer part with commas, and construct the final string.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\n# mapping of currency code to required decimal places\n_CURRENCY_DECIMALS = {\n    'KRW': 0,\n    'JPY': 0,\n    'USD': 2,\n    'EUR': 2,\n    'BHD': 3,\n    'KWD': 3,\n}\n\ndef format_amount(amount: str, currency: str) -> str:\n    \"\"\"\n    Format a numeric amount as \"<CODE> <number>\" with the appropriate\n    number of decimal places for the given currency.\n\n    Rounding is halves‑away‑from‑zero. The integer part is grouped\n    in thousands with commas. A result that rounds to zero is never\n    negative. An unknown currency raises ValueError.\n    \"\"\"\n    # Validate currency and get decimal places\n    if currency not in _CURRENCY_DECIMALS:\n        raise ValueError(f\"Unknown currency: {currency}\")\n    decimals = _CURRENCY_DECIMALS[currency]\n\n    # Convert to Decimal for exact arithmetic\n    d = Decimal(amount)\n\n    # Prepare quantizer: e.g., Decimal('0.01') for 2 decimals\n    quantizer = Decimal('1.' + ('0' * decimals)) if decimals else Decimal('1')\n\n    # Round with half‑up rounding\n    rounded = d.quantize(quantizer, rounding=ROUND_HALF_UP)\n\n    # If the rounded value is zero, ensure it's positive\n    if rounded == 0:\n        rounded = abs(rounded)\n\n    # Separate integer and fractional parts\n    sign = \"-\" if rounded < 0 else \"\"\n    abs_rounded = abs(rounded)\n    int_part, _, frac_part = f\"{abs_rounded:.{decimals}f}\".partition(\".\")\n\n    # Insert commas into the integer part\n    int_part_with_commas = f\"{int(int_part):,}\"\n\n    # Assemble the formatted number\n    if decimals == 0:\n        formatted_number = f\"{sign}{int_part_with_commas}\"\n    else:\n        formatted_number = f\"{sign}{int_part_with_commas}.{frac_part}\"\n\n    return f\"{currency} {formatted_number}\"\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 327,
+        "output_tokens": 604,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

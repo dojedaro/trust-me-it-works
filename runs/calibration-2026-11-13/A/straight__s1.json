@@ -1,0 +1,47 @@
+{
+  "task_id": "straight",
+  "room": "games",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert ranks to numeric values, check for a straight or wheel, and return the highest rank or None.",
+      "code": "def straight_high(ranks: list[str]) -> str | None:\n    \"\"\"Return the highest rank of a straight if the hand is a straight, else None.\"\"\"\n    # Map each rank character to an integer 0-12\n    rank_to_val = {c: i for i, c in enumerate(\"23456789TJQKA\")}\n    values = [rank_to_val[r] for r in ranks]\n\n    # A straight must have 5 distinct ranks\n    if len(set(values)) != 5:\n        return None\n\n    sorted_vals = sorted(values)\n\n    # Check normal consecutive sequence\n    if all(sorted_vals[i] - sorted_vals[i - 1] == 1 for i in range(1, 5)):\n        return \"23456789TJQKA\"[sorted_vals[-1]]\n\n    # Check wheel straight (A-2-3-4-5)\n    if sorted_vals == [0, 1, 2, 3, 12]:\n        return \"5\"  # highest card is 5 in the wheel\n\n    return None\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 267,
+        "output_tokens": 320,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

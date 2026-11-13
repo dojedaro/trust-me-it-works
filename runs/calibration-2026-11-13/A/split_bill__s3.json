@@ -1,0 +1,47 @@
+{
+  "task_id": "split_bill",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Convert total to cents, split evenly, distribute the remainder one cent at a time, format as strings with two decimal places, and return the list sorted in descending order.",
+      "code": "def split_bill(total: str, n: int) -> list[str]:\n    \"\"\"Split a bill amount into n shares.\n\n    Args:\n        total: A decimal string with exactly two decimal places (e.g. \"100.00\").\n        n: Number of people to split the bill among (n >= 1).\n\n    Returns:\n        A list of n strings, each with two decimal places, representing the shares.\n        The shares sum to the original total, differ by at most $0.01, and larger\n        shares appear first.\n    \"\"\"\n    # Convert total to integer cents\n    dollars, cents = total.split('.')\n    total_cents = int(dollars) * 100 + int(cents)\n\n    # Base share for everyone in cents\n    base_cents = total_cents // n\n    # Remainder cents that need to be distributed\n    remainder = total_cents % n\n\n    # Build the list of shares in cents\n    shares_cents = [base_cents + 1 if i < remainder else base_cents for i in range(n)]\n\n    # Convert back to string with two decimal places, largest first\n    shares_str = [f\"{c // 100}.{c % 100:02d}\" for c in sorted(shares_cents, reverse=True)]\n    return shares_str\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 367,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

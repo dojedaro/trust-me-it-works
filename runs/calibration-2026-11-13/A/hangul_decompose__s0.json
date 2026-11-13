@@ -1,0 +1,68 @@
+{
+  "task_id": "hangul_decompose",
+  "room": "korea",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Compute Hangul decomposition using Unicode formulas and map indices to Hangul Compatibility Jamo, preserving all other characters.",
+      "code": "def decompose(text: str) -> str:\n    \"\"\"\n    Replace each precomposed Hangul syllable in *text* with its\n    constituent jamo in the order initial, vowel, final (if any).\n    Other characters are left unchanged.\n    \"\"\"\n    # Hangul constants\n    S_BASE = 0xAC00\n    L_COUNT = 19\n    V_COUNT = 21\n    T_COUNT = 28\n    N_COUNT = V_COUNT * T_COUNT  # 588\n\n    # Compatibility jamo lists\n    L_LIST = [\n        'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ',\n        'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ',\n        'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'\n    ]\n\n    V_LIST = [\n        'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ',\n        'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ',\n        'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'\n    ]\n\n    T_LIST = [\n        '',   'ㄱ',  'ㄲ',  'ㄳ',  'ㄴ',  'ㄵ',  'ㄶ',\n        'ㄷ',  'ㄹ',  'ㄺ',  'ㄻ',  'ㄼ',  'ㄽ',  'ㄾ',\n        'ㄿ',  'ㅀ',  'ㅁ',  'ㅂ',  'ㅄ',  'ㅅ',  'ㅆ',\n        'ㅇ',  'ㅈ',  'ㅊ',  'ㅋ',  'ㅌ',  'ㅍ',  'ㅎ'\n    ]\n\n    result = []\n\n    for ch in text:\n        code = ord(ch)\n        if S_BASE <= code < S_BASE + N_COUNT:\n            # decompose syllable\n            S_index = code - S_BASE\n            L_index = S_index // (V_COUNT * T_COUNT)\n            V_index = (S_index % (V_COUNT * T_COUNT)) // T_COUNT\n            T_index = S_index % T_COUNT\n\n            result.append(L_LIST[L_index])\n            result.append(V_LIST[V_index])\n            if T_index:\n                result.append(T_LIST[T_index])\n        else:\n            # non‑Hangul or already jamo\n            result.append(ch)\n\n    return ''.join(result)\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 2,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_compound_final_consonant",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_compound_vowel",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_first_and_last_syllables",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_output_is_compatibility_jamo",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_word",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 305,
+        "output_tokens": 1102,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

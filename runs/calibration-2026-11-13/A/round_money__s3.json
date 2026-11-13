@@ -1,0 +1,47 @@
+{
+  "task_id": "round_money",
+  "room": "money",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 3,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Use Decimal to round half‑away‑from‑zero to two decimals, then format to exactly two decimal places, ensuring “-0.00” is not returned.",
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\ndef round_money(amount: str) -> str:\n    \"\"\"\n    Round a decimal amount, given as a string, to two decimal places\n    with halves rounded away from zero, and return a string with\n    exactly two decimal digits. Never return a negative zero.\n    \"\"\"\n    d = Decimal(amount)\n    rounded = d.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)\n    # Avoid \"-0.00\"\n    if rounded == 0:\n        rounded = Decimal('0.00')\n    # Format with exactly two decimal places\n    return format(rounded, 'f')\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 260,
+        "output_tokens": 511,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

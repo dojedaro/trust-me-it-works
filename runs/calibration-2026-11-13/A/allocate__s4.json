@@ -1,0 +1,72 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 4,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement allocation using floor division, remainder distribution, handling negatives, and raising ValueError when all weights zero.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    if not weights:\n        raise ValueError(\"weights list must not be empty\")\n    if all(w == 0 for w in weights):\n        raise ValueError(\"all weights are zero\")\n\n    sign = -1 if total < 0 else 1\n    abs_total = abs(total)\n\n    # compute exact shares\n    shares = [w * abs_total for w in weights]\n    weight_sum = sum(share for share in shares)\n\n    if weight_sum == 0:\n        # all weights zero handled above\n        raise ValueError(\"total cannot be allocated with zero weights\")\n\n    # initial allocation (floor division)\n    floors = [share // weight_sum for share in shares]\n    # compute fractional remainders\n    remainders = [(share % weight_sum, i) for i, share in enumerate(shares)]\n\n    # remaining cents to distribute\n    remaining = abs_total - sum(floors)\n\n    # sort by remainder descending, then index ascending\n    remainders.sort(key=lambda x: (-x[0], x[1]))\n\n    result = floors[:]\n    for _, idx in remainders[:remaining]:\n        result[idx] += 1\n\n    # apply sign\n    return [x * sign for x in result]\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 0,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_even_split_and_examples",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_largest_remainder_wins",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_negative_total",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_ties_go_to_the_earlier_part",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_weights",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 318,
+        "output_tokens": 315,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

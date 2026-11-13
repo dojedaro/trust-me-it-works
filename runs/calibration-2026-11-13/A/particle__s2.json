@@ -1,0 +1,64 @@
+{
+  "task_id": "particle",
+  "room": "korea",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 2,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Check the last character for a Hangul syllable and determine if it ends in a consonant or a vowel (with a special rule for '으로/로' when the final consonant is ㄹ); otherwise treat digits as vowel-ending and attach the appropriate particle form.",
+      "code": "def attach_particle(word: str, particle: str) -> str:\n    # Hangul syllable block range\n    HANGUL_BASE = 0xAC00\n    HANGUL_END = 0xD7A3\n    # Final consonant list (index 0 means no batchim)\n    FINAL_JAMO = [\n        \"\", \"ㄱ\",\"ㄲ\",\"ㄴ\",\"ㄷ\",\"ㄸ\",\"ㄹ\",\"ㅁ\",\"ㅂ\",\"ㅃ\",\n        \"ㅅ\",\"ㅆ\",\"ㅇ\",\"ㅈ\",\"ㅉ\",\"ㅊ\",\"ㅋ\",\"ㅌ\",\"ㅍ\",\"ㅎ\"\n    ]\n\n    last_char = word[-1]\n    # Determine if last char is a digit\n    if last_char.isdigit():\n        # digits are treated as ending with a vowel\n        form = particle.split('/')[1]\n    elif HANGUL_BASE <= ord(last_char) <= HANGUL_END:\n        # Compute final consonant index\n        code = ord(last_char) - HANGUL_BASE\n        final_index = code % 28\n        # Special rule for '으로/로'\n        if particle == \"으로/로\" and final_index == FINAL_JAMO.index(\"ㄹ\"):\n            form = particle.split('/')[1]\n        else:\n            # If there is a final consonant, use the first form\n            form = particle.split('/')[0] if final_index != 0 else particle.split('/')[1]\n    else:\n        # For any other characters, default to vowel form\n        form = particle.split('/')[1]\n\n    return word + form\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 3,
+        "total": 7,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_rieul_takes_ro",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_round_numbers_are_read_as_a_whole",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_single_digits",
+            "message": "AssertionError"
+          },
+          {
+            "name": "test_zero_and_words_ending_in_digits",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 337,
+        "output_tokens": 808,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}

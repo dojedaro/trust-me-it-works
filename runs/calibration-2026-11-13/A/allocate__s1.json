@@ -1,0 +1,52 @@
+{
+  "task_id": "allocate",
+  "room": "money",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 1,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement the allocation logic as specified, handling zero weights, negative totals, and tie-breaking correctly.",
+      "code": "def allocate(total: int, weights: list[int]) -> list[int]:\n    \"\"\"\n    Split an integer amount of cents into parts proportional to the given weights.\n    The distribution uses the largest fractional remainders for rounding,\n    with ties broken by earlier indices. Negative totals are handled by\n    allocating the absolute value and then negating the result.\n    \"\"\"\n    if not weights:\n        raise ValueError(\"Weights list cannot be empty\")\n\n    abs_total = abs(total)\n    if all(w == 0 for w in weights):\n        raise ValueError(\"All weights are zero\")\n\n    weight_sum = sum(weights)\n    # Compute exact shares, floors, and fractional remainders\n    floors = []\n    remainders = []\n    for w in weights:\n        exact = abs_total * w / weight_sum\n        flr = int(exact)  # floor\n        floors.append(flr)\n        remainders.append(exact - flr)\n\n    distributed = sum(floors)\n    leftover = abs_total - distributed\n\n    # Determine the order to allocate the leftover cents:\n    # first by decreasing remainder, then by increasing index (for ties)\n    indices = list(range(len(weights)))\n    indices.sort(key=lambda i: (-remainders[i], i))\n\n    # Distribute the remaining cents\n    for i in indices[:leftover]:\n        floors[i] += 1\n\n    # Apply sign for negative totals\n    if total < 0:\n        floors = [-x for x in floors]\n\n    return floors\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 5,
+        "total": 6,
+        "all_passed": false,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": [
+          {
+            "name": "test_exact_with_huge_totals",
+            "message": "AssertionError"
+          }
+        ]
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 318,
+        "output_tokens": 441,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": false,
+  "error": null
+}
