@@ -48,7 +48,7 @@ The same small model writes the code in every variant. Only the checker changes:
 | **F. Devil's advocate with disputes** | as D, but the maker may dispute a failing test and the checker rules on it | Do disputes cut false alarms, or let the maker argue away real bugs? |
 
 The key number is the **false FINAL rate**: how often a checker approved code that fails the hidden tests.
-Every rate is reported with a 95% Wilson interval over 3 samples per task, because a single run per
+Every rate is reported with a 95% Wilson interval over 2 samples per task, because a single run per
 task is noise: in the pilot, the same prompt to the same model at temperature 0 gave different results.
 
 Other metrics, all computed from saved traces:
@@ -70,9 +70,15 @@ Models: [`configs/claude.toml`](configs/claude.toml) (used for the results above
 67% (24/36), Claude Haiku 5.5 92% at low effort and 100% at medium. Haiku 5.5 left checkers nothing to catch,
 so Haiku 4.5 writes the code.
 
+**Caveats this design carries.** The maker was chosen after calibrating on the same 12 tasks the
+experiment then ran on, so the tasks were picked to be hard for this maker. Checkers and maker are
+both Claude models and may share blind spots. Two samples per task means the 24 runs per variant are
+not 24 independent tasks. The differences between A, B and the rest are large enough to survive
+this; the differences among C to F are not.
+
 ## The Trap Room
 
-24 original tasks in 6 rooms, in two tiers:
+24 original tasks in 6 rooms, in two tiers. The Claude results above use the 12 novel tasks:
 
 - **Classic (12):** each hides one well-known trap, such as bowling's 10th frame or the A-2-3-4-5 straight.
 - **Novel (12):** familiar problems with a changed rule or an easy-to-miss requirement, so the model's
