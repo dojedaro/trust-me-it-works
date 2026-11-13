@@ -1,45 +1,145 @@
-Traceback (most recent call last):
-  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\models.py", line 127, in complete
-    with urllib.request.urlopen(req, timeout=120) as resp:
-         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
-  File "C:\Python314\Lib\urllib\request.py", line 187, in urlopen
-    return opener.open(url, data, timeout)
-           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "C:\Python314\Lib\urllib\request.py", line 493, in open
-    response = meth(req, response)
-  File "C:\Python314\Lib\urllib\request.py", line 602, in http_response
-    response = self.parent.error(
-        'http', request, response, code, msg, hdrs)
-  File "C:\Python314\Lib\urllib\request.py", line 531, in error
-    return self._call_chain(*args)
-           ~~~~~~~~~~~~~~~~^^^^^^^
-  File "C:\Python314\Lib\urllib\request.py", line 464, in _call_chain
-    result = func(*args)
-  File "C:\Python314\Lib\urllib\request.py", line 611, in http_error_default
-    raise HTTPError(req.full_url, code, msg, hdrs, fp)
-urllib.error.HTTPError: HTTP Error 400: Bad Request
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "<frozen runpy>", line 198, in _run_module_as_main
-  File "<frozen runpy>", line 88, in _run_code
-  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\__main__.py", line 5, in <module>
-    sys.exit(main())
-             ~~~~^^
-  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\cli.py", line 180, in main
-    return args.func(args)
-           ~~~~~~~~~^^^^^^
-  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\cli.py", line 95, in cmd_calibrate
-    run_experiment(tasks, ["A"], models, out, max_iters=1, samples=args.samples)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\runner.py", line 126, in run_experiment
-    trace = loop.run(task, variant=variant, sample=sample)
-  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\loop.py", line 274, in run
-    reply = self.maker.complete(prompts.MAKER_SYSTEM, user)
-  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\models.py", line 137, in complete
-    raise RuntimeError(f"{self.model}: HTTP {e.code}: {e.read()[:500]!r}") from e
-RuntimeError: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"Tool choice is none, but model called a tool","type":"invalid_request_error","code":"tool_use_failed","failed_generation":"{\\"name\\": \\"assistant\\u003c|channel|\\u003efinal\\", \\"arguments\\": PLAN: Implement the `game_score` function that processes a string of point winners, tracks scores according to tennis rules with no-ad scoring, and returns the correct score format.\\n\\n```python\\ndef game_score(points: str) -\\u003e str:\\n    \\"\\"\\"\\n    Calculate the current tennis score '
 Calibrating: 5 single-pass sample(s) x 24 task(s) -> C:\Users\rames\portfolio\trust-me-it-works\runs\calibration-2026-11-13
-[s0 A] bowling: FINAL after 1 iter(s), correct
-[s0 A] house_bowling: FINAL after 1 iter(s), correct
+[s0 A] no_ad_tennis: FINAL after 1 iter(s), correct
+[s0 A] straight: FINAL after 1 iter(s), correct
+[s0 A] hangul_decompose: FINAL after 1 iter(s), WRONG
+[s0 A] initials_search: FINAL after 1 iter(s), correct
+[s0 A] particle: FINAL after 1 iter(s), WRONG
+[s0 A] read_number: FINAL after 1 iter(s), correct
+[s0 A] allocate: FINAL after 1 iter(s), correct
+[s0 A] format_amount: FINAL after 1 iter(s), correct
+[s0 A] round_money: FINAL after 1 iter(s), correct
+[s0 A] split_bill: FINAL after 1 iter(s), correct
+[s0 A] dedupe: FINAL after 1 iter(s), correct
+[s0 A] leaderboard: FINAL after 1 iter(s), correct
+[s0 A] merge_intervals: FINAL after 1 iter(s), correct
+[s0 A] semver: FINAL after 1 iter(s), correct
+[s0 A] display_width: FINAL after 1 iter(s), correct
+[s0 A] fit_width: FINAL after 1 iter(s), correct
+[s0 A] palindrome: FINAL after 1 iter(s), correct
+[s0 A] same_text: FINAL after 1 iter(s), correct
+[s0 A] add_months: FINAL after 1 iter(s), correct
+[s0 A] business_days: FINAL after 1 iter(s), correct
+[s0 A] duration: FINAL after 1 iter(s), WRONG
+[s0 A] iso_week: FINAL after 1 iter(s), correct
+[s1 A] bowling: FAILED, will retry on the next run: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"property \'error\' is unsupported","type":"invalid_request_error"}}\n'
+[s1 A] house_bowling: FINAL after 1 iter(s), correct
+[s1 A] no_ad_tennis: FINAL after 1 iter(s), correct
+[s1 A] straight: FINAL after 1 iter(s), correct
+[s1 A] hangul_decompose: FINAL after 1 iter(s), correct
+[s1 A] initials_search: FINAL after 1 iter(s), correct
+[s1 A] particle: FINAL after 1 iter(s), WRONG
+[s1 A] read_number: FINAL after 1 iter(s), correct
+[s1 A] allocate: FINAL after 1 iter(s), WRONG
+[s1 A] format_amount: FINAL after 1 iter(s), correct
+[s1 A] round_money: FINAL after 1 iter(s), correct
+[s1 A] split_bill: FINAL after 1 iter(s), correct
+[s1 A] dedupe: FINAL after 1 iter(s), correct
+[s1 A] leaderboard: FINAL after 1 iter(s), correct
+[s1 A] merge_intervals: FINAL after 1 iter(s), correct
+[s1 A] semver: FINAL after 1 iter(s), correct
+[s1 A] display_width: FINAL after 1 iter(s), correct
+[s1 A] fit_width: FINAL after 1 iter(s), correct
+[s1 A] palindrome: FINAL after 1 iter(s), correct
+[s1 A] same_text: FINAL after 1 iter(s), correct
+[s1 A] add_months: FINAL after 1 iter(s), correct
+[s1 A] business_days: FINAL after 1 iter(s), correct
+[s1 A] duration: FINAL after 1 iter(s), WRONG
+[s1 A] iso_week: FAILED, will retry on the next run: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"property \'error\' is unsupported","type":"invalid_request_error"}}\n'
+[s2 A] bowling: FINAL after 1 iter(s), correct
+[s2 A] house_bowling: FINAL after 1 iter(s), correct
+[s2 A] no_ad_tennis: FINAL after 1 iter(s), correct
+[s2 A] straight: FINAL after 1 iter(s), WRONG
+[s2 A] hangul_decompose: FINAL after 1 iter(s), WRONG
+[s2 A] initials_search: FINAL after 1 iter(s), correct
+[s2 A] particle: FINAL after 1 iter(s), WRONG
+[s2 A] read_number: FINAL after 1 iter(s), WRONG
+[s2 A] allocate: FINAL after 1 iter(s), WRONG
+[s2 A] format_amount: FINAL after 1 iter(s), correct
+[s2 A] round_money: FINAL after 1 iter(s), correct
+[s2 A] split_bill: FINAL after 1 iter(s), correct
+[s2 A] dedupe: FINAL after 1 iter(s), correct
+[s2 A] leaderboard: FINAL after 1 iter(s), correct
+[s2 A] merge_intervals: FAILED, will retry on the next run: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"property \'error\' is unsupported","type":"invalid_request_error"}}\n'
+[s2 A] semver: FINAL after 1 iter(s), correct
+[s2 A] display_width: FAILED, will retry on the next run: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"property \'error\' is unsupported","type":"invalid_request_error"}}\n'
+[s2 A] fit_width: FINAL after 1 iter(s), correct
+[s2 A] palindrome: FINAL after 1 iter(s), correct
+[s2 A] same_text: FINAL after 1 iter(s), correct
+[s2 A] add_months: FINAL after 1 iter(s), correct
+[s2 A] business_days: FINAL after 1 iter(s), correct
+[s2 A] duration: FINAL after 1 iter(s), WRONG
+[s2 A] iso_week: FINAL after 1 iter(s), correct
+[s3 A] bowling: FAILED, will retry on the next run: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"property \'error\' is unsupported","type":"invalid_request_error"}}\n'
+[s3 A] house_bowling: FINAL after 1 iter(s), correct
+[s3 A] no_ad_tennis: FINAL after 1 iter(s), correct
+[s3 A] straight: FINAL after 1 iter(s), correct
+[s3 A] hangul_decompose: FINAL after 1 iter(s), correct
+[s3 A] initials_search: FINAL after 1 iter(s), correct
+[s3 A] particle: FINAL after 1 iter(s), WRONG
+[s3 A] read_number: FINAL after 1 iter(s), correct
+[s3 A] allocate: FINAL after 1 iter(s), correct
+[s3 A] format_amount: FINAL after 1 iter(s), WRONG
+[s3 A] round_money: FINAL after 1 iter(s), correct
+[s3 A] split_bill: FINAL after 1 iter(s), correct
+[s3 A] dedupe: FINAL after 1 iter(s), correct
+[s3 A] leaderboard: FINAL after 1 iter(s), correct
+[s3 A] merge_intervals: FINAL after 1 iter(s), correct
+[s3 A] semver: FINAL after 1 iter(s), correct
+[s3 A] display_width: FINAL after 1 iter(s), correct
+[s3 A] fit_width: FINAL after 1 iter(s), correct
+[s3 A] palindrome: FINAL after 1 iter(s), correct
+[s3 A] same_text: FINAL after 1 iter(s), correct
+[s3 A] add_months: FINAL after 1 iter(s), correct
+[s3 A] business_days: FINAL after 1 iter(s), correct
+[s3 A] duration: FINAL after 1 iter(s), WRONG
+[s3 A] iso_week: FINAL after 1 iter(s), correct
+[s4 A] bowling: FINAL after 1 iter(s), correct
+[s4 A] house_bowling: FINAL after 1 iter(s), correct
+[s4 A] no_ad_tennis: FINAL after 1 iter(s), correct
+[s4 A] straight: FINAL after 1 iter(s), correct
+[s4 A] hangul_decompose: FINAL after 1 iter(s), correct
+[s4 A] initials_search: FINAL after 1 iter(s), correct
+[s4 A] particle: FINAL after 1 iter(s), WRONG
+[s4 A] read_number: FINAL after 1 iter(s), WRONG
+[s4 A] allocate: FINAL after 1 iter(s), WRONG
+[s4 A] format_amount: FINAL after 1 iter(s), correct
+[s4 A] round_money: FINAL after 1 iter(s), correct
+[s4 A] split_bill: FAILED, will retry on the next run: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"property \'error\' is unsupported","type":"invalid_request_error"}}\n'
+[s4 A] dedupe: FINAL after 1 iter(s), correct
+[s4 A] leaderboard: FINAL after 1 iter(s), correct
+[s4 A] merge_intervals: FINAL after 1 iter(s), correct
+[s4 A] semver: FINAL after 1 iter(s), correct
+[s4 A] display_width: FINAL after 1 iter(s), correct
+[s4 A] fit_width: FINAL after 1 iter(s), correct
+[s4 A] palindrome: FINAL after 1 iter(s), correct
+[s4 A] same_text: FINAL after 1 iter(s), correct
+[s4 A] add_months: FINAL after 1 iter(s), correct
+[s4 A] business_days: FINAL after 1 iter(s), correct
+[s4 A] duration: FINAL after 1 iter(s), WRONG
+[s4 A] iso_week: FINAL after 1 iter(s), correct
+
+task              room   samples  first_try_pass_rate
+add_months        time   5        1.0                
+allocate          money  5        0.4                
+bowling           games  3        1.0                
+business_days     time   5        1.0                
+dedupe            spec   5        1.0                
+display_width     text   4        1.0                
+duration          time   5        0.0                
+fit_width         text   5        1.0                
+format_amount     money  5        0.8                
+hangul_decompose  korea  5        0.6                
+house_bowling     games  5        1.0                
+initials_search   korea  5        1.0                
+iso_week          time   4        1.0                
+leaderboard       spec   5        1.0                
+merge_intervals   spec   4        1.0                
+no_ad_tennis      games  5        1.0                
+palindrome        text   5        1.0                
+particle          korea  5        0.0                
+read_number       korea  5        0.6                
+round_money       money  5        1.0                
+same_text         text   5        1.0                
+semver            spec   5        1.0                
+split_bill        money  4        1.0                
+straight          games  5        0.8                
