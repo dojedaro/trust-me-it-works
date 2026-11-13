@@ -1,0 +1,26 @@
+# Claude configuration (paid; about $5-8 for the full run).
+# The free Groq tier allows ~200k tokens a day, so the full experiment would take about a week there.
+# Maker and checker are different models, as the experiment requires: a small model writes the code,
+# a larger one checks it. Install the SDK with: pip install -e ".[claude]"
+
+[providers.anthropic]
+type = "anthropic"
+api_key_env = "ANTHROPIC_API_KEY"
+
+[roles.maker]          # writes the code
+provider = "anthropic"
+# Calibration on the 12 novel tasks: Claude Haiku 5.5 solved 100% first try at medium effort (92% at low),
+# leaving checkers nothing to catch. Haiku 4.5 (no thinking) solved 72%, close to gpt-oss-20b's 73%.
+model = "claude-haiku-4-5"
+
+[roles.checker]        # checks the code: a different, larger model
+provider = "anthropic"
+model = "claude-sonnet-5-5"
+effort = "medium"
+
+[run]
+max_iters = 5
+samples = 2            # runs per (variant, task)
+stop_when_unchanged = true
+max_calls = 900        # hard cap on model calls per command (about $4 for the novel tier, 2 samples)
+max_tokens = 8000      # thinking counts toward this; truncated replies are counted in every summary

@@ -11,7 +11,7 @@ from pathlib import Path
 
 from . import prompts
 from .loop import Checker, DisputeChecker, Loop, NoChecker, OracleChecker, ScoreChecker, TestWriterChecker
-from .models import BudgetExceeded, CallBudget, FakeModel, Model, OpenAICompatModel, RateLimited
+from .models import AnthropicModel, BudgetExceeded, CallBudget, FakeModel, Model, OpenAICompatModel, RateLimited
 from .tasks import Task
 
 VARIANTS = {
@@ -37,6 +37,14 @@ def models_from_config(path: Path) -> tuple[Models, dict]:
     def build(role: str) -> Model:
         r = cfg["roles"][role]
         p = cfg["providers"][r["provider"]]
+        if p.get("type") == "anthropic":
+            return AnthropicModel(
+                model=r["model"],
+                api_key_env=p["api_key_env"],
+                max_tokens=cfg["run"].get("max_tokens", 8000),
+                effort=r.get("effort"),
+                budget=budget,
+            )
         return OpenAICompatModel(
             model=r["model"],
             base_url=p["base_url"],
@@ -222,6 +230,16 @@ def summarize(traces: list[dict]) -> list[dict]:
                 ),
                 "truncated_replies": sum(
                     it["maker_usage"].get("truncated", 0) + it["checker_usage"].get("truncated", 0)
+                    for t in ts
+                    for it in t["iterations"]
+                ),
+                "maker_tokens": sum(
+                    it["maker_usage"].get("input_tokens", 0) + it["maker_usage"].get("output_tokens", 0)
+                    for t in ts
+                    for it in t["iterations"]
+                ),
+                "checker_tokens": sum(
+                    it["checker_usage"].get("input_tokens", 0) + it["checker_usage"].get("output_tokens", 0)
                     for t in ts
                     for it in t["iterations"]
                 ),

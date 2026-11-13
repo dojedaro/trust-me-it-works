@@ -164,3 +164,60 @@ def list_models(base_url: str, api_key_env: str) -> list[str]:
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
         return sorted(m["id"] for m in json.load(resp)["data"])
+
+
+# Models that accept the server-side refusal fallback routed by category.
+_FALLBACK_MODELS = {"claude-opus-5-5", "claude-sonnet-5-5"}
+
+
+@dataclass
+class AnthropicModel:
+    """Claude through the official Anthropic SDK (optional dependency: pip install -e ".[claude]").
+
+    Current Claude models reject a temperature setting, so samples differ by default; adaptive thinking
+    counts toward max_tokens, so the cap is set generously and truncation is recorded.
+    """
+
+    model: str
+    api_key_env: str = "ANTHROPIC_API_KEY"
+    max_tokens: int = 8000
+    effort: str | None = None  # "low" / "medium" / "high"
+    budget: CallBudget | None = None
+    refusals: int = 0
+    _client: object = None
+
+    @property
+    def name(self) -> str:
+        return self.model
+
+    def complete(self, system: str, user: str) -> Completion:
+        if self.budget is not None:
+            self.budget.spend()
+        if self._client is None:
+            import anthropic  # optional dependency
+
+            self._client = anthropic.Anthropic(api_key=os.environ.get(self.api_key_env), max_retries=6)
+        params: dict = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+        }
+        if self.effort:
+            params["output_config"] = {"effort": self.effort}
+        if self.model in _FALLBACK_MODELS:
+            # On a safety-classifier decline, the API re-runs the request on a fallback model in the same call.
+            resp = self._client.beta.messages.create(
+                betas=["server-side-fallback-2026-07-01"], fallbacks="default", **params
+            )
+        else:
+            resp = self._client.messages.create(**params)
+        if resp.stop_reason == "refusal":
+            self.refusals += 1
+        text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
+        return Completion(
+            text=text.strip(),
+            input_tokens=resp.usage.input_tokens,
+            output_tokens=resp.usage.output_tokens,
+            truncated=resp.stop_reason == "max_tokens",
+        )

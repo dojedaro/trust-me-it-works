@@ -13,6 +13,7 @@ dependencies = []  # runtime is standard library only
 
 [project.optional-dependencies]
 dev = ["pytest==9.2.0", "ruff==0.17.4"]
+claude = ["anthropic>=2.8,<3"]
 
 [project.scripts]
 trustme = "trustme.cli:main"
