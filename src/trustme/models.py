@@ -88,6 +88,7 @@ class OpenAICompatModel:
     max_retries: int = 6
     reasoning_effort: str | None = None  # "low" / "medium" / "high" for reasoning models that support it
     budget: CallBudget | None = None
+    glitches: int = 0  # provider-side malformed generations that were retried
     _last_call: float = 0.0
 
     @property
@@ -134,7 +135,13 @@ class OpenAICompatModel:
                         raise RateLimited(f"{self.model}: rate limited for {wait_s:.0f}s; re-run later") from e
                     time.sleep(wait_s)
                     continue
-                raise RuntimeError(f"{self.model}: HTTP {e.code}: {e.read()[:500]!r}") from e
+                body = e.read()
+                if e.code == 400 and b"tool_use_failed" in body:
+                    # gpt-oss sometimes emits a malformed internal channel that the provider rejects as a
+                    # tool call. It's a sampling glitch, not a bad request: the same request usually works.
+                    self.glitches += 1
+                    continue
+                raise RuntimeError(f"{self.model}: HTTP {e.code}: {body[:500]!r}") from e
             usage = data.get("usage") or {}
             choice = data["choices"][0]
             return Completion(

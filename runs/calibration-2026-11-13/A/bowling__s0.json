@@ -1,0 +1,47 @@
+{
+  "task_id": "bowling",
+  "room": "games",
+  "variant": "A",
+  "tier": "classic",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Parse rolls frame by frame, handling strikes, spares, and open frames, summing scores accordingly.",
+      "code": "def bowling_score(rolls: list[int]) -> int:\n    total = 0\n    i = 0  # index in rolls\n    for frame in range(10):\n        if rolls[i] == 10:  # strike\n            total += 10 + rolls[i + 1] + rolls[i + 2]\n            i += 1\n        else:\n            frame_sum = rolls[i] + rolls[i + 1]\n            if frame_sum == 10:  # spare\n                total += 10 + rolls[i + 2]\n            else:  # open frame\n                total += frame_sum\n            i += 2\n    return total\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 7,
+        "total": 7,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 271,
+        "output_tokens": 188,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

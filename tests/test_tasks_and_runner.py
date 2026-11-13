@@ -78,3 +78,20 @@ def test_fake_run_of_every_variant(tmp_path: Path):
     assert set(rows) == set("ABCDEF")
     # The fake checker's smoke test is correct, so it never counts as a wrong test.
     assert rows["D"]["wrong_test_rate"] == 0.0
+
+
+def test_a_failed_call_skips_that_run_only(tmp_path: Path):
+    tasks = TASKS[:2]
+    models = fake_models(tasks)
+    real = models.maker.script
+
+    def flaky(system: str, user: str) -> str:
+        if user.startswith(tasks[0].render_prompt()) and not user.startswith(tasks[0].render_prompt() + "\n\nYour"):
+            raise RuntimeError("HTTP 500 after retries")
+        return real(system, user)
+
+    models.maker.script = flaky
+    logs: list[str] = []
+    written = run_experiment(tasks, ["A"], models, tmp_path, log=logs.append)
+    assert [p.name for p in written] == [f"{tasks[1].id}__s0.json"]
+    assert any("FAILED" in line for line in logs)

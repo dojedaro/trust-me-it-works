@@ -11,7 +11,7 @@ from pathlib import Path
 
 from . import prompts
 from .loop import Checker, DisputeChecker, Loop, NoChecker, OracleChecker, ScoreChecker, TestWriterChecker
-from .models import CallBudget, FakeModel, Model, OpenAICompatModel
+from .models import BudgetExceeded, CallBudget, FakeModel, Model, OpenAICompatModel, RateLimited
 from .tasks import Task
 
 VARIANTS = {
@@ -123,7 +123,15 @@ def run_experiment(
                 path = out_dir / variant / f"{task.id}__s{sample}.json"
                 if path.exists():
                     continue
-                trace = loop.run(task, variant=variant, sample=sample)
+                try:
+                    trace = loop.run(task, variant=variant, sample=sample)
+                except (RateLimited, BudgetExceeded):
+                    raise  # stop the whole run; re-running resumes from here
+                except RuntimeError as e:
+                    # One failed API call shouldn't end a multi-hour run. Nothing is saved, so the next
+                    # run retries this (variant, task, sample).
+                    log(f"[s{sample} {variant}] {task.id}: FAILED, will retry on the next run: {e}"[:300])
+                    continue
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(trace.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
                 written.append(path)

@@ -1,0 +1,47 @@
+{
+  "task_id": "house_bowling",
+  "room": "games",
+  "variant": "A",
+  "tier": "novel",
+  "maker": "openai/gpt-oss-20b",
+  "checker_kind": "none",
+  "checker_model": null,
+  "max_iters": 1,
+  "sample": 0,
+  "stop_when_unchanged": false,
+  "iterations": [
+    {
+      "index": 0,
+      "plan": "Implement scoring logic with 10 frames, handling strike/spare bonuses only from existing rolls and special 10th frame rules.",
+      "code": "def house_bowling(rolls: list[int]) -> int:\n    score = 0\n    i = 0  # index into rolls\n\n    # Frames 1 through 9\n    for _ in range(9):\n        if rolls[i] == 10:  # strike\n            score += 10\n            # Add next two rolls if they exist\n            if i + 1 < len(rolls):\n                score += rolls[i + 1]\n            if i + 2 < len(rolls):\n                score += rolls[i + 2]\n            i += 1\n        else:\n            first = rolls[i]\n            second = rolls[i + 1] if i + 1 < len(rolls) else 0\n            frame_total = first + second\n            if frame_total == 10:  # spare\n                score += 10\n                if i + 2 < len(rolls):\n                    score += rolls[i + 2]\n            else:\n                score += frame_total\n            i += 2\n\n    # Frame 10: just sum the remaining rolls (either 1 or 2)\n    # According to the house rule, no extra bonus rolls are granted.\n    while i < len(rolls):\n        score += rolls[i]\n        i += 1\n\n    return score\n",
+      "verdict": "FINAL",
+      "feedback": "",
+      "checker_details": {},
+      "ground_truth": {
+        "passed": 6,
+        "total": 6,
+        "all_passed": true,
+        "timed_out": false,
+        "crashed": false,
+        "collection_error": null,
+        "failures": []
+      },
+      "maker_usage": {
+        "calls": 1,
+        "input_tokens": 372,
+        "output_tokens": 439,
+        "truncated": 0
+      },
+      "checker_usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "truncated": 0
+      },
+      "checker_tests_truth": null
+    }
+  ],
+  "final_decision": "FINAL",
+  "final_correct": true,
+  "error": null
+}

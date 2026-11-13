@@ -1,0 +1,45 @@
+Traceback (most recent call last):
+  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\models.py", line 127, in complete
+    with urllib.request.urlopen(req, timeout=120) as resp:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\urllib\request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\urllib\request.py", line 493, in open
+    response = meth(req, response)
+  File "C:\Python314\Lib\urllib\request.py", line 602, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "C:\Python314\Lib\urllib\request.py", line 531, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Python314\Lib\urllib\request.py", line 464, in _call_chain
+    result = func(*args)
+  File "C:\Python314\Lib\urllib\request.py", line 611, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 400: Bad Request
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\__main__.py", line 5, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\cli.py", line 180, in main
+    return args.func(args)
+           ~~~~~~~~~^^^^^^
+  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\cli.py", line 95, in cmd_calibrate
+    run_experiment(tasks, ["A"], models, out, max_iters=1, samples=args.samples)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\runner.py", line 126, in run_experiment
+    trace = loop.run(task, variant=variant, sample=sample)
+  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\loop.py", line 274, in run
+    reply = self.maker.complete(prompts.MAKER_SYSTEM, user)
+  File "C:\Users\rames\portfolio\trust-me-it-works\src\trustme\models.py", line 137, in complete
+    raise RuntimeError(f"{self.model}: HTTP {e.code}: {e.read()[:500]!r}") from e
+RuntimeError: openai/gpt-oss-20b: HTTP 400: b'{"error":{"message":"Tool choice is none, but model called a tool","type":"invalid_request_error","code":"tool_use_failed","failed_generation":"{\\"name\\": \\"assistant\\u003c|channel|\\u003efinal\\", \\"arguments\\": PLAN: Implement the `game_score` function that processes a string of point winners, tracks scores according to tennis rules with no-ad scoring, and returns the correct score format.\\n\\n```python\\ndef game_score(points: str) -\\u003e str:\\n    \\"\\"\\"\\n    Calculate the current tennis score '
+Calibrating: 5 single-pass sample(s) x 24 task(s) -> C:\Users\rames\portfolio\trust-me-it-works\runs\calibration-2026-11-13
+[s0 A] bowling: FINAL after 1 iter(s), correct
+[s0 A] house_bowling: FINAL after 1 iter(s), correct
