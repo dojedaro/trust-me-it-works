@@ -1,3 +1,6 @@
+> **Historical brief (2026-11-09).** This is the original plan, kept to show how the project was scoped.
+> It is out of date: the models, task count and results are in the [README](README.md).
+
 # Trust Me, It Works
 ### Can an AI tell when its own code is wrong?
 

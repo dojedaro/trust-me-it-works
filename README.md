@@ -1,5 +1,7 @@
 # Trust Me, It Works
 
+[![CI](https://github.com/dojedaro/trust-me-it-works/actions/workflows/ci.yml/badge.svg)](https://github.com/dojedaro/trust-me-it-works/actions/workflows/ci.yml)
+
 **Can an AI tell when its own code is wrong?**
 
 A popular prompting pattern asks a model to work in a loop: *plan, write, score your own work 1–10,
@@ -17,14 +19,15 @@ know whether the checker was right.
 
 | Variant | Final correct | Checker approved wrong code | False alarms (rejected correct code) |
 |---|---|---|---|
-| A. Single pass | 58% (14/24) | 10 of 24 | 0 |
+| A. Single pass | 58% (14/24) | n/a (no checker; 10 of 24 wrong) | 0 |
 | B. Self-check | 71% (17/24) | **4 of 17 (24%)** | 15 |
 | C. Cross-check (Sonnet scores) | **96% (23/24)** | 1 of 20 (5%) | 20 |
 | D. Devil's advocate (Sonnet writes tests) | 92% (22/24) | 1 of 23 (4%) | 8 |
 | E. Oracle (hidden-test failures shown) | 92% (22/24) | 0 of 22 | 0 |
 | F. Devil's advocate + disputes | 92% (22/24) | 2 of 24 (8%) | 9 |
 
-- **Self-checking approves wrong code 1 time in 4**; a different checker cuts that to about 1 in 20.
+- **Self-checking approved wrong code in 4 of 17 cases; a different checker in 1 of 20.** The samples are
+  small and the 95% intervals overlap (10–47% vs. 1–24%), so this is a strong hint, not a proven gap.
 - **The checker's quality decides everything:** only 2.6% of Sonnet 5.5's tests were wrong (19 of 726),
   against 31% for gpt-oss-120b in the pilot.
 - **The maker never pushed back:** in variant F it saw 117 failing tests and disputed none, though 23
@@ -73,8 +76,9 @@ so Haiku 4.5 writes the code.
 **Caveats this design carries.** The maker was chosen after calibrating on the same 12 tasks the
 experiment then ran on, so the tasks were picked to be hard for this maker. Checkers and maker are
 both Claude models and may share blind spots. Two samples per task means the 24 runs per variant are
-not 24 independent tasks. The differences between A, B and the rest are large enough to survive
-this; the differences among C to F are not.
+not 24 independent tasks. The clearest result is single pass vs. any checker
+with real feedback (A: 58% correct, 39–76%; C: 96%, 80–99%), where the intervals don't overlap. Self-checking
+(B: 71%, 51–85%) overlaps with C to F, and C to F are indistinguishable from each other.
 
 ## The Trap Room
 
@@ -125,6 +129,12 @@ python -m trustme validate                 # every task is fair
 python -m trustme run --fake               # full pipeline with scripted models, no API key needed
 pytest                                     # harness, sandbox and loop-engine tests
 
+# Reproduce the published results (Claude; about $4)
+pip install -e ".[claude]"
+echo ANTHROPIC_API_KEY=... >> .env
+python -m trustme run --config configs/claude.toml --only novel --name my-run
+
+# Or $0 on Groq's free tier (slow: ~200k tokens/day)
 cp .env.example .env                       # then paste a free Groq API key into .env
 python -m trustme models                   # check which model IDs Groq currently offers
 python -m trustme run --variants A,B --only korea --name dev
