@@ -1,0 +1,20 @@
+id = "add_months"
+room = "time"
+tier = "novel"
+title = '''Add months, the way a billing system does'''
+signature = '''def add_months(day: str, n: int) -> str'''
+prompt = '''
+Write `add_months(day, n)` that moves the date `day` ("YYYY-MM-DD") by `n` calendar months (`n` may be
+negative or zero) and returns the new date in the same format. Billing rule: if `day` is the last day of
+its month, the result is the last day of the target month. Otherwise keep the same day of the month,
+using the target month's last day if the target month is too short.
+'''
+trap = '''The sticky end of month: 2026-02-28 is the last day of February, so one month later is 2026-03-31, not 03-28. But 2024-02-28 is not the last day of a leap February, so it stays on the 28th. Clamping alone (what most date libraries do) misses the sticky rule.'''
+
+[[examples]]
+call = '''add_months('2026-01-15', 1)'''
+result = ''''2026-02-15''''
+
+[[examples]]
+call = '''add_months('2026-01-31', 1)'''
+result = ''''2026-02-28''''

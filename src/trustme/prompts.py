@@ -53,6 +53,52 @@ Reply with only one ```python code block containing the tests. Standard library 
 
 TESTWRITER_USER = SCORE_USER
 
+DISPUTE_SYSTEM = """You wrote a solution to a coding task. A reviewer wrote tests to break it, and some failed.
+A reviewer's test can be wrong: its expected value may contradict the task statement.
+For each failing test, decide:
+- "accept": the test is right and your code has a bug, or
+- "dispute": the test's expectation contradicts the task statement. Quote the sentence of the task it contradicts.
+Only dispute a test you are confident is wrong. Reply with only a JSON object, one entry per failing test:
+{"test_name": {"action": "accept" or "dispute", "reason": "..."}}"""
+
+DISPUTE_USER = """TASK:
+{task}
+
+YOUR solution.py:
+```python
+{code}
+```
+
+THE REVIEWER'S TESTS:
+```python
+{tests}
+```
+
+FAILING TESTS:
+{failures}"""
+
+RULING_SYSTEM = """You wrote tests to break a solution to a coding task. The author disputes some failing tests,
+claiming their expected values contradict the task statement. Judge each dispute against the task statement
+only, not against what the solution returns. Withdraw a test only if the task statement shows it is wrong.
+Reply with only a JSON object, one entry per disputed test:
+{"test_name": {"action": "uphold" or "withdraw", "reason": "..."}}"""
+
+RULING_USER = """TASK:
+{task}
+
+THE SOLUTION:
+```python
+{code}
+```
+
+YOUR TESTS:
+```python
+{tests}
+```
+
+DISPUTES:
+{disputes}"""
+
 _CODE_BLOCK = re.compile(r"```(?:python|py)?[ \t]*\r?\n(.*?)```", re.DOTALL | re.IGNORECASE)
 _PLAN = re.compile(r"^\s*PLAN:\s*(.+)$", re.MULTILINE)
 _JSON_OBJECT = re.compile(r"\{.*\}", re.DOTALL)
@@ -69,6 +115,29 @@ def extract_code(text: str) -> str:
 def extract_plan(text: str) -> str:
     match = _PLAN.search(text)
     return match.group(1).strip() if match else ""
+
+
+def parse_decisions(text: str, names: set[str], actions: tuple[str, str]) -> dict[str, dict[str, str]]:
+    """Parse {"test_name": {"action": ..., "reason": ...}} for the given test names.
+
+    actions[0] is the safe default ("accept" a test, or "uphold" it): a missing or unparsable entry never
+    removes a test, so a garbled reply can't turn a failure into a pass.
+    """
+    default = {name: {"action": actions[0], "reason": ""} for name in names}
+    match = _JSON_OBJECT.search(text)
+    if not match:
+        return default
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return default
+    if not isinstance(data, dict):
+        return default
+    for name in names:
+        entry = data.get(name)
+        if isinstance(entry, dict) and entry.get("action") in actions:
+            default[name] = {"action": entry["action"], "reason": str(entry.get("reason", ""))[:1000]}
+    return default
 
 
 def parse_scores(text: str) -> tuple[dict[str, int], str]:

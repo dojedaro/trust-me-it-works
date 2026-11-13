@@ -1,0 +1,24 @@
+id = "fit_width"
+room = "text"
+tier = "novel"
+title = '''Truncate text to fit a terminal column'''
+signature = '''def fit(text: str, width: int) -> str'''
+prompt = '''
+Write `fit(text, width)` that shortens `text` to fit in `width` terminal columns (width >= 1).
+Characters whose East Asian Width is Wide or Fullwidth (Hangul syllables, CJK ideographs, fullwidth
+letters, most emoji) take 2 columns. Combining marks (general category Mn or Me) and invisible format
+characters (category Cf, such as the zero-width joiner) take 0 columns. Everything else takes 1. Use
+the Unicode data in Python's unicodedata module.
+If `text` already fits, return it unchanged. Otherwise return the longest prefix that still fits when
+followed by "…" (which takes 1 column), then "…". Never separate a character from the zero-width
+characters that follow it: they stay with it or are cut together.
+'''
+trap = '''Truncating by len() overflows with Korean (2 columns each), a wide character must not be half-included, the ellipsis itself takes a column, and a combining accent must not be split from its letter. Text that fits exactly gets no ellipsis.'''
+
+[[examples]]
+call = '''fit('hello world', 8)'''
+result = ''''hello w…''''
+
+[[examples]]
+call = '''fit('hello', 5)'''
+result = ''''hello''''

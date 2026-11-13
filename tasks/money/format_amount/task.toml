@@ -1,0 +1,21 @@
+id = "format_amount"
+room = "money"
+tier = "novel"
+title = '''Format money in its own currency'''
+signature = '''def format_amount(amount: str, currency: str) -> str'''
+prompt = '''
+Write `format_amount(amount, currency)` that formats a decimal amount, given as a string such as "1234.5",
+as "<CODE> <number>". Round to the currency's number of decimal places, halves away from zero:
+KRW 0, JPY 0, USD 2, EUR 2, BHD 3, KWD 3. Group the integer part in threes with commas, use "." as the
+decimal point, show exactly that many decimals, and put "-" before a negative number. A result that rounds
+to zero is never negative. An unknown currency raises ValueError.
+'''
+trap = '''Floats and round(): round(2.675, 2) is 2.67 and round(0.5) is 0 (banker's rounding). Currencies have 0 or 3 decimals, not always 2, and -0.004 must not print as "-0.00".'''
+
+[[examples]]
+call = '''format_amount('1234.5', 'USD')'''
+result = ''''USD 1,234.50''''
+
+[[examples]]
+call = '''format_amount('1234.5', 'KRW')'''
+result = ''''KRW 1,235''''

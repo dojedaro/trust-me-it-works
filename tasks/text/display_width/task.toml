@@ -1,0 +1,21 @@
+id = "display_width"
+room = "text"
+tier = "novel"
+title = '''How wide is this string in a terminal?'''
+signature = '''def display_width(text: str) -> int'''
+prompt = '''
+Write `display_width(text)` that returns how many columns `text` takes in a monospaced terminal.
+Characters whose East Asian Width is Wide or Fullwidth (Hangul syllables, CJK ideographs, fullwidth
+letters, most emoji) take 2 columns. Combining marks (general category Mn or Me) and invisible format
+characters (category Cf, such as the zero-width joiner) take 0 columns. Everything else takes 1. Use
+the Unicode data in Python's unicodedata module.
+'''
+trap = '''len() counts code points: Korean takes 2 columns per syllable, a decomposed accent adds a code point but no width, and an emoji family is several emoji joined by zero-width joiners. Halfwidth katakana and ambiguous-width characters such as circled digits are 1 column.'''
+
+[[examples]]
+call = '''display_width('abc')'''
+result = '''3'''
+
+[[examples]]
+call = '''display_width('한국')'''
+result = '''4'''

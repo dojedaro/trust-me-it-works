@@ -22,7 +22,9 @@ reasoning_effort = "low"
 
 [run]
 max_iters = 5
+samples = 5            # runs per (variant, task): one run per task is noise, even at temperature 0
+stop_when_unchanged = true  # stop when the maker answers feedback with identical code
 max_calls = 1500       # hard cap on model calls per command, across all variants
-temperature = 0.0
+temperature = 1.0      # gpt-oss's recommended setting; samples need to differ to estimate rates
 max_tokens = 4096      # reasoning models spend part of this on hidden reasoning; Groq free tier counts
                        # this cap against its 8,000 tokens-per-minute limit, so keep input + cap < 8,000

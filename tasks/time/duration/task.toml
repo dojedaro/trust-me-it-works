@@ -1,0 +1,23 @@
+id = "duration"
+room = "time"
+tier = "novel"
+title = '''Parse an ISO 8601 duration'''
+signature = '''def parse_duration(text: str) -> float'''
+prompt = '''
+Write `parse_duration(text)` that converts an ISO 8601 duration to seconds. Accept two forms, with
+uppercase letters only: weeks alone, "P<n>W", or "P<n>D" followed by an optional time part
+"T<n>H<n>M<n>S", where every component is optional but at least one must be present overall, and a "T"
+must be followed by at least one time component. A day is 86400 seconds and a week 7 days. Numbers are
+non-negative integers, except that the last component written may have a decimal fraction, using "." or
+",". Years and months have no fixed length, so durations with them, and any other invalid text, raise
+ValueError.
+'''
+trap = '''M means months before the T and minutes after it: PT1M is 60 seconds, P1M is invalid. Also: weeks can't be combined with other components, a comma is a valid decimal mark, a fraction is only allowed on the last component, and "P", "PT" and "P1DT" are invalid.'''
+
+[[examples]]
+call = '''parse_duration('PT1H30M')'''
+result = '''5400.0'''
+
+[[examples]]
+call = '''parse_duration('P1W')'''
+result = '''604800.0'''

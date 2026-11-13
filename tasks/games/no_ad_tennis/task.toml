@@ -1,0 +1,20 @@
+id = "no_ad_tennis"
+room = "games"
+tier = "novel"
+title = '''Score a tennis game with no-ad scoring'''
+signature = '''def game_score(points: str) -> str'''
+prompt = '''
+Write `game_score(points)` for one game of tennis. `points` lists who won each point, in order, as "A"
+or "B". Return the score with A first, using 0, 15, 30 and 40, as in "30-15". This match uses no-ad
+scoring: at 40-40 (written "40-40") the next point wins the game. Once a player has won, return
+"Game A" or "Game B", and ignore any points listed after that. No points played is "0-0".
+'''
+trap = '''Standard tennis has deuce and advantage; the model's prior pulls toward "Deuce" and "Advantage A". Here 40-40 is written as a score and the next point decides the game. Points after the game ends must be ignored.'''
+
+[[examples]]
+call = '''game_score('')'''
+result = ''''0-0''''
+
+[[examples]]
+call = '''game_score('AAB')'''
+result = ''''30-15''''

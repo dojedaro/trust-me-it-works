@@ -10,7 +10,7 @@ from .models import Completion, Model
 from .sandbox import TestReport, run_tests
 from .tasks import Task
 
-Verdict = Literal["FINAL", "ITERATING"]
+Verdict = Literal["FINAL", "ITERATING", "UNCHANGED"]
 
 
 class ConfigError(ValueError):
@@ -106,6 +106,75 @@ class TestWriterChecker:
 
 
 @dataclass
+class DisputeChecker:
+    """Variant F (devil's advocate with disputes): like D, but the maker may dispute a failing test.
+
+    1. The checker writes tests to break the code, and they run.
+    2. For each failing test, the maker accepts it or disputes it with a reason.
+    3. The checker rules on each dispute: uphold the test or withdraw it.
+    4. Withdrawn tests no longer count. FINAL iff every remaining test passes.
+
+    A loop design choice under test: it should cut false alarms caused by wrong tests, but a persuasive
+    maker might also talk the checker out of a test that was right.
+    """
+
+    model: Model  # the checker
+    maker: Model
+    kind: str = "tests+disputes"
+
+    def check(self, task: Task, code: str) -> CheckResult:
+        usage = Usage()
+        c = self.model.complete(
+            prompts.TESTWRITER_SYSTEM, prompts.TESTWRITER_USER.format(task=task.render_prompt(), code=code)
+        )
+        usage.add(c)
+        tests = prompts.extract_code(c.text)
+        report = run_tests(code, tests)
+        details: dict = {"tests": tests, "report": report.to_dict(), "disputes": {}, "rulings": {}, "withdrawn": []}
+        failing = [r for r in report.results if not r.passed]
+        if report.all_passed or not failing:
+            # Nothing to dispute: a crash or import error is not a single test the maker can argue with.
+            verdict: Verdict = "FINAL" if report.all_passed else "ITERATING"
+            return CheckResult(
+                verdict, "The reviewer wrote tests against your code.\n" + report.summary(), details, usage
+            )
+
+        failures = "\n".join(f"- {r.name}: {r.message}" for r in failing)
+        d = self.maker.complete(
+            prompts.DISPUTE_SYSTEM,
+            prompts.DISPUTE_USER.format(task=task.render_prompt(), code=code, tests=tests, failures=failures),
+        )
+        usage.add(d)
+        disputes = prompts.parse_decisions(d.text, {r.name for r in failing}, ("accept", "dispute"))
+        details["disputes"] = disputes
+        disputed = {name: v["reason"] for name, v in disputes.items() if v["action"] == "dispute"}
+
+        withdrawn: set[str] = set()
+        if disputed:
+            claims = "\n".join(f"- {name}: {reason}" for name, reason in disputed.items())
+            r = self.model.complete(
+                prompts.RULING_SYSTEM,
+                prompts.RULING_USER.format(task=task.render_prompt(), code=code, tests=tests, disputes=claims),
+            )
+            usage.add(r)
+            rulings = prompts.parse_decisions(r.text, set(disputed), ("uphold", "withdraw"))
+            details["rulings"] = rulings
+            withdrawn = {name for name, v in rulings.items() if v["action"] == "withdraw"}
+        details["withdrawn"] = sorted(withdrawn)
+
+        upheld = [r for r in failing if r.name not in withdrawn]
+        if not upheld:
+            return CheckResult("FINAL", "Every failing test was withdrawn after your disputes.", details, usage)
+        lines = [f"The reviewer's tests: {report.passed}/{report.total} passed, {len(withdrawn)} withdrawn on review."]
+        lines += [f"- {r.name}: {r.message}" for r in upheld][:5]
+        for r in upheld:
+            if r.name in disputed:
+                reason = details["rulings"].get(r.name, {}).get("reason", "")
+                lines.append(f"The reviewer upheld {r.name} after your dispute: {reason}")
+        return CheckResult("ITERATING", "\n".join(lines), details, usage)
+
+
+@dataclass
 class OracleChecker:
     """Variant E: our hidden tests, with failures shown to the maker. An upper bound, not a fair checker."""
 
@@ -129,6 +198,7 @@ class Iteration:
     ground_truth: dict
     maker_usage: Usage
     checker_usage: Usage
+    checker_tests_truth: dict | None = None
 
 
 @dataclass
@@ -136,12 +206,15 @@ class Trace:
     task_id: str
     room: str
     variant: str
+    tier: str
     maker: str
     checker_kind: str
     checker_model: str | None
     max_iters: int
+    sample: int = 0
+    stop_when_unchanged: bool = False
     iterations: list[Iteration] = field(default_factory=list)
-    final_decision: str = ""  # "FINAL" or "CAP_REACHED"
+    final_decision: str = ""  # "FINAL", "UNCHANGED" or "CAP_REACHED"
     final_correct: bool = False
     error: str | None = None
 
@@ -150,7 +223,21 @@ class Trace:
 
 
 class Loop:
-    def __init__(self, maker: Model, checker: Checker, max_iters: int = 5, allow_self_check: bool = False):
+    """Run the loop on one task.
+
+    stop_when_unchanged: if the maker answers feedback by returning identical code, stop instead of asking
+    the checker the same question again. The maker is standing by its answer, and another round would only
+    spend calls (in the pilot, 8 of 38 devil's-advocate revisions returned identical code).
+    """
+
+    def __init__(
+        self,
+        maker: Model,
+        checker: Checker,
+        max_iters: int = 5,
+        allow_self_check: bool = False,
+        stop_when_unchanged: bool = False,
+    ):
         if max_iters < 1:
             raise ConfigError("max_iters must be >= 1")
         if checker.model is not None and not allow_self_check and _same_model(maker, checker.model):
@@ -161,16 +248,20 @@ class Loop:
         self.maker = maker
         self.checker = checker
         self.max_iters = max_iters
+        self.stop_when_unchanged = stop_when_unchanged
 
-    def run(self, task: Task, variant: str = "") -> Trace:
+    def run(self, task: Task, variant: str = "", sample: int = 0) -> Trace:
         trace = Trace(
             task_id=task.id,
             room=task.room,
             variant=variant,
+            tier=task.tier,
             maker=self.maker.name,
             checker_kind=self.checker.kind,
             checker_model=self.checker.model.name if self.checker.model else None,
             max_iters=self.max_iters,
+            sample=sample,
+            stop_when_unchanged=self.stop_when_unchanged,
         )
         code, feedback = "", ""
         for i in range(self.max_iters):
@@ -182,11 +273,33 @@ class Loop:
                 user = prompts.MAKER_REVISE.format(task=task.render_prompt(), code=code, feedback=feedback)
             reply = self.maker.complete(prompts.MAKER_SYSTEM, user)
             maker_usage.add(reply)
-            code = prompts.extract_code(reply.text)
+            previous, code = code, prompts.extract_code(reply.text)
+            if i > 0 and self.stop_when_unchanged and code.strip() == previous.strip():
+                last = trace.iterations[-1]
+                trace.iterations.append(
+                    Iteration(
+                        index=i,
+                        plan=prompts.extract_plan(reply.text),
+                        code=code,
+                        verdict="UNCHANGED",
+                        feedback="",
+                        checker_details={},
+                        ground_truth=last.ground_truth,
+                        maker_usage=maker_usage,
+                        checker_usage=Usage(),
+                    )
+                )
+                trace.final_decision = "UNCHANGED"
+                break
             # VERIFY
             result = self.checker.check(task, code)
             # GROUND TRUTH (recorded, never shown to the maker except by the oracle checker)
             truth: TestReport = run_tests(code, task.hidden_test)
+            # A checker that writes tests: run its tests against our correct reference solution.
+            # A test that fails the reference is itself wrong. Recorded for analysis, never shown to anyone.
+            tests_truth = None
+            if "tests" in result.details:
+                tests_truth = run_tests(task.reference, result.details["tests"]).to_dict()
             trace.iterations.append(
                 Iteration(
                     index=i,
@@ -198,6 +311,7 @@ class Loop:
                     ground_truth=truth.to_dict(),
                     maker_usage=maker_usage,
                     checker_usage=result.usage,
+                    checker_tests_truth=tests_truth,
                 )
             )
             # DECIDE

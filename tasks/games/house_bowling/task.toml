@@ -1,0 +1,23 @@
+id = "house_bowling"
+room = "games"
+tier = "novel"
+title = '''Bowling with a house rule'''
+signature = '''def house_bowling(rolls: list[int]) -> int'''
+prompt = '''
+Write `house_bowling(rolls)` that scores one complete game of bowling at a lane with a house rule.
+`rolls` lists the pins knocked down by each roll, in order, and is always a valid complete game.
+There are 10 frames of at most two rolls; a strike (all 10 pins on a frame's first roll) ends its frame.
+A strike scores 10 plus the next two rolls; a spare scores 10 plus the next roll.
+House rule: the 10th frame never gets extra rolls. The game ends after the 10th frame, which is one roll
+if it is a strike and two rolls otherwise. Bonuses count only rolls that exist, so a strike in frame 10
+scores just 10, and a strike in frame 9 followed by a strike in frame 10 scores 10 + 10.
+'''
+trap = '''The model knows standard bowling, where frame 10 earns bonus rolls and a perfect game is 300. Under the house rule there are no bonus rolls, so the standard algorithm reads past the end of the list (or invents a 12th roll). All strikes here is 10 rolls and scores 270.'''
+
+[[examples]]
+call = '''house_bowling([0] * 20)'''
+result = '''0'''
+
+[[examples]]
+call = '''house_bowling([10] + [0] * 18)'''
+result = '''10'''

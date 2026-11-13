@@ -27,6 +27,7 @@ class Task:
     hidden_test: str
     reference: str
     naive: str
+    tier: str = "classic"  # "classic": well-known traps; "novel": twists the model can't have memorized
 
     def render_prompt(self) -> str:
         """What the maker sees. Never includes the trap note or the hidden tests."""
@@ -50,12 +51,13 @@ def load_task(path: Path) -> Task:
         hidden_test=(path / "hidden_test.py").read_text(encoding="utf-8"),
         reference=(path / "reference.py").read_text(encoding="utf-8"),
         naive=(path / "naive.py").read_text(encoding="utf-8"),
+        tier=meta.get("tier", "classic"),
     )
 
 
 def load_tasks(root: Path, only: list[str] | None = None) -> list[Task]:
-    """Load every task under root, optionally filtered by task id or room name."""
+    """Load every task under root, optionally filtered by task id, room name or tier."""
     tasks = [load_task(p.parent) for p in sorted(root.glob("*/*/task.toml"))]
     if only:
-        tasks = [t for t in tasks if t.id in only or t.room in only]
+        tasks = [t for t in tasks if t.id in only or t.room in only or t.tier in only]
     return tasks

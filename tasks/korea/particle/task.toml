@@ -1,0 +1,22 @@
+id = "particle"
+room = "korea"
+tier = "novel"
+title = '''Attach a Korean particle, even after a number'''
+signature = '''def attach_particle(word: str, particle: str) -> str'''
+prompt = '''
+Write `attach_particle(word, particle)` that returns `word` followed by the right form of a Korean
+particle. `particle` is one of "은/는", "이/가", "을/를", "과/와" or "으로/로": the form before the slash
+follows a final consonant (batchim), the form after it follows a vowel. For "으로/로" only, a word whose
+last syllable ends in ㄹ takes "로", as if it ended in a vowel.
+`word` ends in a Hangul syllable or in digits. Digits are read aloud as one Sino-Korean number, and
+the particle follows how that number is pronounced.
+'''
+trap = '''Two traps. (1) The ㄹ exception applies to 으로/로 only (서울로 and 7로, but 서울은). (2) A number is pronounced as a whole, so its last syllable is not its last digit: 10**12 is 조, which ends in a vowel (1000000000000를), while a last-digit lookup reads 영 and picks 을.'''
+
+[[examples]]
+call = '''attach_particle('책', '을/를')'''
+result = ''''책을''''
+
+[[examples]]
+call = '''attach_particle('3', '이/가')'''
+result = ''''3이''''

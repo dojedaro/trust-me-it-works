@@ -1,0 +1,21 @@
+id = "allocate"
+room = "money"
+tier = "novel"
+title = '''Allocate money by weights, to the cent'''
+signature = '''def allocate(total: int, weights: list[int]) -> list[int]'''
+prompt = '''
+Write `allocate(total, weights)` that splits `total` (integer cents) into parts proportional to `weights`
+(non-negative integers) and returns the parts in the same order. Each part starts as the floor of its
+exact share of abs(total); the cents left over go one each to the parts with the largest fractional
+remainders, ties going to the earlier part. For a negative total, allocate abs(total) and negate every
+part. The parts must add up to exactly `total`. If every weight is 0, raise ValueError.
+'''
+trap = '''Floats lose exactness on large totals (10**17 cents), rounding each share independently loses or invents cents, and the tie-break and negative-total rules are easy to get backwards. Integer divmod with exact remainders is the safe route.'''
+
+[[examples]]
+call = '''allocate(100, [1, 1, 1])'''
+result = '''[34, 33, 33]'''
+
+[[examples]]
+call = '''allocate(5, [1, 0, 1])'''
+result = '''[3, 0, 2]'''

@@ -1,0 +1,21 @@
+id = "read_number"
+room = "korea"
+tier = "novel"
+title = '''Read a number aloud in Korean'''
+signature = '''def read_number(n: int) -> str'''
+prompt = '''
+Write `read_number(n)` that returns how the integer `n` (0 <= n < 10**12) is read aloud in Sino-Korean,
+in Hangul with no spaces. Digits are 일 이 삼 사 오 육 칠 팔 구, and zero on its own is 영.
+Within a group of four digits the place values are 천, 백, 십 and ones, and a 1 before 천, 백 or 십 is
+not read (110 is 백십). Groups of four digits are joined with 만 and 억, and an all-zero group is skipped
+together with its unit. A 만 group that is exactly 1 is read as just 만, but 억 always keeps its number.
+'''
+trap = '''만 vs 일억: 10000 is 만 (not 일만) but 100000000 is 일억. Empty groups must vanish with their unit (100000001 is 일억일, not 일억만일), and the silent 1 applies to 천/백/십 and to a 만 group of exactly 1.'''
+
+[[examples]]
+call = '''read_number(2026)'''
+result = ''''이천이십육''''
+
+[[examples]]
+call = '''read_number(110)'''
+result = ''''백십''''

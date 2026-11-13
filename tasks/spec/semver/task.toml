@@ -1,0 +1,24 @@
+id = "semver"
+room = "spec"
+tier = "novel"
+title = '''Compare semantic versions'''
+signature = '''def compare_versions(a: str, b: str) -> int'''
+prompt = '''
+Write `compare_versions(a, b)` that returns -1, 0 or 1 as version `a` has lower, equal or higher
+precedence than `b` under Semantic Versioning 2.0.0. A version is MAJOR.MINOR.PATCH, optionally followed
+by "-" and dot-separated pre-release identifiers, optionally followed by "+" and build metadata.
+Compare major, minor and patch numerically. A version with a pre-release has lower precedence than the
+same version without one. Pre-release identifiers are compared one by one from the left: identifiers of
+only digits compare numerically, others compare in ASCII order, and a numeric identifier has lower
+precedence than a non-numeric one. If all compared identifiers are equal, more identifiers is higher.
+Build metadata is ignored.
+'''
+trap = '''String comparison sorts beta.11 before beta.2 and "10.0.0" before "2.0.0"; a pre-release is lower than the release; numeric identifiers sort below alphanumeric ones; build metadata is ignored; and a pre-release may itself contain hyphens (1.0.0-x-y), so split on the first "-" only.'''
+
+[[examples]]
+call = '''compare_versions('1.2.10', '1.2.9')'''
+result = '''1'''
+
+[[examples]]
+call = '''compare_versions('1.0.0-alpha', '1.0.0')'''
+result = '''-1'''
