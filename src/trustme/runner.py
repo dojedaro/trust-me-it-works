@@ -41,7 +41,7 @@ def models_from_config(path: Path) -> tuple[Models, dict]:
             return AnthropicModel(
                 model=r["model"],
                 api_key_env=p["api_key_env"],
-                max_tokens=cfg["run"].get("max_tokens", 8000),
+                max_tokens=r.get("max_tokens", cfg["run"].get("max_tokens", 8000)),
                 effort=r.get("effort"),
                 budget=budget,
             )
@@ -50,8 +50,8 @@ def models_from_config(path: Path) -> tuple[Models, dict]:
             base_url=p["base_url"],
             api_key_env=p["api_key_env"],
             min_interval_s=p.get("min_interval_s", 2.0),
-            temperature=cfg["run"].get("temperature", 0.0),
-            max_tokens=cfg["run"].get("max_tokens", 4096),
+            temperature=r.get("temperature", cfg["run"].get("temperature", 0.0)),
+            max_tokens=r.get("max_tokens", cfg["run"].get("max_tokens", 4096)),
             reasoning_effort=r.get("reasoning_effort"),
             budget=budget,
         )

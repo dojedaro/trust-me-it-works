@@ -132,7 +132,12 @@ class OpenAICompatModel:
                     retry_after = e.headers.get("retry-after")
                     wait_s = float(retry_after) if retry_after else 2.0 * 2**attempt
                     if wait_s > MAX_RETRY_WAIT_S:
-                        raise RateLimited(f"{self.model}: rate limited for {wait_s:.0f}s; re-run later") from e
+                        # Say which limit was hit: a per-minute cap clears in seconds, a daily cap in hours.
+                        reason = _error_message(e.read())
+                        raise RateLimited(
+                            f"{self.model}: rate limited for {wait_s:.0f}s; re-run later"
+                            + (f" ({reason})" if reason else "")
+                        ) from e
                     time.sleep(wait_s)
                     continue
                 body = e.read()
@@ -230,3 +235,11 @@ class AnthropicModel:
             output_tokens=resp.usage.output_tokens,
             truncated=resp.stop_reason == "max_tokens",
         )
+
+
+def _error_message(body: bytes) -> str:
+    """The provider's error message from an OpenAI-style error body, or "" if there isn't one."""
+    try:
+        return str(json.loads(body)["error"]["message"])[:300]
+    except (ValueError, KeyError, TypeError):
+        return ""

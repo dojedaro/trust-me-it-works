@@ -76,8 +76,10 @@ so Haiku 4.5 writes the code.
 **Caveats this design carries.** The maker was chosen after calibrating on the same 12 tasks the
 experiment then ran on, so the tasks were picked to be hard for this maker. Checkers and maker are
 both Claude models and may share blind spots, and the separate checker (Sonnet 5.5) is also larger than the
-maker (Haiku 4.5), so "a different model" and "a stronger model" are confounded here; a same-size checker
-would separate the two. Two samples per task means the 24 runs per variant are
+maker (Haiku 4.5), so "a different model" and "a stronger model" are confounded here. A same-size checker
+would separate the two: [`configs/peer-check.toml`](configs/peer-check.toml) sets that run up (gpt-oss-20b,
+which solves about as many tasks as Haiku 4.5, checks Haiku's code) but it has not been run yet. Two samples
+per task means the 24 runs per variant are
 not 24 independent tasks. The clearest result is single pass vs. any checker
 with real feedback (A: 58% correct, 39–76%; C: 96%, 80–99%), where the intervals don't overlap. Self-checking
 (B: 71%, 51–85%) overlaps with C to F, and C to F are indistinguishable from each other.
