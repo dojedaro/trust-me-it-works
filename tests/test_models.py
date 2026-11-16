@@ -83,3 +83,39 @@ def test_anthropic_errors_map_to_the_runner_contract():
     overloaded = anthropic.InternalServerError("overloaded", response=httpx.Response(529, request=request), body=None)
     with pytest.raises(RuntimeError, match="InternalServerError"):
         failing(overloaded).complete("s", "u")
+
+
+def test_long_rate_limit_says_which_limit(monkeypatch):
+    body = json.dumps({"error": {"message": "Rate limit reached on tokens per day (TPD)"}}).encode()
+    err = urllib.error.HTTPError("http://x", 429, "err", {"retry-after": "933"}, io.BytesIO(body))
+    stub(monkeypatch, [err])
+    with pytest.raises(models.RateLimited, match="tokens per day"):
+        model().complete("s", "u")
+
+
+def test_role_settings_override_run_settings(tmp_path):
+    from trustme.runner import models_from_config
+
+    cfg = tmp_path / "c.toml"
+    cfg.write_text(
+        """
+[providers.p]
+base_url = "http://x"
+api_key_env = "KEY"
+[roles.maker]
+provider = "p"
+model = "a"
+[roles.checker]
+provider = "p"
+model = "b"
+max_tokens = 1536
+temperature = 1.0
+[run]
+max_calls = 10
+max_tokens = 8000
+""",
+        encoding="utf-8",
+    )
+    m, _ = models_from_config(cfg)
+    assert (m.maker.max_tokens, m.maker.temperature) == (8000, 0.0)
+    assert (m.checker.max_tokens, m.checker.temperature) == (1536, 1.0)
