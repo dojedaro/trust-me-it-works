@@ -1,4 +1,4 @@
-# Claude configuration (paid; about $5-8 for the full run).
+# Claude configuration (paid; about $4 for the novel tier at 2 samples).
 # The free Groq tier allows ~200k tokens a day, so the full experiment would take about a week there.
 # Maker and checker are different models, as the experiment requires: a small model writes the code,
 # a larger one checks it. Install the SDK with: pip install -e ".[claude]"
