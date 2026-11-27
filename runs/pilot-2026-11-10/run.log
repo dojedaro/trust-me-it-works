@@ -1,4 +1,4 @@
-Running 5 variant(s) x 12 task(s) -> C:\Users\rames\portfolio\trust-me-it-works\runs\v1
+Running 5 variant(s) x 12 task(s) -> runs/v1
 [A] bowling: FINAL after 1 iter(s), correct
 [A] straight: FINAL after 1 iter(s), correct
 [A] hangul_decompose: FINAL after 1 iter(s), correct

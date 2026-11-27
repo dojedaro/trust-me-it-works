@@ -12,8 +12,9 @@ This project measures how often that happens, and which kinds of checker actuall
 Every iteration of every run is checked against **hidden tests the models never see**, so we always
 know whether the checker was right.
 
-> **Status:** first full results below (12 novel tasks × 2 samples × 6 variants, Claude Haiku 4.5 maker,
-> Claude Sonnet 5.5 checker, $3.82 total). Every number comes from saved traces in `runs/`.
+> 12 novel tasks × 2 samples × 6 variants, Claude Haiku 4.5 as maker and Claude Sonnet 5.5 as checker.
+> Every result below is recomputed from the saved traces in `runs/` by `python -m trustme summarize`.
+> The run cost about $4: the traces record token counts, and I priced them by hand at list prices.
 
 ## Results
 
@@ -36,6 +37,18 @@ know whether the checker was right.
   working code only once.
 - With 24 runs per variant the 95% intervals are wide (C: 80–99%, D/E/F: 74–98%), so C vs. D/E/F is
   not a real difference; A and B vs. the rest is.
+
+## What this means if you are deciding how to check AI-written code
+
+- **Do not use a model's own "looks good" as a quality gate.** Here it approved wrong code about one
+  time in four.
+- **Spend on the checker, not on more self-review rounds.** A separate, larger model, or tests that
+  actually run, took final correctness from 58% to above 90% for a few dollars.
+- **A picky checker is cheap.** False alarms cost extra iterations but broke working code once.
+- **Do not count on the coding model to catch a bad test.** It accepted every failing test it was
+  shown, including the wrong ones, so the checker's own error rate is what you need to measure.
+
+These are small samples on 12 tasks with one maker model; the caveats are below.
 
 ## The experiment
 
@@ -96,14 +109,15 @@ with real feedback (A: 58% correct, 39–76%; C: 96%, 80–99%), where the inter
 
 ### Calibration: does the model fall for the traps?
 
-Single attempts by the maker (gpt-oss-20b), 5 per task:
+Single attempts by the pilot's maker (gpt-oss-20b), 5 per task. Six of the 120 planned runs did not
+complete and have no saved trace, which is why the totals are 56 and 58 and not 60:
 
 | Tier | First-try pass rate |
 |---|---|
 | Classic | **95%** (53 of 56 runs) |
 | Novel | **72%** (42 of 58 runs) |
 
-The pilot's maker solved every classic task on the first try, so the classic tier alone couldn't show
+The pilot's maker passed 95% of classic attempts on the first try, so the classic tier alone couldn't show
 whether a checker helps. The novel tier is where checkers have something to catch. The two 0% tasks
 were checked by hand to make sure they're fair: the spec states the rule, and the model misses it (for
 example it writes "서울으로" although the spec says ㄹ takes 로).
