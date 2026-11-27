@@ -4,6 +4,12 @@
 
 **Can an AI tell when its own code is wrong?**
 
+**A separate checker (a larger model scoring the code, or tests that actually run) lifted final correctness from 58% to 92–96%. A model checking its own code approved wrong code in 4 of 17 cases, the separate checker in 1 of 20 (12 trap tasks, 144 runs, hidden tests, 95% intervals that overlap).**
+
+![Final correctness per checking strategy, with 95% intervals](assets/final_correct.png)
+
+<sub>Chart: `python scripts/plot_results.py`, recomputed from the traces in `runs/claude-2026-11-13`.</sub>
+
 A popular prompting pattern asks a model to work in a loop: *plan, write, score your own work 1–10,
 and stop when every score is 8 or higher.* The flaw is that the model that wrote the code is the one
 grading it, so "FINAL, 9/10" can mean "the model is satisfied", not "the code is correct".
