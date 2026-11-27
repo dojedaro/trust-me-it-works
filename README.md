@@ -42,7 +42,7 @@ know whether the checker was right.
 
 - **Do not use a model's own "looks good" as a quality gate.** Here it approved wrong code about one
   time in four.
-- **Spend on the checker, not on more self-review rounds.** A stronger second model, or tests that
+- **Spend on the checker, not on more self-review rounds.** A separate, larger model, or tests that
   actually run, took final correctness from 58% to above 90% for a few dollars.
 - **A picky checker is cheap.** False alarms cost extra iterations but broke working code once.
 - **Do not count on the coding model to catch a bad test.** It accepted every failing test it was
